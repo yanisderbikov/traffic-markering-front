@@ -52,6 +52,10 @@ const CampaignCard = ({ campaign, to }) => {
         <span className={styles.rateUnit}> / 1000 просмотров</span>
       </p>
 
+      {campaign.regionDescription && (
+        <span className={styles.region}>{campaign.regionDescription}</span>
+      )}
+
       <BudgetBar
         budgetKopecks={campaign.budgetKopecks}
         spentKopecks={campaign.spentKopecks}

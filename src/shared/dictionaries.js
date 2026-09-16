@@ -17,6 +17,19 @@ export const CAMPAIGN_STATUS_LABELS = {
   COMPLETED: 'завершено',
 };
 
+// Регион, по которому считаются оплачиваемые просмотры оффера.
+export const REGION_LABELS = {
+  RUSSIA: 'только РФ',
+  CIS: 'СНГ',
+  WORLDWIDE: 'весь мир',
+};
+
+// Готовый список для <select> — порядок фиксированный, чтобы не прыгал между рендерами.
+export const REGION_OPTIONS = Object.entries(REGION_LABELS).map(([value, label]) => ({
+  value,
+  label,
+}));
+
 export const APPLICATION_STATUS_LABELS = {
   PENDING: 'на рассмотрении',
   APPROVED: 'одобрен',

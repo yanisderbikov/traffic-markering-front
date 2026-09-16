@@ -159,6 +159,12 @@ const CampaignPage = () => {
               </dd>
             </div>
             <div className={styles.fact}>
+              <dt className={styles.factKey}>регион просмотров</dt>
+              <dd className={styles.factValue}>
+                {campaign.regionDescription || campaign.region || '—'}
+              </dd>
+            </div>
+            <div className={styles.fact}>
               <dt className={styles.factKey}>откликов</dt>
               <dd className={styles.factValue}>{campaign.applicationsCount ?? 0}</dd>
             </div>

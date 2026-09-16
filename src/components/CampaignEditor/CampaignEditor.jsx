@@ -18,6 +18,7 @@ import {
   APPLICATION_STATUS_LABELS,
   CAMPAIGN_STATUS_LABELS,
   PLATFORM_LABELS,
+  REGION_OPTIONS,
   formatDate,
 } from '../../shared/dictionaries';
 import styles from './CampaignEditor.module.css';
@@ -28,6 +29,7 @@ const emptyForm = {
   photoKey: '',
   rateRub: '',
   budgetRub: '',
+  region: 'WORLDWIDE',
   status: 'DRAFT',
 };
 
@@ -61,6 +63,7 @@ const formFromCampaign = (campaign) => ({
   photoKey: campaign.photoKey || '',
   rateRub: kopecksToInput(campaign.ratePerThousandKopecks),
   budgetRub: kopecksToInput(campaign.budgetKopecks),
+  region: campaign.region || 'WORLDWIDE',
   status: campaign.status || 'DRAFT',
 });
 
@@ -239,6 +242,7 @@ const CampaignEditor = () => {
           photoKey: form.photoKey,
           ratePerThousandKopecks,
           budgetKopecks,
+          region: form.region,
           status: form.status,
         });
         toast.success('Объявление создано');
@@ -252,6 +256,7 @@ const CampaignEditor = () => {
         photoKey: form.photoKey,
         ratePerThousandKopecks,
         budgetKopecks,
+        region: form.region,
       });
       let saved = res.data;
       // Статус в теле PUT не отправляем: бэк меняет его, только если поле пришло,
@@ -343,6 +348,8 @@ const CampaignEditor = () => {
               <span className={styles.rateUnit}> / 1000 просмотров</span>
             </p>
             <p className={styles.summaryMeta}>
+              регион: {campaign.regionDescription || campaign.region || '—'}
+              {' · '}
               откликов: {campaign.applicationsCount ?? 0}
               {' · '}
               просмотров: {formatViews(campaign.totalViews ?? 0)}
@@ -466,6 +473,26 @@ const CampaignEditor = () => {
             <FieldError>{errors.budgetRub}</FieldError>
             <span className={styles.hint}>
               Больше этой суммы криаторам не начислится: кончился бюджет — начисления обрезаются.
+            </span>
+          </label>
+          <label className={styles.label}>
+            Регион просмотров
+            <select
+              name="region"
+              value={form.region}
+              onChange={setField}
+              className={styles.input}
+            >
+              {REGION_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <span className={styles.hint}>
+              В оплату идут только просмотры из выбранного региона; криатор увидит его до того,
+              как снимет ролик. Смена региона обнуляет уже подтверждённую гео-разбивку по
+              откликам.
             </span>
           </label>
           <label className={styles.label}>
