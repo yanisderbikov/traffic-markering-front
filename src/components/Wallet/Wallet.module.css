@@ -1,0 +1,122 @@
+.wrap {
+  width: min(100%, 1040px);
+  margin: 0 auto;
+  padding: 8px 0 48px;
+}
+
+.head,
+.sectionHead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.head {
+  margin-bottom: 24px;
+}
+
+.eyebrow {
+  margin-bottom: 7px;
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+
+.title {
+  font-size: clamp(32px, 5vw, 48px);
+  line-height: 1;
+}
+
+.banner,
+.message {
+  padding: 16px 18px;
+  border-radius: var(--field-radius);
+}
+
+.banner {
+  margin-bottom: 20px;
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+}
+
+.message {
+  color: var(--color-muted);
+  background: var(--color-surface-alt);
+}
+
+.balanceCard {
+  padding: clamp(24px, 5vw, 42px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--card-radius);
+  background: var(--color-surface);
+}
+
+.balanceLabel {
+  margin-bottom: 12px;
+  color: var(--color-muted);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+
+.balance {
+  font-family: var(--font-display);
+  font-size: clamp(44px, 8vw, 76px);
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.balanceHint {
+  max-width: 720px;
+  margin-top: 20px;
+  color: var(--color-ink-soft);
+  line-height: 1.55;
+}
+
+.historySection {
+  margin-top: 38px;
+}
+
+.sectionHead {
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  font-size: clamp(24px, 4vw, 32px);
+}
+
+.refreshBtn {
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid var(--color-field-border);
+  border-radius: var(--field-radius);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.refreshBtn:hover {
+  border-color: var(--color-ink);
+}
+
+.refreshBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+@media (max-width: 640px) {
+  .wrap {
+    padding-bottom: 28px;
+  }
+
+  .sectionHead {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

@@ -15,6 +15,8 @@ import CampaignEditor from './components/CampaignEditor/CampaignEditor';
 import CreatorApplications from './components/CreatorApplications/CreatorApplications';
 import Profile from './components/Profile/Profile';
 import CreatorSocialAccounts from './components/CreatorSocialAccounts/CreatorSocialAccounts';
+import Wallet from './components/Wallet/Wallet';
+import AdminWallets from './components/AdminWallets/AdminWallets';
 import Info from './components/Info/Info';
 import Privacy from './components/Info/Privacy';
 import Terms from './components/Info/Terms';
@@ -34,6 +36,8 @@ const KNOWN_PATHS = new Set([
   '/app/applications',
   '/app/profile',
   '/app/profile/socials',
+  '/app/wallet',
+  '/app/admin/wallets',
 ]);
 
 // Динамические маршруты: карточка объявления и редактор объявления.
@@ -152,6 +156,8 @@ function App() {
           <Route path="/app/applications" element={<CreatorApplications />} />
           <Route path="/app/profile" element={<Profile />} />
           <Route path="/app/profile/socials" element={<CreatorSocialAccounts />} />
+          <Route path="/app/wallet" element={<Wallet />} />
+          <Route path="/app/admin/wallets" element={<AdminWallets />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

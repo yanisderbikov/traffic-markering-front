@@ -27,6 +27,7 @@ export const APPLICATION_STATUS_LABELS = {
 export const ROLE_LABELS = {
   CUSTOMER: 'заказчик',
   CREATOR: 'криатор',
+  ADMIN: 'администратор',
 };
 
 export const formatDate = (value) => {

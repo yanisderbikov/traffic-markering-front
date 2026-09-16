@@ -26,12 +26,22 @@ const MENU = [
     ],
   },
   {
+    title: 'финансы',
+    section: SECTIONS.WALLET,
+    items: [{ to: '/app/wallet', label: 'Кошелёк' }],
+  },
+  {
     title: 'профиль',
     section: SECTIONS.PROFILE,
     items: [
       { to: '/app/profile', label: 'О себе' },
       { to: '/app/profile/socials', label: 'Соцсети', section: SECTIONS.SOCIALS },
     ],
+  },
+  {
+    title: 'администрирование',
+    section: SECTIONS.ADMIN_WALLETS,
+    items: [{ to: '/app/admin/wallets', label: 'Кошельки' }],
   },
 ];
 
