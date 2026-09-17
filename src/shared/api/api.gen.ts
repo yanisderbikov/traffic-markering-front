@@ -146,6 +146,11 @@ export interface CampaignCreateUpdateRequestDTO {
    */
   budgetKopecks: number;
   /**
+   * Регион, по которому считаются оплачиваемые просмотры: RUSSIA, CIS или WORLDWIDE
+   * @example "WORLDWIDE"
+   */
+  region: "RUSSIA" | "CIS" | "WORLDWIDE";
+  /**
    * Статус; null — не менять (при создании DRAFT)
    * @example "ACTIVE"
    */
@@ -191,6 +196,13 @@ export interface CampaignDTO {
    * @example "Активно"
    */
   statusDescription?: string;
+  /** Регион, по которому считаются оплачиваемые просмотры: RUSSIA, CIS, WORLDWIDE */
+  region?: string;
+  /**
+   * Человекочитаемый регион
+   * @example "Только РФ"
+   */
+  regionDescription?: string;
   /** @format int64 */
   customerId?: number;
   customerName?: string;
@@ -382,6 +394,13 @@ export interface CampaignBoardDTO {
    * @format int64
    */
   remainingKopecks?: number;
+  /** Регион, по которому считаются оплачиваемые просмотры: RUSSIA, CIS, WORLDWIDE */
+  region?: string;
+  /**
+   * Человекочитаемый регион
+   * @example "Только РФ"
+   */
+  regionDescription?: string;
   customerName?: string;
   /** Компания заказчика; null — профиль не заполнен */
   customerCompany?: string;

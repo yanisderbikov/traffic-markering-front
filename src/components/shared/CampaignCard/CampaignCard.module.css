@@ -92,6 +92,18 @@
   color: var(--color-muted);
 }
 
+.region {
+  align-self: flex-start;
+  padding: 3px 10px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  color: var(--color-ink);
+  background: var(--color-surface-alt);
+  border-radius: 999px;
+}
+
 .footer {
   display: flex;
   align-items: baseline;

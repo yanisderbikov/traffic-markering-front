@@ -108,6 +108,8 @@ const CustomerCampaigns = () => {
                 />
 
                 <p className={styles.meta}>
+                  регион: {campaign.regionDescription || campaign.region || '—'}
+                  {' · '}
                   откликов: {campaign.applicationsCount ?? 0}
                   {' · '}
                   создано {formatDate(campaign.createdAt)}

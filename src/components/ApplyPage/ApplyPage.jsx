@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import FieldError from '../shared/FieldError/FieldError';
 import { formatRubles } from '../../shared/money';
-import { CAMPAIGN_STATUS_LABELS, PLATFORM_LABELS } from '../../shared/dictionaries';
+import { CAMPAIGN_STATUS_LABELS, PLATFORM_LABELS, REGION_LABELS } from '../../shared/dictionaries';
 import { detectPlatform } from '../../shared/video';
 import styles from './ApplyPage.module.css';
 
@@ -140,6 +140,12 @@ const ApplyPage = () => {
               {formatRubles(campaign.ratePerThousandKopecks)}
             </span>{' '}
             / 1000 просмотров
+          </p>
+
+          <p className={styles.hintBanner}>
+            оплачиваются только просмотры из региона «
+            {REGION_LABELS[campaign.region] || campaign.regionDescription || campaign.region}» —
+            просмотры из других стран в начисление не идут.
           </p>
 
           {inactive && (
