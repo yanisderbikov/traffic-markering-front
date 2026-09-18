@@ -10,6 +10,12 @@ export const PLATFORM_LABELS = {
   YOUTUBE_SHORTS: 'YouTube Shorts',
 };
 
+export const VIEW_REGION_LABELS = {
+  RUSSIA: 'только РФ',
+  CIS: 'СНГ',
+  WORLD: 'весь мир',
+};
+
 export const CAMPAIGN_STATUS_LABELS = {
   DRAFT: 'черновик',
   ACTIVE: 'активно',
@@ -27,7 +33,29 @@ export const APPLICATION_STATUS_LABELS = {
 export const ROLE_LABELS = {
   CUSTOMER: 'заказчик',
   CREATOR: 'криатор',
+  FINANCE_MANAGER: 'менеджер финансов',
   ADMIN: 'администратор',
+  SUPER_ADMIN: 'супер-админ',
+};
+
+export const ASSIGNABLE_ROLES = ['CUSTOMER', 'CREATOR', 'FINANCE_MANAGER', 'ADMIN'];
+
+export const WALLET_TRANSACTION_LABELS = {
+  TOP_UP: 'пополнение',
+  WITHDRAWAL: 'вывод USDT',
+  ALLOCATION: 'резерв под объявление',
+  RELEASE: 'возврат из объявления',
+  EARNING: 'начисление за просмотры',
+  PAYOUT: 'выплата USDT',
+};
+
+export const OPERATION_STATUS_LABELS = {
+  DONE: 'проведена',
+  PENDING: 'ожидает отправки',
+  SENT: 'ждёт подтверждения',
+  CONFIRMED: 'подтверждена',
+  REJECTED: 'отклонена',
+  CANCELLED: 'отменена',
 };
 
 export const formatDate = (value) => {

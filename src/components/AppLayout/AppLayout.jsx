@@ -15,6 +15,7 @@ const MENU = [
     items: [
       { to: '/app/campaigns', label: 'Мои объявления' },
       { to: '/app/campaigns/new', label: 'Новое объявление' },
+      { to: '/app/wallet', label: 'Кошелёк', section: SECTIONS.WALLET },
     ],
   },
   {
@@ -23,12 +24,22 @@ const MENU = [
     items: [
       { to: '/app/applications', label: 'Мои отклики' },
       { to: '/app/board', label: 'Доска объявлений' },
+      { to: '/app/earnings', label: 'Заработок', section: SECTIONS.EARNINGS, end: false },
     ],
   },
   {
     title: 'финансы',
-    section: SECTIONS.WALLET,
-    items: [{ to: '/app/wallet', label: 'Кошелёк' }],
+    section: SECTIONS.FINANCE,
+    items: [
+      { to: '/app/finance', label: 'Кошельки заказчиков' },
+      { to: '/app/finance/payouts', label: 'Выплаты', end: false },
+      { to: '/app/finance/operations', label: 'Все операции', end: false },
+    ],
+  },
+  {
+    title: 'администрирование',
+    section: SECTIONS.USERS,
+    items: [{ to: '/app/admin/users', label: 'Пользователи и роли' }],
   },
   {
     title: 'профиль',
@@ -37,11 +48,6 @@ const MENU = [
       { to: '/app/profile', label: 'О себе' },
       { to: '/app/profile/socials', label: 'Соцсети', section: SECTIONS.SOCIALS },
     ],
-  },
-  {
-    title: 'администрирование',
-    section: SECTIONS.ADMIN_WALLETS,
-    items: [{ to: '/app/admin/wallets', label: 'Кошельки' }],
   },
 ];
 
@@ -90,7 +96,7 @@ const AppLayout = () => {
             <NavLink
               key={item.to}
               to={item.to}
-              end
+              end={item.end ?? true}
               className={({ isActive }) =>
                 `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`
               }
