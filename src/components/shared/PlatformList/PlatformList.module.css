@@ -1,0 +1,32 @@
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--pill-radius);
+  padding: 5px 10px;
+}
+
+.compact .item {
+  padding: 5px;
+}
+
+.icon {
+  width: 1.15em;
+  height: 1.15em;
+  color: var(--color-accent);
+}

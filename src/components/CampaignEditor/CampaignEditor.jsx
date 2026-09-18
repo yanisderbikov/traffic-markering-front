@@ -4,16 +4,30 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import BudgetBar from '../shared/BudgetBar/BudgetBar';
+import WalletSummary from '../shared/WalletSummary/WalletSummary';
 import CreatorSocials from '../shared/CreatorSocials/CreatorSocials';
 import FieldError from '../shared/FieldError/FieldError';
+import MaterialList from '../shared/MaterialList/MaterialList';
+import SocialIcon from '../shared/SocialIcon/SocialIcon';
 import { clearFieldError, hasErrors, validateRequired } from '../../shared/validation';
+import { VIDEO_PLATFORMS } from '../../shared/video';
 import {
+  DEFAULT_VIEW_REGION,
+  VIEW_REGIONS,
+  platformLabels,
+  platformsWithoutGeography,
+  viewRegionLabel,
+} from '../../shared/viewRegion';
+import {
+  formatIntInput,
   formatRubInput,
   formatRubles,
   formatViews,
   kopecksToRub,
+  parseIntInput,
   rubToKopecks,
 } from '../../shared/money';
+import { dateInputValue, endOfDayIso, startOfDayIso } from '../../shared/dates';
 import {
   APPLICATION_STATUS_LABELS,
   CAMPAIGN_STATUS_LABELS,
@@ -28,11 +42,22 @@ const emptyForm = {
   photoKey: '',
   rateRub: '',
   budgetRub: '',
+  minPayoutRub: '',
   status: 'DRAFT',
+  platforms: VIDEO_PLATFORMS,
+  viewRegion: DEFAULT_VIEW_REGION,
+  minVideoSeconds: '',
+  minPaidViews: '',
+  maxVideosPerCreator: '',
+  startsOn: '',
+  endsOn: '',
+  materials: [],
 };
 
 const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const PHOTO_MAX_BYTES = 10 * 1024 * 1024;
+const MATERIAL_MAX_BYTES = 100 * 1024 * 1024;
+const MATERIALS_MAX = 10;
 
 // Статусы объявления в порядке жизненного цикла — так их и показываем в селекте.
 const CAMPAIGN_STATUS_OPTIONS = ['DRAFT', 'ACTIVE', 'PAUSED', 'COMPLETED'];
@@ -55,13 +80,67 @@ const APPLICATION_STATUS_CLASS = {
 const kopecksToInput = (kopecks) =>
   kopecks == null ? '' : formatRubInput(String(kopecksToRub(kopecks)));
 
+const sameValue = (a, b) => {
+  if (!Array.isArray(a) || !Array.isArray(b)) return a === b;
+  if (a.length !== b.length) return false;
+  return a.every((item, index) =>
+    item && typeof item === 'object'
+      ? JSON.stringify(item) === JSON.stringify(b[index])
+      : b.includes(item)
+  );
+};
+
+const intToInput = (value) => (value == null ? '' : formatIntInput(String(value)));
+
+const materialFromDto = (material) => ({
+  kind: material.kind,
+  title: material.title || '',
+  url: material.url || '',
+  fileKey: material.fileKey || '',
+  contentType: material.contentType || '',
+  sizeBytes: material.sizeBytes ?? null,
+  opensInBrowser: Boolean(material.opensInBrowser),
+});
+
+const materialToRequest = (material) =>
+  material.kind === 'FILE'
+    ? {
+        kind: 'FILE',
+        title: material.title,
+        fileKey: material.fileKey,
+        contentType: material.contentType || null,
+        sizeBytes: material.sizeBytes,
+      }
+    : { kind: 'LINK', title: material.title, url: material.url };
+
+const normalizeLink = (value) => {
+  const raw = value.trim();
+  if (!raw) return '';
+  const withScheme = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  try {
+    const url = new URL(withScheme);
+    return url.hostname.includes('.') ? url.toString() : '';
+  } catch {
+    return '';
+  }
+};
+
 const formFromCampaign = (campaign) => ({
   title: campaign.title || '',
   description: campaign.description || '',
   photoKey: campaign.photoKey || '',
   rateRub: kopecksToInput(campaign.ratePerThousandKopecks),
   budgetRub: kopecksToInput(campaign.budgetKopecks),
+  minPayoutRub: kopecksToInput(campaign.minPayoutKopecks),
   status: campaign.status || 'DRAFT',
+  platforms: Array.isArray(campaign.platforms) ? campaign.platforms : [],
+  viewRegion: campaign.viewRegion || DEFAULT_VIEW_REGION,
+  minVideoSeconds: intToInput(campaign.minVideoSeconds),
+  minPaidViews: intToInput(campaign.minPaidViews),
+  maxVideosPerCreator: intToInput(campaign.maxVideosPerCreator),
+  startsOn: dateInputValue(campaign.startsAt),
+  endsOn: dateInputValue(campaign.endsAt),
+  materials: Array.isArray(campaign.materials) ? campaign.materials.map(materialFromDto) : [],
 });
 
 const CampaignEditor = () => {
@@ -84,7 +163,21 @@ const CampaignEditor = () => {
   const [busyApplicationId, setBusyApplicationId] = useState(null);
   const [photoPreview, setPhotoPreview] = useState('');
   const [uploadProgress, setUploadProgress] = useState(null);
+  const [materialProgress, setMaterialProgress] = useState(null);
+  const [link, setLink] = useState({ url: '', title: '' });
+  const [linkError, setLinkError] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [wallet, setWallet] = useState(null);
+  const ownsWallet = apiClient.getJwtMetadata()?.role === 'CUSTOMER';
+
+  const loadWallet = useCallback(async () => {
+    try {
+      const res = await apiClient.api.myWallet();
+      setWallet(res.data);
+    } catch {
+      setWallet(null);
+    }
+  }, []);
 
   // fillForm=true только при первой загрузке: после смены статуса отклика объявление
   // перечитывается ради пересчитанного бюджета, и затирать правки формы нельзя.
@@ -126,6 +219,10 @@ const CampaignEditor = () => {
   }, [campaignId]);
 
   useEffect(() => {
+    loadWallet();
+  }, [loadWallet]);
+
+  useEffect(() => {
     if (isNew) {
       setCampaign(null);
       setForm(emptyForm);
@@ -161,6 +258,141 @@ const CampaignEditor = () => {
     clearFieldError(setErrors, name);
     setError('');
   };
+
+  const setIntField = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: formatIntInput(value) }));
+    clearFieldError(setErrors, name);
+    setError('');
+  };
+
+  const addMaterial = (material) => {
+    setForm((prev) => ({ ...prev, materials: [...prev.materials, material] }));
+    clearFieldError(setErrors, 'materials');
+    setError('');
+  };
+
+  const removeMaterial = (index) => {
+    setForm((prev) => ({
+      ...prev,
+      materials: prev.materials.filter((_, position) => position !== index),
+    }));
+    setError('');
+  };
+
+  const materialsFull = form.materials.length >= MATERIALS_MAX;
+
+  const handleMaterialChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (materialsFull) {
+      toast.error(`Не больше ${MATERIALS_MAX} материалов.`);
+      return;
+    }
+    if (file.size > MATERIAL_MAX_BYTES) {
+      toast.error('Файл не больше 100 МБ — большие материалы приложите ссылкой.');
+      return;
+    }
+    const contentType = file.type || 'application/octet-stream';
+
+    setMaterialProgress(0);
+    setError('');
+    try {
+      const res = await apiClient.api.presignCampaignMaterial({
+        filename: file.name,
+        contentType,
+      });
+      const { uploadUrl, key } = res.data;
+      await axios.put(uploadUrl, file, {
+        headers: { 'Content-Type': contentType },
+        onUploadProgress: (event) => {
+          if (event.total) {
+            setMaterialProgress(Math.round((event.loaded / event.total) * 100));
+          }
+        },
+      });
+      addMaterial({
+        kind: 'FILE',
+        title: file.name.slice(0, 255),
+        url: '',
+        fileKey: key,
+        contentType,
+        sizeBytes: file.size,
+        opensInBrowser: false,
+      });
+      toast.success('Файл загружен — не забудьте сохранить объявление');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err?.message || 'Не удалось загрузить файл');
+    } finally {
+      setMaterialProgress(null);
+    }
+  };
+
+  const handleAddLink = () => {
+    const url = normalizeLink(link.url);
+    if (!url) {
+      setLinkError('Укажите адрес ссылки, например disk.yandex.ru/d/…');
+      return;
+    }
+    if (materialsFull) {
+      setLinkError(`Не больше ${MATERIALS_MAX} материалов.`);
+      return;
+    }
+    addMaterial({
+      kind: 'LINK',
+      title: link.title.trim() || url,
+      url,
+      fileKey: '',
+      contentType: '',
+      sizeBytes: null,
+      opensInBrowser: true,
+    });
+    setLink({ url: '', title: '' });
+    setLinkError('');
+  };
+
+  const setLinkField = (e) => {
+    const { name, value } = e.target;
+    setLink((prev) => ({ ...prev, [name]: value }));
+    setLinkError('');
+  };
+
+  const addLinkOnEnter = (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    handleAddLink();
+  };
+
+  const updatePlatforms = (next) => {
+    setForm((prev) => ({ ...prev, platforms: next(prev.platforms) }));
+    clearFieldError(setErrors, 'platforms');
+    setError('');
+  };
+
+  const togglePlatform = (platform) =>
+    updatePlatforms((current) =>
+      current.includes(platform)
+        ? current.filter((item) => item !== platform)
+        : [...current, platform]
+    );
+
+  const selectAllPlatforms = () => updatePlatforms(() => VIDEO_PLATFORMS);
+
+  const clearPlatforms = () => updatePlatforms(() => []);
+
+  const setViewRegion = (region) => {
+    setForm((prev) => ({ ...prev, viewRegion: region }));
+    clearFieldError(setErrors, 'viewRegion');
+    setError('');
+  };
+
+  const blindPlatforms = platformsWithoutGeography(form.platforms);
+  const regionBlindWarning = form.viewRegion !== 'WORLD' && blindPlatforms.length > 0;
+
+  const allPlatformsSelected = VIDEO_PLATFORMS.every((platform) =>
+    form.platforms.includes(platform)
+  );
 
   const invalid = (name) => (errors[name] ? 'true' : undefined);
 
@@ -206,7 +438,22 @@ const CampaignEditor = () => {
     }
   };
 
-  const dirty = Object.keys(form).some((key) => form[key] !== savedForm[key]);
+  const dirty = Object.keys(form).some((key) => !sameValue(form[key], savedForm[key]));
+
+  const savedBudgetKopecks = campaign?.budgetKopecks ?? 0;
+  const spentKopecks = campaign?.spentKopecks ?? 0;
+  const availableKopecks = wallet ? (wallet.balanceKopecks ?? 0) + savedBudgetKopecks : null;
+
+  const budgetError = (budgetKopecks) => {
+    if (budgetKopecks == null || budgetKopecks < 0) return 'Сумма в рублях, ноль или больше';
+    if (!isNew && budgetKopecks < spentKopecks) {
+      return `Нельзя опустить ниже уже начисленного: ${formatRubles(spentKopecks)}`;
+    }
+    if (ownsWallet && availableKopecks != null && budgetKopecks > availableKopecks) {
+      return `Не хватает средств в кошельке: доступно ${formatRubles(availableKopecks)}`;
+    }
+    return '';
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -215,6 +462,13 @@ const CampaignEditor = () => {
     // Пользователь вводит рубли, бэк принимает копейки — конвертируем здесь.
     const ratePerThousandKopecks = rubToKopecks(form.rateRub);
     const budgetKopecks = rubToKopecks(form.budgetRub);
+    const minPayoutKopecks = rubToKopecks(form.minPayoutRub);
+    const minVideoSeconds = parseIntInput(form.minVideoSeconds);
+    const minPaidViews = parseIntInput(form.minPaidViews);
+    const maxVideosPerCreator = parseIntInput(form.maxVideosPerCreator);
+    const startsAt = startOfDayIso(form.startsOn);
+    const endsAt = endOfDayIso(form.endsOn);
+    const positiveOrEmpty = (value, message) => (value != null && value <= 0 ? message : '');
 
     const nextErrors = {
       title: validateRequired(title, 'Укажите заголовок'),
@@ -224,10 +478,30 @@ const CampaignEditor = () => {
         ratePerThousandKopecks == null || ratePerThousandKopecks <= 0
           ? 'Ставка должна быть больше нуля'
           : '',
-      budgetRub: budgetKopecks == null || budgetKopecks < 0 ? 'Сумма в рублях, ноль или больше' : '',
+      budgetRub: budgetError(budgetKopecks),
+      minPayoutRub:
+        minPayoutKopecks == null || minPayoutKopecks <= 0
+          ? 'Порог вывода должен быть больше нуля'
+          : '',
+      platforms: form.platforms.length ? '' : 'Выберите хотя бы одну площадку',
+      viewRegion: VIEW_REGIONS.includes(form.viewRegion) ? '' : 'Выберите регион просмотров',
+      minVideoSeconds: positiveOrEmpty(minVideoSeconds, 'Длина ролика — целое число секунд'),
+      minPaidViews: positiveOrEmpty(minPaidViews, 'Порог просмотров должен быть больше нуля'),
+      maxVideosPerCreator: positiveOrEmpty(maxVideosPerCreator, 'Лимит роликов должен быть больше нуля'),
+      endsOn:
+        startsAt && endsAt && endsAt < startsAt ? 'Окончание приёма раньше его начала' : '',
     };
     setErrors(nextErrors);
     if (hasErrors(nextErrors)) return;
+
+    const requirements = {
+      minVideoSeconds,
+      minPaidViews,
+      maxVideosPerCreator,
+      startsAt,
+      endsAt,
+      materials: form.materials.map(materialToRequest),
+    };
 
     setSaving(true);
     setError('');
@@ -239,9 +513,14 @@ const CampaignEditor = () => {
           photoKey: form.photoKey,
           ratePerThousandKopecks,
           budgetKopecks,
+          minPayoutKopecks,
+          platforms: form.platforms,
+          viewRegion: form.viewRegion,
+          ...requirements,
           status: form.status,
         });
         toast.success('Объявление создано');
+        loadWallet();
         navigate(`/app/campaigns/${res.data.id}`, { replace: true });
         return;
       }
@@ -252,6 +531,10 @@ const CampaignEditor = () => {
         photoKey: form.photoKey,
         ratePerThousandKopecks,
         budgetKopecks,
+        minPayoutKopecks,
+        platforms: form.platforms,
+        viewRegion: form.viewRegion,
+        ...requirements,
       });
       let saved = res.data;
       // Статус в теле PUT не отправляем: бэк меняет его, только если поле пришло,
@@ -268,6 +551,7 @@ const CampaignEditor = () => {
       setForm(savedFields);
       setSavedForm(savedFields);
       setPhotoPreview(saved.photoUrl || '');
+      loadWallet();
       toast.success('Объявление сохранено');
     } catch (err) {
       setError(
@@ -335,6 +619,12 @@ const CampaignEditor = () => {
       </Link>
       <h1 className={styles.title}>{isNew ? 'Новое объявление' : 'Редактирование объявления'}</h1>
 
+      {isNew && wallet && (
+        <section className={styles.walletBlock}>
+          <WalletSummary wallet={wallet} />
+        </section>
+      )}
+
       {campaign && (
         <section className={styles.card}>
           <div className={styles.summaryHead}>
@@ -346,6 +636,8 @@ const CampaignEditor = () => {
               откликов: {campaign.applicationsCount ?? 0}
               {' · '}
               просмотров: {formatViews(campaign.totalViews ?? 0)}
+              {' · '}
+              регион: {viewRegionLabel(campaign.viewRegion || DEFAULT_VIEW_REGION)}
             </p>
           </div>
           <BudgetBar
@@ -435,6 +727,84 @@ const CampaignEditor = () => {
             />
             <FieldError>{errors.description}</FieldError>
           </label>
+          <div className={`${styles.label} ${styles.labelWide}`}>
+            Площадки *
+            <div className={styles.platforms} role="group" aria-label="Площадки">
+              {VIDEO_PLATFORMS.map((platform) => {
+                const selected = form.platforms.includes(platform);
+                return (
+                  <button
+                    key={platform}
+                    type="button"
+                    className={`${styles.platform} ${selected ? styles.platformSelected : ''}`}
+                    onClick={() => togglePlatform(platform)}
+                    aria-pressed={selected}
+                  >
+                    <SocialIcon name={platform} className={styles.platformIcon} />
+                    {PLATFORM_LABELS[platform]}
+                  </button>
+                );
+              })}
+            </div>
+            <div className={styles.platformsBulk}>
+              <button
+                type="button"
+                className={styles.linkBtn}
+                onClick={selectAllPlatforms}
+                disabled={allPlatformsSelected}
+              >
+                выбрать все
+              </button>
+              <button
+                type="button"
+                className={styles.linkBtn}
+                onClick={clearPlatforms}
+                disabled={form.platforms.length === 0}
+              >
+                убрать все
+              </button>
+            </div>
+            <FieldError>{errors.platforms}</FieldError>
+            <span className={styles.hint}>
+              Криатор сможет подать ролик только с выбранных площадок — ссылку с другой
+              площадки отклик не примет.
+            </span>
+          </div>
+          <div className={`${styles.label} ${styles.labelWide}`}>
+            Регион просмотров *
+            <div className={styles.platforms} role="radiogroup" aria-label="Регион просмотров">
+              {VIEW_REGIONS.map((region) => {
+                const selected = form.viewRegion === region;
+                return (
+                  <button
+                    key={region}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    className={`${styles.platform} ${selected ? styles.platformSelected : ''}`}
+                    onClick={() => setViewRegion(region)}
+                  >
+                    {viewRegionLabel(region)}
+                  </button>
+                );
+              })}
+            </div>
+            <FieldError>{errors.viewRegion}</FieldError>
+            <span className={styles.hint}>
+              Оплачиваются только просмотры из выбранного региона; «весь мир» — все просмотры.
+              {regionBlindWarning && (
+                <>
+                  {' '}
+                  <span className={styles.hintWarn}>
+                    {platformLabels(blindPlatforms)} географию просмотров{' '}
+                    {blindPlatforms.length > 1 ? 'не отдают' : 'не отдаёт'} — ролики оттуда по
+                    такому региону не оплатятся; географию отдаёт только YouTube (криатор
+                    должен подключить канал с доступом к аналитике).
+                  </span>
+                </>
+              )}
+            </span>
+          </div>
           <label className={styles.label}>
             Ставка за 1000 просмотров, ₽ *
             <input
@@ -465,7 +835,39 @@ const CampaignEditor = () => {
             />
             <FieldError>{errors.budgetRub}</FieldError>
             <span className={styles.hint}>
-              Больше этой суммы криаторам не начислится: кончился бюджет — начисления обрезаются.
+              Бюджет резервируется из кошелька.
+              {availableKopecks != null && (
+                <>
+                  {' '}
+                  Доступно {formatRubles(availableKopecks)}
+                  {!isNew && savedBudgetKopecks > 0
+                    ? ` (из них ${formatRubles(savedBudgetKopecks)} уже в этом объявлении)`
+                    : ''}
+                  .
+                </>
+              )}{' '}
+              <Link to="/app/wallet" className={styles.hintLink}>
+                Кошелёк
+              </Link>
+            </span>
+          </label>
+          <label className={styles.label}>
+            Вывод от, ₽ *
+            <input
+              type="text"
+              inputMode="decimal"
+              name="minPayoutRub"
+              value={form.minPayoutRub}
+              onChange={setMoneyField}
+              className={styles.input}
+              aria-invalid={invalid('minPayoutRub')}
+              placeholder="3 000"
+              autoComplete="off"
+            />
+            <FieldError>{errors.minPayoutRub}</FieldError>
+            <span className={styles.hint}>
+              Криатор сможет вывести заработанное по объявлению, когда накопит эту сумму. До
+              порога начисления копятся на откликах и в кошелёк не попадают.
             </span>
           </label>
           <label className={styles.label}>
@@ -486,13 +888,173 @@ const CampaignEditor = () => {
           </label>
         </div>
 
+        <h2 className={`${styles.cardTitle} ${styles.sectionTitle}`}>Требования к ролику</h2>
+        <p className={styles.sectionLead}>
+          Криатор видит требования на странице объявления до отклика. Пустое поле — без
+          ограничения.
+        </p>
+        <div className={styles.formGrid}>
+          <label className={styles.label}>
+            Длина ролика от, сек
+            <input
+              type="text"
+              inputMode="numeric"
+              name="minVideoSeconds"
+              value={form.minVideoSeconds}
+              onChange={setIntField}
+              className={styles.input}
+              aria-invalid={invalid('minVideoSeconds')}
+              placeholder="30"
+              autoComplete="off"
+            />
+            <FieldError>{errors.minVideoSeconds}</FieldError>
+            <span className={styles.hint}>
+              Хронометраж не проверяется автоматически — слишком короткий ролик отклоните
+              при рассмотрении отклика.
+            </span>
+          </label>
+          <label className={styles.label}>
+            Оплата от, просмотров
+            <input
+              type="text"
+              inputMode="numeric"
+              name="minPaidViews"
+              value={form.minPaidViews}
+              onChange={setIntField}
+              className={styles.input}
+              aria-invalid={invalid('minPaidViews')}
+              placeholder="1 000"
+              autoComplete="off"
+            />
+            <FieldError>{errors.minPaidViews}</FieldError>
+            <span className={styles.hint}>
+              Ролик, не набравший столько просмотров, не оплачивается. Как только порог
+              пройден, оплачиваются все его просмотры.
+            </span>
+          </label>
+          <label className={styles.label}>
+            Роликов от одного криатора
+            <input
+              type="text"
+              inputMode="numeric"
+              name="maxVideosPerCreator"
+              value={form.maxVideosPerCreator}
+              onChange={setIntField}
+              className={styles.input}
+              aria-invalid={invalid('maxVideosPerCreator')}
+              placeholder="3"
+              autoComplete="off"
+            />
+            <FieldError>{errors.maxVideosPerCreator}</FieldError>
+            <span className={styles.hint}>
+              Сколько роликов примете от одного криатора. Отклонённые в лимит не входят.
+            </span>
+          </label>
+          <label className={styles.label}>
+            Приём откликов с
+            <input
+              type="date"
+              name="startsOn"
+              value={form.startsOn}
+              onChange={setField}
+              className={styles.input}
+              aria-invalid={invalid('startsOn')}
+            />
+            <FieldError>{errors.startsOn}</FieldError>
+            <span className={styles.hint}>До этой даты объявление не показывается на доске.</span>
+          </label>
+          <label className={styles.label}>
+            Приём откликов до
+            <input
+              type="date"
+              name="endsOn"
+              value={form.endsOn}
+              onChange={setField}
+              min={form.startsOn || undefined}
+              className={styles.input}
+              aria-invalid={invalid('endsOn')}
+            />
+            <FieldError>{errors.endsOn}</FieldError>
+            <span className={styles.hint}>
+              После этой даты новые отклики не принимаются, а просмотры по уже принятым
+              роликам продолжают оплачиваться. Даты — по Москве, включительно.
+            </span>
+          </label>
+        </div>
+
+        <h2 className={`${styles.cardTitle} ${styles.sectionTitle}`}>Материалы для криатора</h2>
+        <p className={styles.sectionLead}>
+          Бриф, баннеры, референсы — файлом или ссылкой. Криатор откроет или скачает их со
+          страницы объявления.
+        </p>
+        <MaterialList
+          materials={form.materials}
+          onRemove={removeMaterial}
+          className={styles.materials}
+        />
+        <div className={styles.materialAdd}>
+          <label
+            className={`${styles.materialFile} ${
+              materialProgress !== null || materialsFull ? styles.materialFileBusy : ''
+            }`}
+          >
+            {materialProgress !== null ? `загрузка ${materialProgress}%` : '+ файл'}
+            <input
+              type="file"
+              onChange={handleMaterialChange}
+              className={styles.photoInput}
+              disabled={materialProgress !== null || materialsFull}
+            />
+          </label>
+          <div className={styles.linkForm}>
+            <input
+              type="text"
+              name="url"
+              value={link.url}
+              onChange={setLinkField}
+              onKeyDown={addLinkOnEnter}
+              className={styles.input}
+              aria-invalid={linkError ? 'true' : undefined}
+              placeholder="https://disk.yandex.ru/d/…"
+              maxLength={2048}
+              autoComplete="off"
+              disabled={materialsFull}
+            />
+            <input
+              type="text"
+              name="title"
+              value={link.title}
+              onChange={setLinkField}
+              onKeyDown={addLinkOnEnter}
+              className={styles.input}
+              placeholder="Подпись, например «Референсы»"
+              maxLength={255}
+              autoComplete="off"
+              disabled={materialsFull}
+            />
+            <button
+              type="button"
+              className={styles.actionBtn}
+              onClick={handleAddLink}
+              disabled={materialsFull}
+            >
+              + ссылка
+            </button>
+          </div>
+        </div>
+        <FieldError>{linkError}</FieldError>
+        <p className={styles.sectionLead}>
+          Файлы до 100 МБ, всего до {MATERIALS_MAX} материалов. Загруженный файл станет
+          доступен криаторам после сохранения объявления.
+        </p>
+
         {error && <p className={styles.error}>{error}</p>}
 
         <div className={styles.formActions}>
           <button
             type="submit"
             className={`${styles.submit} ${dirty ? '' : styles.submitIdle}`}
-            disabled={saving || uploadProgress !== null || !dirty}
+            disabled={saving || uploadProgress !== null || materialProgress !== null || !dirty}
           >
             {saving ? 'Сохранение…' : isNew ? 'Создать объявление' : 'Сохранить'}
           </button>
@@ -565,6 +1127,21 @@ const CampaignEditor = () => {
 
                   <p className={styles.numbers}>
                     просмотров: <b>{formatViews(application.views ?? 0)}</b>
+                    {application.campaignViewRegion &&
+                      application.campaignViewRegion !== 'WORLD' && (
+                        <>
+                          {' · '}
+                          {application.viewsGeographyKnown === false ? (
+                            <span className={styles.numbersWarn}>
+                              география недоступна — в расчёт не идут
+                            </span>
+                          ) : (
+                            <>
+                              в расчёт: <b>{formatViews(application.payableViews ?? 0)}</b>
+                            </>
+                          )}
+                        </>
+                      )}
                     {' · '}
                     начислено: <b>{formatRubles(application.accruedKopecks ?? 0)}</b>
                   </p>

@@ -25,6 +25,18 @@ const errorText = (err, fallback) =>
 const formatFollowers = (value) =>
   typeof value === 'number' ? value.toLocaleString('ru-RU') : null;
 
+const renderGeographyStatus = (account) => {
+  if (account.platform !== 'YOUTUBE_SHORTS') return null;
+  if (account.reportsViewGeography) {
+    return <span className={styles.geo}>география просмотров: да</span>;
+  }
+  return (
+    <span className={styles.geoWarn}>
+      география просмотров: нет — переподключите, чтобы учитывались объявления с регионом
+    </span>
+  );
+};
+
 const CreatorSocialAccounts = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [accounts, setAccounts] = useState([]);
@@ -153,6 +165,7 @@ const CreatorSocialAccounts = () => {
                               {STATUS_LABELS[account.status] || account.status}
                               {followers ? ` · ${followers} подписчиков` : ''}
                             </span>
+                            {renderGeographyStatus(account)}
                           </span>
                           <button
                             type="button"

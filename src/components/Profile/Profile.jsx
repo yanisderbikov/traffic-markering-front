@@ -19,7 +19,7 @@ const Profile = () => {
   if (role === 'CREATOR') return <CreatorProfile />;
 
   // У админа на бэке есть доступ к обоим профилям — показываем оба, друг под другом.
-  if (role === 'ADMIN') {
+  if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
     return (
       <>
         <CustomerProfile />

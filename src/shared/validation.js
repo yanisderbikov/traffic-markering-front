@@ -1,5 +1,6 @@
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const TELEGRAM_RE = /^(?:https?:\/\/)?(?:t\.me\/|@)?[a-zA-Z0-9_]{5,32}$/;
+const CODE_RE = /^\d{6}$/;
 const WEBSITE_RE = /^(?:https?:\/\/)?[^\s/.]+(?:\.[^\s/.]+)+(?:\/\S*)?$/;
 
 export const validateEmail = (value) => {
@@ -9,9 +10,10 @@ export const validateEmail = (value) => {
   return '';
 };
 
-export const validatePassword = (value) => {
-  if (!value) return 'Придумайте пароль';
-  if (value.length < 6) return 'Минимум 6 символов';
+export const validateCode = (value) => {
+  const code = value.trim();
+  if (!code) return 'Введите код из письма';
+  if (!CODE_RE.test(code)) return 'Код — 6 цифр';
   return '';
 };
 

@@ -74,6 +74,21 @@
   line-height: 1.4;
 }
 
+.regionNote {
+  margin: 0;
+  background: var(--color-surface-alt);
+  color: var(--color-ink-soft);
+  border-left: 3px solid transparent;
+  border-radius: var(--field-radius);
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.regionNoteAccent {
+  border-left-color: var(--color-accent);
+}
+
 .form {
   display: flex;
   flex-direction: column;
@@ -214,4 +229,46 @@
   padding: 10px 14px;
   font-size: 0.85rem;
   margin: 0 0 16px;
+}
+
+.platformsRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -4px 0 4px;
+}
+
+.platformsLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  color: var(--color-muted);
+}
+
+.requirements {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+}
+
+.requirement {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  border: 1px solid var(--color-ink);
+  border-radius: var(--pill-radius);
+  padding: 4px 12px;
+}
+
+.requirementKey {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  font-size: 0.64rem;
+  color: var(--color-muted);
 }

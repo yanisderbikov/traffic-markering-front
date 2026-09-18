@@ -149,6 +149,56 @@
   cursor: not-allowed;
 }
 
+.caption {
+  margin: -12px 0 18px;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  color: var(--color-ink-soft);
+}
+
+.codeInput {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: 0.4em;
+  text-align: center;
+}
+
+.codeInput::placeholder {
+  color: var(--color-track);
+  letter-spacing: 0.4em;
+}
+
+.secondary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.linkButton {
+  padding: 0;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--color-ink);
+  cursor: pointer;
+}
+
+.linkButton:hover:not(:disabled) {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}
+
+.linkButton:disabled {
+  color: var(--color-muted);
+  border-bottom-color: transparent;
+  cursor: default;
+}
+
 .footer {
   margin: 16px 0 0;
   font-size: 0.82rem;

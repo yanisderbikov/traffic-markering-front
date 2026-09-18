@@ -3,55 +3,77 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import apiClient from '../../apiClient';
 import Logo from '../shared/Logo/Logo';
 import FieldError from '../shared/FieldError/FieldError';
-import { clearFieldError, hasErrors, validateRequired } from '../../shared/validation';
+import { clearFieldError, hasErrors, validateCode, validateEmail } from '../../shared/validation';
+import { useCooldown } from '../../shared/useCooldown';
+import { errorMessage, safeReturnPath, verifyCode } from '../../shared/auth';
 import styles from './Login.module.css';
 
 const Login = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [loginValue, setLoginValue] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
+  const [codeSent, setCodeSent] = useState(false);
   const [error, setError] = useState('');
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const cooldown = useCooldown();
 
-  async function login(username, pass) {
-    const response = await apiClient.api.login({ username, password: pass });
-    const token = response.data.token;
-    if (!token) {
-      throw new Error('В ответе сервера нет токена');
-    }
-    apiClient.setToken(token);
-    return token;
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    const nextErrors = {
-      login: validateRequired(loginValue, 'Введите логин'),
-      password: validateRequired(password, 'Введите пароль'),
-    };
+  const requestCode = async () => {
+    const nextErrors = { email: validateEmail(email) };
     setErrors(nextErrors);
     if (hasErrors(nextErrors)) return;
+
     setLoading(true);
+    setError('');
     try {
-      await login(loginValue.trim(), password);
-      // Возвращаем туда, куда человек шёл до логина; иначе — на главную кабинета.
-      // Чужие абсолютные адреса в `from` не пускаем, чтобы не увести пользователя с сайта.
-      const from = searchParams.get('from');
-      const target = from && from.startsWith('/') && !from.startsWith('//') ? from : '/app';
-      navigate(target, { replace: true });
+      await apiClient.api.requestCode({ email: email.trim() });
+      setCodeSent(true);
+      setCode('');
+      cooldown.start();
     } catch (err) {
-      setError(
-        err?.response?.data?.message ||
-          err?.response?.data?.error ||
-          err?.message ||
-          'Ошибка входа. Проверьте логин и пароль.'
-      );
+      const message = errorMessage(err, 'Не удалось отправить код');
+      if (err?.response?.status === 404) {
+        setErrors({ email: message });
+      } else {
+        setError(message);
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const verify = async () => {
+    const nextErrors = { code: validateCode(code) };
+    setErrors(nextErrors);
+    if (hasErrors(nextErrors)) return;
+
+    setLoading(true);
+    setError('');
+    try {
+      await verifyCode(email.trim(), code.trim());
+      navigate(safeReturnPath(searchParams.get('from')), { replace: true });
+    } catch (err) {
+      setError(errorMessage(err, 'Не удалось войти. Проверьте код.'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (codeSent) {
+      verify();
+    } else {
+      requestCode();
+    }
+  };
+
+  const changeEmail = () => {
+    setCodeSent(false);
+    setCode('');
+    setError('');
+    setErrors({});
   };
 
   return (
@@ -68,45 +90,93 @@ const Login = () => {
       <main className={styles.wrap}>
         <div className={styles.card}>
           <h1 className={styles.title}>вход</h1>
+          <p className={styles.caption}>
+            {codeSent
+              ? `Код отправлен на ${email.trim()}. Он действует 10 минут.`
+              : 'Пришлём код для входа на почту — пароль не нужен.'}
+          </p>
           <form onSubmit={handleSubmit} className={styles.form} noValidate>
-            <label className={styles.label}>
-              Логин
-              <input
-                type="email"
-                value={loginValue}
-                onChange={(e) => {
-                  setLoginValue(e.target.value);
-                  clearFieldError(setErrors, 'login');
-                }}
-                className={styles.input}
-                aria-invalid={errors.login ? 'true' : undefined}
-                autoComplete="username"
-                placeholder="you@mail.ru"
-                disabled={loading}
-                autoFocus
-              />
-              <FieldError>{errors.login}</FieldError>
-            </label>
-            <label className={styles.label}>
-              Пароль
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  clearFieldError(setErrors, 'password');
-                }}
-                className={styles.input}
-                aria-invalid={errors.password ? 'true' : undefined}
-                autoComplete="current-password"
-                disabled={loading}
-              />
-              <FieldError>{errors.password}</FieldError>
-            </label>
+            {!codeSent && (
+              <label className={styles.label}>
+                Почта
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    clearFieldError(setErrors, 'email');
+                    setError('');
+                  }}
+                  className={styles.input}
+                  aria-invalid={errors.email ? 'true' : undefined}
+                  autoComplete="email"
+                  placeholder="you@mail.ru"
+                  disabled={loading}
+                  autoFocus
+                />
+                <FieldError>{errors.email}</FieldError>
+              </label>
+            )}
+
+            {codeSent && (
+              <label className={styles.label}>
+                Код из письма
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={6}
+                  value={code}
+                  onChange={(e) => {
+                    setCode(e.target.value.replace(/\D/g, ''));
+                    clearFieldError(setErrors, 'code');
+                    setError('');
+                  }}
+                  className={`${styles.input} ${styles.codeInput}`}
+                  aria-invalid={errors.code ? 'true' : undefined}
+                  autoComplete="one-time-code"
+                  placeholder="000000"
+                  disabled={loading}
+                  autoFocus
+                />
+                <FieldError>{errors.code}</FieldError>
+              </label>
+            )}
+
             {error && <p className={styles.error}>{error}</p>}
+
             <button type="submit" className={styles.submit} disabled={loading}>
-              {loading ? 'Вход…' : 'Войти'}
+              {codeSent
+                ? loading
+                  ? 'Проверяем…'
+                  : 'Войти'
+                : loading
+                  ? 'Отправляем…'
+                  : 'Получить код'}
             </button>
+
+            {codeSent && (
+              <div className={styles.secondary}>
+                <button
+                  type="button"
+                  className={styles.linkButton}
+                  onClick={requestCode}
+                  disabled={loading || cooldown.active}
+                >
+                  {cooldown.active
+                    ? `отправить ещё раз через ${cooldown.secondsLeft} с`
+                    : 'отправить код ещё раз'}
+                </button>
+                <button
+                  type="button"
+                  className={styles.linkButton}
+                  onClick={changeEmail}
+                  disabled={loading}
+                >
+                  другая почта
+                </button>
+              </div>
+            )}
           </form>
           <p className={styles.footer}>
             нет аккаунта?{' '}

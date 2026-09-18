@@ -2,8 +2,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../../apiClient';
 import BudgetBar from '../shared/BudgetBar/BudgetBar';
+import PlatformList from '../shared/PlatformList/PlatformList';
 import { formatRubles } from '../../shared/money';
 import { CAMPAIGN_STATUS_LABELS, formatDate } from '../../shared/dictionaries';
+import { DEFAULT_VIEW_REGION, viewRegionLabel } from '../../shared/viewRegion';
 import styles from './CustomerCampaigns.module.css';
 
 // Цвет бейджа зависит от статуса: активное объявление должно бросаться в глаза.
@@ -96,6 +98,8 @@ const CustomerCampaigns = () => {
                   </span>
                 </div>
 
+                <PlatformList platforms={campaign.platforms} compact />
+
                 <p className={styles.rate}>
                   {formatRubles(campaign.ratePerThousandKopecks)}
                   <span className={styles.rateUnit}> / 1000 просмотров</span>
@@ -108,9 +112,13 @@ const CustomerCampaigns = () => {
                 />
 
                 <p className={styles.meta}>
+                  вывод от {formatRubles(campaign.minPayoutKopecks)}
+                  {' · '}
                   откликов: {campaign.applicationsCount ?? 0}
                   {' · '}
                   создано {formatDate(campaign.createdAt)}
+                  {' · '}
+                  просмотры: {viewRegionLabel(campaign.viewRegion || DEFAULT_VIEW_REGION)}
                 </p>
               </Link>
             </li>

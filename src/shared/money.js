@@ -51,8 +51,26 @@ export const formatRubInput = (value) => {
   return `${grouped || '0'},${fractionParts.join('').slice(0, 2)}`;
 };
 
+/** Копейки со знаком → «+1 500 ₽» или «−300 ₽»: для журнала операций. */
+export const signedRubles = (kopecks) => {
+  const amount = Number(kopecks) || 0;
+  return `${amount < 0 ? '−' : '+'}${formatRubles(Math.abs(amount))}`;
+};
+
 /** Просмотры → строка с разрядами: 12400 → «12 400». */
 export const formatViews = (n) => {
   if (n == null) return '—';
   return VIEWS_FORMATTER.format(Number(n));
+};
+
+export const formatIntInput = (value) => {
+  if (value == null) return '';
+  const digits = String(value).replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+};
+
+export const parseIntInput = (value) => {
+  if (value == null) return null;
+  const digits = String(value).replace(/\D/g, '');
+  return digits === '' ? null : Number(digits);
 };

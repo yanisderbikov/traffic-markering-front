@@ -1,19 +1,21 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import BudgetBar from '../BudgetBar/BudgetBar';
+import PlatformList from '../PlatformList/PlatformList';
 import { formatRubles } from '../../../shared/money';
 import { formatDate } from '../../../shared/dictionaries';
+import { pluralize, requirementsSummary } from '../../../shared/requirements';
 import styles from './CampaignCard.module.css';
 
 // «3 отклика» / «5 откликов» — без склонения число рядом со словом читается как ошибка.
 const applicationsLabel = (count) => {
   const n = Math.abs(Number(count) || 0);
-  const tail = n % 100;
-  const last = n % 10;
-  if (tail > 10 && tail < 20) return `${n} откликов`;
-  if (last === 1) return `${n} отклик`;
-  if (last >= 2 && last <= 4) return `${n} отклика`;
-  return `${n} откликов`;
+  return `${n} ${pluralize(n, ['отклик', 'отклика', 'откликов'])}`;
+};
+
+const materialsLabel = (count) => {
+  const n = Number(count) || 0;
+  return n ? `${n} ${pluralize(n, ['материал', 'материала', 'материалов'])}` : '';
 };
 
 /**
@@ -26,6 +28,10 @@ const CampaignCard = ({ campaign, to }) => {
 
   const customer = campaign.customerCompany || campaign.customerName || 'заказчик';
   const target = to || `/campaigns/${campaign.publicId}`;
+  const requirements = requirementsSummary(campaign);
+  const materials = materialsLabel(
+    campaign.materialsCount ?? (Array.isArray(campaign.materials) ? campaign.materials.length : 0)
+  );
 
   return (
     <Link to={target} className={styles.card}>
@@ -47,10 +53,22 @@ const CampaignCard = ({ campaign, to }) => {
 
       <h2 className={styles.title}>{campaign.title}</h2>
 
+      <PlatformList platforms={campaign.platforms} compact />
+
       <p className={styles.rate}>
         {formatRubles(campaign.ratePerThousandKopecks)}
         <span className={styles.rateUnit}> / 1000 просмотров</span>
       </p>
+
+      {campaign.minPayoutKopecks != null && (
+        <p className={styles.payout}>вывод от {formatRubles(campaign.minPayoutKopecks)}</p>
+      )}
+
+      {(requirements || materials) && (
+        <p className={styles.requirements}>
+          {[requirements, materials].filter(Boolean).join(' · ')}
+        </p>
+      )}
 
       <BudgetBar
         budgetKopecks={campaign.budgetKopecks}

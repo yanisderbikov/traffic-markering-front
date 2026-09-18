@@ -3,8 +3,12 @@ import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-route
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import FieldError from '../shared/FieldError/FieldError';
+import PlatformList from '../shared/PlatformList/PlatformList';
 import { formatRubles } from '../../shared/money';
 import { CAMPAIGN_STATUS_LABELS, PLATFORM_LABELS } from '../../shared/dictionaries';
+import { formatDay, periodState } from '../../shared/dates';
+import { campaignRequirements } from '../../shared/requirements';
+import { isWorldRegion, platformGeographyWarning, viewRegionHint } from '../../shared/viewRegion';
 import { detectPlatform } from '../../shared/video';
 import styles from './ApplyPage.module.css';
 
@@ -70,9 +74,27 @@ const ApplyPage = () => {
   }
 
   const platform = detectPlatform(form.videoUrl);
+  const acceptedPlatforms = Array.isArray(campaign?.platforms) ? campaign.platforms : [];
+  const platformAccepted = !platform || acceptedPlatforms.includes(platform);
+  const acceptedLabels = acceptedPlatforms
+    .map((item) => PLATFORM_LABELS[item] || item)
+    .join(', ');
   const hasAccount =
     accounts === null ||
     accounts.some((account) => account.platform === platform && account.status === 'ACTIVE');
+  const worldRegion = isWorldRegion(campaign?.viewRegion);
+  const regionHint = viewRegionHint(campaign?.viewRegion, campaign?.platforms);
+  const geographyWarning = platformGeographyWarning(campaign?.viewRegion, platform);
+  const activeYoutubeAccounts = Array.isArray(accounts)
+    ? accounts.filter(
+        (account) => account.platform === 'YOUTUBE_SHORTS' && account.status === 'ACTIVE'
+      )
+    : [];
+  const youtubeWithoutAnalytics =
+    platform === 'YOUTUBE_SHORTS' &&
+    !worldRegion &&
+    activeYoutubeAccounts.length > 0 &&
+    !activeYoutubeAccounts.some((account) => account.reportsViewGeography === true);
 
   const setField = (e) => {
     const { name, value } = e.target;
@@ -90,6 +112,12 @@ const ApplyPage = () => {
     }
     if (!platform) {
       setVideoUrlError('Площадка не распознана: принимаются YouTube, TikTok и Instagram');
+      return;
+    }
+    if (!platformAccepted) {
+      setVideoUrlError(
+        `Заказчик не принимает ролики с ${PLATFORM_LABELS[platform]} — подходят: ${acceptedLabels}`
+      );
       return;
     }
 
@@ -115,7 +143,24 @@ const ApplyPage = () => {
     }
   };
 
-  const inactive = campaign ? campaign.status !== 'ACTIVE' : false;
+  const period = campaign ? periodState(campaign.startsAt, campaign.endsAt) : 'current';
+  const inactive = campaign ? campaign.status !== 'ACTIVE' || period !== 'current' : false;
+  const requirements = campaignRequirements(campaign);
+
+  const renderInactiveNotice = () => {
+    if (campaign.status !== 'ACTIVE') {
+      return (
+        <>
+          объявление сейчас {CAMPAIGN_STATUS_LABELS[campaign.status] || campaign.status} — новые
+          отклики заказчик не принимает.
+        </>
+      );
+    }
+    if (period === 'upcoming') {
+      return <>приём откликов откроется {formatDay(campaign.startsAt)}.</>;
+    }
+    return <>приём откликов закончился {formatDay(campaign.endsAt)}.</>;
+  };
 
   return (
     <div className={styles.wrap}>
@@ -141,13 +186,28 @@ const ApplyPage = () => {
             </span>{' '}
             / 1000 просмотров
           </p>
-
-          {inactive && (
-            <p className={styles.hintBanner}>
-              объявление сейчас {CAMPAIGN_STATUS_LABELS[campaign.status] || campaign.status} —
-              новые отклики заказчик не принимает.
-            </p>
+          {acceptedPlatforms.length > 0 && (
+            <div className={styles.platformsRow}>
+              <span className={styles.platformsLabel}>принимаются ролики с</span>
+              <PlatformList platforms={acceptedPlatforms} />
+            </div>
           )}
+
+          {requirements.length > 0 && (
+            <ul className={styles.requirements} aria-label="Требования к ролику">
+              {requirements.map((row) => (
+                <li key={row.key} className={styles.requirement} title={row.hint || undefined}>
+                  <span className={styles.requirementKey}>{row.label}</span> {row.value}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <p className={`${styles.regionNote} ${worldRegion ? '' : styles.regionNoteAccent}`}>
+            {regionHint}
+          </p>
+
+          {inactive && <p className={styles.hintBanner}>{renderInactiveNotice()}</p>}
 
           <form className={styles.form} onSubmit={handleSubmit} noValidate>
             <label className={styles.label}>
@@ -167,15 +227,33 @@ const ApplyPage = () => {
               <FieldError>{videoUrlError}</FieldError>
               <span className={styles.hint}>
                 по этой ссылке считаются просмотры, за которые начисляются деньги. площадка
-                определяется автоматически: YouTube, TikTok или Instagram.
+                определяется автоматически и должна быть из списка заказчика.
               </span>
               {form.videoUrl.trim() && !platform && !videoUrlError && (
                 <span className={styles.platformWarn}>площадка по ссылке не распознана.</span>
               )}
-              {platform && hasAccount && (
+              {platform && !platformAccepted && !videoUrlError && (
+                <span className={styles.platformWarn}>
+                  заказчик не принимает ролики с {PLATFORM_LABELS[platform]} — подходят:{' '}
+                  {acceptedLabels}.
+                </span>
+              )}
+              {platform && platformAccepted && hasAccount && (
                 <span className={styles.platformOk}>площадка: {PLATFORM_LABELS[platform]}</span>
               )}
-              {platform && !hasAccount && (
+              {platform && platformAccepted && geographyWarning && (
+                <span className={styles.platformWarn}>{geographyWarning}</span>
+              )}
+              {platform && platformAccepted && hasAccount && youtubeWithoutAnalytics && (
+                <span className={styles.platformWarn}>
+                  YouTube подключён без доступа к аналитике — география просмотров не учтётся и
+                  ролик по этому региону не оплатится.{' '}
+                  <Link to="/app/profile" className={styles.inlineLink}>
+                    переподключить YouTube
+                  </Link>
+                </span>
+              )}
+              {platform && platformAccepted && !hasAccount && (
                 <span className={styles.platformWarn}>
                   {PLATFORM_LABELS[platform]} не привязан в профиле, отклик не примется.{' '}
                   <Link to="/app/profile" className={styles.inlineLink}>

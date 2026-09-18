@@ -2,8 +2,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import apiClient from '../../apiClient';
 import BudgetBar from '../shared/BudgetBar/BudgetBar';
+import MaterialList from '../shared/MaterialList/MaterialList';
+import PlatformList from '../shared/PlatformList/PlatformList';
 import { formatRubles, formatViews } from '../../shared/money';
 import { CAMPAIGN_STATUS_LABELS, formatDate } from '../../shared/dictionaries';
+import { formatDay, periodState } from '../../shared/dates';
+import { campaignRequirements } from '../../shared/requirements';
+import { viewRegionHint } from '../../shared/viewRegion';
 import styles from './CampaignPage.module.css';
 
 const CampaignPage = () => {
@@ -37,6 +42,10 @@ const CampaignPage = () => {
   useEffect(() => {
     loadCampaign();
   }, [loadCampaign]);
+
+  const requirements = campaignRequirements(campaign);
+  const materials = Array.isArray(campaign?.materials) ? campaign.materials : [];
+  const period = campaign ? periodState(campaign.startsAt, campaign.endsAt) : 'current';
 
   const renderApplyBlock = () => {
     if (!authorized) {
@@ -85,10 +94,33 @@ const CampaignPage = () => {
       );
     }
 
+    if (period === 'upcoming') {
+      return (
+        <div className={styles.applyBlock}>
+          <p className={styles.noticeText}>
+            приём откликов откроется {formatDay(campaign.startsAt)} — пока можно изучить задачу
+            и материалы.
+          </p>
+        </div>
+      );
+    }
+
+    if (period === 'ended') {
+      return (
+        <div className={styles.applyBlock}>
+          <p className={styles.noticeText}>
+            приём откликов закончился {formatDay(campaign.endsAt)} — новые ролики заказчик не
+            принимает.
+          </p>
+        </div>
+      );
+    }
+
     return (
       <div className={styles.applyBlock}>
         <p className={styles.noticeText}>
-          снимите ролик, приложите ссылку — просмотры посчитаются автоматически.
+          снимите ролик, приложите ссылку — просмотры посчитаются автоматически.{' '}
+          {viewRegionHint(campaign.viewRegion, campaign.platforms)}.
         </p>
         <Link to={`/campaigns/${publicId}/apply`} className={styles.applyButton}>
           взять в работу
@@ -137,6 +169,30 @@ const CampaignPage = () => {
 
           <p className={styles.description}>{campaign.description}</p>
 
+          {requirements.length > 0 && (
+            <section className={styles.requirements} aria-label="Требования к ролику">
+              <h2 className={styles.sectionTitle}>требования к ролику</h2>
+              <dl className={styles.requirementList}>
+                {requirements.map((row) => (
+                  <div key={row.key} className={styles.requirement}>
+                    <dt className={styles.requirementKey}>{row.label}</dt>
+                    <dd className={styles.requirementValue}>
+                      {row.value}
+                      {row.hint && <span className={styles.requirementHint}>{row.hint}</span>}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          )}
+
+          {materials.length > 0 && (
+            <section className={styles.materials} aria-label="Материалы">
+              <h2 className={styles.sectionTitle}>материалы от заказчика</h2>
+              <MaterialList materials={materials} />
+            </section>
+          )}
+
           <div className={styles.budgetBlock}>
             <BudgetBar
               budgetKopecks={campaign.budgetKopecks}
@@ -159,12 +215,22 @@ const CampaignPage = () => {
               </dd>
             </div>
             <div className={styles.fact}>
+              <dt className={styles.factKey}>вывод от</dt>
+              <dd className={styles.factValue}>{formatRubles(campaign.minPayoutKopecks)}</dd>
+            </div>
+            <div className={styles.fact}>
               <dt className={styles.factKey}>откликов</dt>
               <dd className={styles.factValue}>{campaign.applicationsCount ?? 0}</dd>
             </div>
             <div className={styles.fact}>
               <dt className={styles.factKey}>просмотров набрано</dt>
               <dd className={styles.factValue}>{formatViews(campaign.totalViews ?? 0)}</dd>
+            </div>
+            <div className={`${styles.fact} ${styles.factWide}`}>
+              <dt className={styles.factKey}>принимаются ролики с</dt>
+              <dd className={styles.factValue}>
+                <PlatformList platforms={campaign.platforms} />
+              </dd>
             </div>
           </dl>
 
