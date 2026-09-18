@@ -33,6 +33,22 @@
   margin: 0;
 }
 
+.earningsLink {
+  margin-left: auto;
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--action-tracking);
+  color: var(--color-ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.earningsLink:hover {
+  color: var(--color-accent);
+}
+
 .refreshBtn {
   display: flex;
   align-items: center;
@@ -284,6 +300,11 @@
 
 .earned {
   color: var(--color-success);
+}
+
+.numbersWarn {
+  color: var(--color-danger);
+  font-weight: 600;
 }
 
 .actions {

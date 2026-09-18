@@ -1,0 +1,144 @@
+.wrap {
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+  padding: 1rem 12px 3rem;
+}
+
+@media (min-width: 769px) {
+  .wrap {
+    padding-left: 50px;
+    padding-right: 50px;
+  }
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 5vw, 2.6rem);
+  font-weight: 700;
+  line-height: 1.02;
+  text-transform: uppercase;
+  letter-spacing: var(--title-tracking);
+  color: var(--color-ink);
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 0.82rem;
+  color: var(--color-muted);
+  margin: 0 0 18px;
+}
+
+.primaryBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--action-tracking);
+  text-decoration: none;
+  color: #fff;
+  background: var(--color-ink);
+  border: none;
+  border-radius: var(--pill-radius);
+  padding: 10px 22px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.primaryBtn:hover {
+  background: var(--color-accent);
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: 20px;
+  margin-top: 22px;
+}
+
+.cardTitle {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--title-tracking);
+  color: var(--color-ink);
+  margin: 0 0 12px;
+}
+
+.text {
+  font-size: 0.88rem;
+  color: var(--color-ink-soft);
+  margin: 0 0 8px;
+  max-width: 680px;
+}
+
+.text:last-child {
+  margin-bottom: 0;
+}
+
+.banner {
+  background: var(--color-danger-soft);
+  border-left: 3px solid var(--color-danger);
+  color: var(--color-danger);
+  border-radius: var(--field-radius);
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  margin: 0 0 14px;
+}
+
+.message {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  margin: 8px 0;
+}
+
+.address {
+  font-size: 0.86rem;
+  color: var(--color-ink);
+  background: var(--color-surface-alt);
+  border-radius: 8px;
+  padding: 4px 8px;
+  word-break: break-all;
+}
+
+.copyBtn {
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  color: var(--color-ink);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--pill-radius);
+  padding: 2px 10px;
+  cursor: pointer;
+}
+
+.copyBtn:hover {
+  border-color: var(--color-ink);
+}
+
+.awaiting {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--color-accent);
+  background: var(--color-surface-alt);
+  border-radius: var(--field-radius);
+  font-size: 0.85rem;
+  color: var(--color-ink);
+}

@@ -92,6 +92,22 @@
   color: var(--color-muted);
 }
 
+.payout {
+  margin: -6px 0 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  color: var(--color-ink-soft);
+}
+
+.requirements {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--color-ink-soft);
+}
+
 .footer {
   display: flex;
   align-items: baseline;

@@ -4,6 +4,8 @@ const HOSTS = [
   { platform: 'INSTAGRAM', domains: ['instagram.com', 'instagr.am'] },
 ];
 
+export const VIDEO_PLATFORMS = HOSTS.map(({ platform }) => platform);
+
 const hostOf = (url) => {
   const trimmed = url.trim();
   if (!trimmed) return null;

@@ -15,6 +15,15 @@ import CampaignEditor from './components/CampaignEditor/CampaignEditor';
 import CreatorApplications from './components/CreatorApplications/CreatorApplications';
 import Profile from './components/Profile/Profile';
 import CreatorSocialAccounts from './components/CreatorSocialAccounts/CreatorSocialAccounts';
+import CustomerWallet from './components/CustomerWallet/CustomerWallet';
+import FinanceCustomers from './components/FinanceCustomers/FinanceCustomers';
+import FinanceCustomer from './components/FinanceCustomer/FinanceCustomer';
+import AdminUsers from './components/AdminUsers/AdminUsers';
+import CreatorEarnings from './components/CreatorEarnings/CreatorEarnings';
+import OperationPage from './components/OperationPage/OperationPage';
+import FinancePayouts from './components/FinancePayouts/FinancePayouts';
+import FinancePayout from './components/FinancePayout/FinancePayout';
+import FinanceOperations from './components/FinanceOperations/FinanceOperations';
 import Info from './components/Info/Info';
 import Privacy from './components/Info/Privacy';
 import Terms from './components/Info/Terms';
@@ -31,7 +40,13 @@ const KNOWN_PATHS = new Set([
   '/app',
   '/app/board',
   '/app/campaigns',
+  '/app/wallet',
   '/app/applications',
+  '/app/earnings',
+  '/app/finance',
+  '/app/finance/payouts',
+  '/app/finance/operations',
+  '/app/admin/users',
   '/app/profile',
   '/app/profile/socials',
 ]);
@@ -41,6 +56,11 @@ const DYNAMIC_PATHS = [
   /^\/campaigns\/[^/]+$/,
   /^\/campaigns\/[^/]+\/apply$/,
   /^\/app\/campaigns\/[^/]+$/,
+  /^\/app\/finance\/\d+$/,
+  /^\/app\/earnings\/\d+$/,
+  /^\/app\/wallet\/\d+$/,
+  /^\/app\/finance\/payouts\/\d+$/,
+  /^\/app\/finance\/operations\/\d+$/,
 ];
 
 // Заголовок и описание вкладки по пути. Ключ — уже нормализованный pathname.
@@ -149,7 +169,21 @@ function App() {
           <Route path="/app/campaigns" element={<CustomerCampaigns />} />
           {/* campaignId = "new" — создание объявления, uuid — правка и отклики. */}
           <Route path="/app/campaigns/:campaignId" element={<CampaignEditor />} />
+          <Route path="/app/wallet" element={<CustomerWallet />} />
+          <Route path="/app/wallet/:operationId" element={<OperationPage scope="wallet" />} />
           <Route path="/app/applications" element={<CreatorApplications />} />
+          <Route path="/app/earnings" element={<CreatorEarnings />} />
+          <Route path="/app/earnings/:operationId" element={<OperationPage scope="earnings" />} />
+          <Route path="/app/finance" element={<FinanceCustomers />} />
+          <Route path="/app/finance/payouts" element={<FinancePayouts />} />
+          <Route path="/app/finance/payouts/:payoutId" element={<FinancePayout />} />
+          <Route path="/app/finance/operations" element={<FinanceOperations />} />
+          <Route
+            path="/app/finance/operations/:operationId"
+            element={<OperationPage scope="finance" />}
+          />
+          <Route path="/app/finance/:userId" element={<FinanceCustomer />} />
+          <Route path="/app/admin/users" element={<AdminUsers />} />
           <Route path="/app/profile" element={<Profile />} />
           <Route path="/app/profile/socials" element={<CreatorSocialAccounts />} />
         </Route>

@@ -257,3 +257,66 @@
   font-size: 0.85rem;
   margin: 0 0 16px;
 }
+
+.factWide {
+  grid-column: 1 / -1;
+}
+
+/* ── требования и материалы ── */
+.requirements,
+.materials {
+  margin: 0 0 18px;
+}
+
+.sectionTitle {
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  color: var(--color-ink);
+}
+
+.requirementList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.requirement {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--color-ink);
+  border-radius: var(--field-radius);
+  background: var(--color-surface);
+}
+
+.requirementKey {
+  font-family: var(--font-display);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  color: var(--color-muted);
+}
+
+.requirementValue {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 4px 0 0;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.requirementHint {
+  font-family: var(--font-body);
+  font-size: 0.74rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--color-ink-soft);
+}

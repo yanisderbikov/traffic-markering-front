@@ -1,0 +1,234 @@
+.banner {
+  background: var(--color-danger-soft);
+  border-left: 3px solid var(--color-danger);
+  color: var(--color-danger);
+  border-radius: var(--field-radius);
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  margin: 0 0 12px;
+}
+
+.message {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  margin: 8px 0;
+}
+
+.table {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 96px minmax(140px, 1.1fr) minmax(220px, 2fr) 120px 150px;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 8px;
+  border-top: 1px solid var(--color-border);
+  color: inherit;
+  text-decoration: none;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+
+a.row:hover {
+  background: var(--color-surface-alt);
+}
+
+.header {
+  border-top: none;
+  padding-top: 4px;
+  padding-bottom: 8px;
+  font-size: 0.66rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  color: var(--color-muted);
+}
+
+.right {
+  text-align: right;
+}
+
+.date {
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.what {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.subtitle {
+  font-size: 0.76rem;
+  color: var(--color-ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flowCell {
+  min-width: 0;
+}
+
+.flow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.arrow {
+  color: var(--color-accent);
+  font-weight: 700;
+  flex: none;
+}
+
+.point {
+  display: inline-block;
+  max-width: 100%;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  background: var(--color-surface-alt);
+  border-radius: var(--pill-radius);
+  padding: 3px 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pointExternal {
+  color: var(--color-muted);
+  background: transparent;
+  border: 1px dashed var(--color-field-border);
+}
+
+.pointCustomer {
+  background: var(--color-surface-alt);
+}
+
+.pointCampaign {
+  color: var(--color-accent-hover);
+  background: var(--color-accent-soft);
+}
+
+.pointCreator {
+  color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.pointTron {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.72rem;
+  color: var(--color-ink);
+  background: var(--color-track);
+}
+
+.amount {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.amountIn {
+  color: var(--color-success);
+}
+
+.amountClosed {
+  color: var(--color-muted);
+  text-decoration: line-through;
+}
+
+.statusCell {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.status {
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  color: #fff;
+  background: var(--color-muted);
+  border-radius: var(--pill-radius);
+  padding: 3px 9px;
+  white-space: nowrap;
+}
+
+.statusDone {
+  background: var(--color-ink-soft);
+}
+
+.statusPending {
+  background: var(--color-accent);
+}
+
+.statusSent {
+  background: var(--color-ink);
+}
+
+.statusConfirmed {
+  background: var(--color-success);
+}
+
+.statusRejected {
+  background: var(--color-danger);
+}
+
+.statusCancelled {
+  background: var(--color-muted);
+}
+
+@media (max-width: 900px) {
+  .header {
+    display: none;
+  }
+
+  .row {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      'what amount'
+      'flow flow'
+      'date status';
+    gap: 6px 12px;
+    padding: 12px 6px;
+  }
+
+  .what {
+    grid-area: what;
+  }
+
+  .amount {
+    grid-area: amount;
+  }
+
+  .flowCell {
+    grid-area: flow;
+  }
+
+  .date {
+    grid-area: date;
+  }
+
+  .statusCell {
+    grid-area: status;
+  }
+}

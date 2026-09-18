@@ -21,6 +21,12 @@ const TILES = [
     text: 'Опишите задачу, задайте ставку за 1000 просмотров и бюджет.',
   },
   {
+    section: SECTIONS.WALLET,
+    to: '/app/wallet',
+    title: 'кошелёк',
+    text: 'Свободные деньги, резервы под объявления и история операций.',
+  },
+  {
     section: SECTIONS.APPLICATIONS,
     to: '/app/applications',
     title: 'мои отклики',
@@ -31,6 +37,12 @@ const TILES = [
     to: '/app/board',
     title: 'доска объявлений',
     text: 'Свежие заказы от заказчиков — выберите, что снять.',
+  },
+  {
+    section: SECTIONS.EARNINGS,
+    to: '/app/earnings',
+    title: 'заработок',
+    text: 'Начисления за просмотры и вывод USDT на TRON-кошелёк.',
   },
   {
     section: SECTIONS.PROFILE,
@@ -44,7 +56,40 @@ const TILES = [
     title: 'соцсети',
     text: 'Подключённые аккаунты площадок, по которым считаются просмотры.',
   },
+  {
+    section: SECTIONS.FINANCE,
+    to: '/app/finance',
+    title: 'кошельки заказчиков',
+    text: 'Остатки, пополнения и выводы по каждому заказчику.',
+  },
+  {
+    section: SECTIONS.FINANCE,
+    to: '/app/finance/payouts',
+    title: 'выплаты криаторам',
+    text: 'Выплаты криаторам: отправить USDT, приложить скриншот, дождаться подтверждения.',
+  },
+  {
+    section: SECTIONS.FINANCE,
+    to: '/app/finance/operations',
+    title: 'все операции',
+    text: 'Одна таблица по всем кошелькам: откуда, куда, сколько и в каком статусе.',
+  },
+  {
+    section: SECTIONS.USERS,
+    to: '/app/admin/users',
+    title: 'пользователи и роли',
+    text: 'Добавьте почту и назначьте роль: финансист, админ, заказчик или криатор.',
+  },
 ];
+
+const ROLE_GREETINGS = {
+  CREATOR: 'Вы вошли как криатор: берите объявления в работу и получайте за просмотры.',
+  CUSTOMER: 'Вы вошли как заказчик: публикуйте объявления и одобряйте отклики криаторов.',
+  FINANCE_MANAGER:
+    'Вы вошли как менеджер финансов: пополняйте кошельки заказчиков и следите за операциями.',
+  ADMIN: 'Вы вошли как администратор: вам открыты кабинеты заказчика и криатора.',
+  SUPER_ADMIN: 'Вы вошли как супер-админ: все кабинеты, финансы и управление ролями.',
+};
 
 const AppHome = () => {
   const jwtMeta = apiClient.getJwtMetadata();
@@ -59,11 +104,7 @@ const AppHome = () => {
         {userName ? `Привет, ${userName}` : 'Привет'}
       </h1>
       <p className={styles.subtitle}>
-        {role === 'CREATOR'
-          ? 'Вы вошли как криатор: берите объявления в работу и получайте за просмотры.'
-          : role === 'CUSTOMER'
-            ? 'Вы вошли как заказчик: публикуйте объявления и одобряйте отклики криаторов.'
-            : `Вы вошли как ${ROLE_LABELS[role] || role || 'пользователь'}.`}
+        {ROLE_GREETINGS[role] || `Вы вошли как ${ROLE_LABELS[role] || role || 'пользователь'}.`}
       </p>
 
       <div className={styles.tiles}>

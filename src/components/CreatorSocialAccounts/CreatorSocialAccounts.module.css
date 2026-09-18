@@ -124,6 +124,20 @@
   color: var(--color-muted);
 }
 
+.geo,
+.geoWarn {
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.geo {
+  color: var(--color-muted);
+}
+
+.geoWarn {
+  color: var(--color-danger);
+}
+
 .unlink {
   font-family: inherit;
   font-size: 0.76rem;

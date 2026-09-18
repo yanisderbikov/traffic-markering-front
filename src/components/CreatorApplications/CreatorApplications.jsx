@@ -8,6 +8,7 @@ import {
   PLATFORM_LABELS,
   formatDate,
 } from '../../shared/dictionaries';
+import { DEFAULT_VIEW_REGION, isWorldRegion, viewRegionLabel } from '../../shared/viewRegion';
 import styles from './CreatorApplications.module.css';
 
 const STATUS_CLASS = {
@@ -21,6 +22,20 @@ const STATUS_CLASS = {
 // по ним криатору начисляются деньги.
 const isApproved = (application) =>
   application.status === 'APPROVED' || application.status === 'COMPLETED';
+
+const renderPayableViews = (application) => {
+  if (isWorldRegion(application.campaignViewRegion)) return null;
+  if (application.viewsGeographyKnown === false) {
+    return (
+      <span className={styles.numbersWarn}>география недоступна — просмотры не оплачиваются</span>
+    );
+  }
+  return (
+    <span>
+      в расчёт: <b>{formatViews(application.payableViews ?? 0)}</b>
+    </span>
+  );
+};
 
 const CreatorApplications = () => {
   const [applications, setApplications] = useState([]);
@@ -82,6 +97,9 @@ const CreatorApplications = () => {
     <div className={styles.wrap}>
       <div className={styles.head}>
         <h1 className={styles.title}>Мои отклики</h1>
+        <Link to="/app/earnings" className={styles.earningsLink}>
+          заработок и вывод →
+        </Link>
         <button
           type="button"
           className={styles.refreshBtn}
@@ -171,6 +189,10 @@ const CreatorApplications = () => {
                   application.platform}
                 {' · '}
                 отклик от {formatDate(application.createdAt)}
+                {' · '}
+                вывод от {formatRubles(application.minPayoutKopecks)}
+                {' · '}
+                просмотры: {viewRegionLabel(application.campaignViewRegion || DEFAULT_VIEW_REGION)}
               </p>
 
               <a
@@ -186,6 +208,7 @@ const CreatorApplications = () => {
                 <span>
                   просмотров: <b>{formatViews(application.views ?? 0)}</b>
                 </span>
+                {renderPayableViews(application)}
                 <span className={styles.earned}>
                   заработано: <b>{formatRubles(application.accruedKopecks ?? 0)}</b>
                 </span>
