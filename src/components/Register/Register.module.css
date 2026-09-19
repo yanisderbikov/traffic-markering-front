@@ -177,22 +177,10 @@
   color: var(--color-ink-soft);
 }
 
-.label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--label-tracking);
-  color: var(--color-muted);
-}
-
 .labelRow {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: wrap;
 }
 
 .labelIcon {
@@ -202,7 +190,7 @@
 }
 
 .optional {
-  margin-left: auto;
+  margin-left: 2px;
   font-size: 0.68rem;
   font-weight: 500;
   text-transform: none;
@@ -304,11 +292,6 @@
   font-weight: 700;
   letter-spacing: 0.4em;
   text-align: center;
-}
-
-.codeInput::placeholder {
-  color: var(--color-track);
-  letter-spacing: 0.4em;
 }
 
 .secondary {

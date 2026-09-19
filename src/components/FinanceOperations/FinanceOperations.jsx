@@ -5,6 +5,7 @@ import { errorMessage } from '../../shared/auth';
 import { OPERATION_STATUS_LABELS, WALLET_TRANSACTION_LABELS } from '../../shared/dictionaries';
 import { financeOperationLink } from '../../shared/routes';
 import styles from './FinanceOperations.module.css';
+import Field from '../shared/Field/Field';
 
 const TYPES = Object.keys(WALLET_TRANSACTION_LABELS);
 const STATUSES = Object.keys(OPERATION_STATUS_LABELS);
@@ -57,40 +58,42 @@ const FinanceOperations = () => {
       </p>
 
       <div className={styles.filters}>
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className={styles.search}
-          placeholder="Имя, объявление, адрес"
-          aria-label="Поиск по операциям"
-        />
-        <select
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-          className={styles.select}
-          aria-label="Тип операции"
-        >
-          <option value="">все типы</option>
-          {TYPES.map((item) => (
-            <option key={item} value={item}>
-              {WALLET_TRANSACTION_LABELS[item]}
-            </option>
-          ))}
-        </select>
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className={styles.select}
-          aria-label="Статус операции"
-        >
-          <option value="">все статусы</option>
-          {STATUSES.map((item) => (
-            <option key={item} value={item}>
-              {OPERATION_STATUS_LABELS[item]}
-            </option>
-          ))}
-        </select>
+        <Field label="Имя, объявление, адрес" className={styles.searchField} pill>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className={styles.search}
+          />
+        </Field>
+        <Field label="Тип операции" pill>
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            className={styles.select}
+          >
+            <option value="">все типы</option>
+            {TYPES.map((item) => (
+              <option key={item} value={item}>
+                {WALLET_TRANSACTION_LABELS[item]}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Статус операции" pill>
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            className={styles.select}
+          >
+            <option value="">все статусы</option>
+            {STATUSES.map((item) => (
+              <option key={item} value={item}>
+                {OPERATION_STATUS_LABELS[item]}
+              </option>
+            ))}
+          </select>
+        </Field>
         <span className={styles.count}>
           {visible.length} из {rows.length}
         </span>

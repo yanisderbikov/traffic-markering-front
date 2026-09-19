@@ -5,6 +5,7 @@ import apiClient from '../../apiClient';
 import Logo from '../shared/Logo/Logo';
 import SocialIcon from '../shared/SocialIcon/SocialIcon';
 import FieldError from '../shared/FieldError/FieldError';
+import Field from '../shared/Field/Field';
 import {
   clearFieldError,
   hasErrors,
@@ -221,8 +222,7 @@ const Register = () => {
 
             {step === STEP_NAME && (
               <>
-                <label className={styles.label}>
-                  Имя
+                <Field label="Имя">
                   <input
                     type="text"
                     name="name"
@@ -231,17 +231,19 @@ const Register = () => {
                     className={styles.input}
                     aria-invalid={invalid('name')}
                     autoComplete="name"
-                    placeholder="Как к вам обращаться"
                     autoFocus
                   />
                   <FieldError>{errors.name}</FieldError>
-                </label>
-                <label className={styles.label}>
-                  <span className={styles.labelRow}>
-                    <SocialIcon name="telegram" className={styles.labelIcon} />
-                    Telegram для связи
-                    <span className={styles.optional}>можно пропустить</span>
-                  </span>
+                </Field>
+                <Field
+                  label={
+                    <span className={styles.labelRow}>
+                      <SocialIcon name="telegram" className={styles.labelIcon} />
+                      Telegram для связи
+                      <span className={styles.optional}>можно пропустить</span>
+                    </span>
+                  }
+                >
                   <input
                     type="text"
                     name="telegram"
@@ -249,16 +251,14 @@ const Register = () => {
                     onChange={setField}
                     className={styles.input}
                     aria-invalid={invalid('telegram')}
-                    placeholder="@username"
                   />
                   <FieldError>{errors.telegram}</FieldError>
-                </label>
+                </Field>
               </>
             )}
 
             {step === STEP_EMAIL && (
-              <label className={styles.label}>
-                Почта (она же логин)
+              <Field label="Почта (она же логин)">
                 <input
                   type="email"
                   name="email"
@@ -267,7 +267,6 @@ const Register = () => {
                   className={styles.input}
                   aria-invalid={invalid('email')}
                   autoComplete="email"
-                  placeholder="you@mail.ru"
                   disabled={loading}
                   autoFocus
                 />
@@ -276,12 +275,11 @@ const Register = () => {
                 ) : (
                   <span className={styles.hint}>на неё придёт код для входа</span>
                 )}
-              </label>
+              </Field>
             )}
 
             {step === STEP_CODE && (
-              <label className={styles.label}>
-                Код из письма на {form.email.trim()}
+              <Field label={<>Код из письма на {form.email.trim()}</>}>
                 <input
                   type="text"
                   name="code"
@@ -293,7 +291,6 @@ const Register = () => {
                   className={`${styles.input} ${styles.codeInput}`}
                   aria-invalid={invalid('code')}
                   autoComplete="one-time-code"
-                  placeholder="000000"
                   disabled={loading}
                   autoFocus
                 />
@@ -310,7 +307,7 @@ const Register = () => {
                       : 'отправить код ещё раз'}
                   </button>
                 </span>
-              </label>
+              </Field>
             )}
 
             {error && <p className={styles.error}>{error}</p>}

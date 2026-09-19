@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import apiClient from '../../apiClient';
 import Logo from '../shared/Logo/Logo';
 import FieldError from '../shared/FieldError/FieldError';
+import Field from '../shared/Field/Field';
 import { clearFieldError, hasErrors, validateCode, validateEmail } from '../../shared/validation';
 import { useCooldown } from '../../shared/useCooldown';
 import { errorMessage, safeReturnPath, verifyCode } from '../../shared/auth';
@@ -97,8 +98,7 @@ const Login = () => {
           </p>
           <form onSubmit={handleSubmit} className={styles.form} noValidate>
             {!codeSent && (
-              <label className={styles.label}>
-                Почта
+              <Field label="Почта">
                 <input
                   type="email"
                   value={email}
@@ -110,17 +110,15 @@ const Login = () => {
                   className={styles.input}
                   aria-invalid={errors.email ? 'true' : undefined}
                   autoComplete="email"
-                  placeholder="you@mail.ru"
                   disabled={loading}
                   autoFocus
                 />
                 <FieldError>{errors.email}</FieldError>
-              </label>
+              </Field>
             )}
 
             {codeSent && (
-              <label className={styles.label}>
-                Код из письма
+              <Field label="Код из письма">
                 <input
                   type="text"
                   inputMode="numeric"
@@ -135,12 +133,11 @@ const Login = () => {
                   className={`${styles.input} ${styles.codeInput}`}
                   aria-invalid={errors.code ? 'true' : undefined}
                   autoComplete="one-time-code"
-                  placeholder="000000"
                   disabled={loading}
                   autoFocus
                 />
                 <FieldError>{errors.code}</FieldError>
-              </label>
+              </Field>
             )}
 
             {error && <p className={styles.error}>{error}</p>}

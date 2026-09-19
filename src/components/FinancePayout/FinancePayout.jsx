@@ -5,6 +5,7 @@ import apiClient from '../../apiClient';
 import TransferCard from '../shared/TransferCard/TransferCard';
 import ProofUploader from '../shared/ProofUploader/ProofUploader';
 import FieldError from '../shared/FieldError/FieldError';
+import Field from '../shared/Field/Field';
 import { errorMessage } from '../../shared/auth';
 import { formatRubles } from '../../shared/money';
 import styles from './FinancePayout.module.css';
@@ -127,8 +128,7 @@ const FinancePayout = () => {
               Переведите {amount} в USDT (TRC-20) на адрес выше, укажите номер транзакции и
               приложите скриншот — заявка перейдёт в ожидание подтверждения от криатора.
             </p>
-            <label className={styles.label}>
-              Номер транзакции *
+            <Field label="Номер транзакции *">
               <input
                 type="text"
                 value={txId}
@@ -139,14 +139,13 @@ const FinancePayout = () => {
                 }}
                 className={styles.input}
                 aria-invalid={errors.txId ? 'true' : undefined}
-                placeholder="7c1e0f…9a2b"
                 maxLength={255}
                 autoComplete="off"
                 spellCheck={false}
                 disabled={busy}
               />
               <FieldError>{errors.txId}</FieldError>
-            </label>
+            </Field>
             <ProofUploader
               proofs={proofs}
               onChange={(next) => {
@@ -157,8 +156,7 @@ const FinancePayout = () => {
               label="Скриншоты отправки *"
             />
             <FieldError>{errors.proofs}</FieldError>
-            <label className={styles.label}>
-              Ссылка на транзакцию, комментарий
+            <Field label="Ссылка на транзакцию, комментарий">
               <textarea
                 value={comment}
                 onChange={(e) => {
@@ -166,12 +164,11 @@ const FinancePayout = () => {
                   setError('');
                 }}
                 className={styles.textarea}
-                placeholder="https://tronscan.org/#/transaction/…"
                 rows={3}
                 maxLength={2000}
                 disabled={busy}
               />
-            </label>
+            </Field>
             {error && <p className={styles.error}>{error}</p>}
             <div className={styles.actions}>
               <button type="button" className={styles.primaryBtn} onClick={markSent} disabled={busy}>

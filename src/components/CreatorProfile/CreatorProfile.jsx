@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import SocialIcon from '../shared/SocialIcon/SocialIcon';
 import FieldError from '../shared/FieldError/FieldError';
+import Field from '../shared/Field/Field';
 import { formatDate } from '../../shared/dictionaries';
 import { clearFieldError, hasErrors, validateTelegram } from '../../shared/validation';
 import styles from './CreatorProfile.module.css';
@@ -129,34 +130,33 @@ const CreatorProfile = () => {
 
       <form className={styles.card} onSubmit={handleSubmit} noValidate>
         <div className={styles.formGrid}>
-          <label className={`${styles.label} ${styles.labelWide}`}>
-            Отображаемое имя
+          <Field label="Отображаемое имя" className={styles.labelWide}>
             <input
               type="text"
               name="displayName"
               value={form.displayName}
               onChange={setField}
               className={styles.input}
-              placeholder="Как вас видят заказчики"
               autoComplete="off"
             />
-          </label>
-          <label className={`${styles.label} ${styles.labelWide}`}>
-            О себе
+          </Field>
+          <Field label="О себе" className={styles.labelWide}>
             <textarea
               name="bio"
               value={form.bio}
               onChange={setField}
               className={styles.textarea}
-              placeholder="Тематика роликов, охваты, аудитория."
               rows={5}
             />
-          </label>
-          <label className={styles.label}>
-            <span className={styles.labelText}>
-              <SocialIcon name="telegram" />
-              Telegram
-            </span>
+          </Field>
+          <Field
+            label={
+              <span className={styles.labelText}>
+                <SocialIcon name="telegram" />
+                Telegram
+              </span>
+            }
+          >
             <input
               type="text"
               name="telegram"
@@ -164,56 +164,61 @@ const CreatorProfile = () => {
               onChange={setField}
               className={styles.input}
               aria-invalid={errors.telegram ? 'true' : undefined}
-              placeholder="@nickname"
               autoComplete="off"
             />
             <FieldError>{errors.telegram}</FieldError>
-          </label>
-          <label className={styles.label}>
-            <span className={styles.labelText}>
-              <SocialIcon name="instagram" />
-              Instagram
-            </span>
+          </Field>
+          <Field
+            label={
+              <span className={styles.labelText}>
+                <SocialIcon name="instagram" />
+                Instagram
+              </span>
+            }
+          >
             <input
               type="text"
               name="instagram"
               value={form.instagram}
               onChange={setField}
               className={styles.input}
-              placeholder="@nickname"
               autoComplete="off"
             />
-          </label>
-          <label className={styles.label}>
-            <span className={styles.labelText}>
-              <SocialIcon name="tiktok" />
-              TikTok
-            </span>
+          </Field>
+          <Field
+            label={
+              <span className={styles.labelText}>
+                <SocialIcon name="tiktok" />
+                TikTok
+              </span>
+            }
+          >
             <input
               type="text"
               name="tiktok"
               value={form.tiktok}
               onChange={setField}
               className={styles.input}
-              placeholder="@nickname"
               autoComplete="off"
             />
-          </label>
-          <label className={styles.label}>
-            <span className={styles.labelText}>
-              <SocialIcon name="youtube" />
-              YouTube Shorts
-            </span>
+          </Field>
+          <Field
+            label={
+              <span className={styles.labelText}>
+                <SocialIcon name="youtube" />
+                YouTube Shorts
+              </span>
+            }
+          >
             <input
               type="text"
               name="youtubeShorts"
               value={form.youtubeShorts}
               onChange={setField}
               className={styles.input}
-              placeholder="Ссылка на канал"
               autoComplete="off"
             />
-          </label>
+          </Field>
         </div>
 
         <p className={styles.hint}>

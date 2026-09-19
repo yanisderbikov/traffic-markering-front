@@ -85,17 +85,6 @@
   gap: 14px;
 }
 
-.label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--label-tracking);
-  color: var(--color-muted);
-}
-
 .input {
   font-family: inherit;
   font-size: 0.92rem;
@@ -162,11 +151,6 @@
   font-weight: 700;
   letter-spacing: 0.4em;
   text-align: center;
-}
-
-.codeInput::placeholder {
-  color: var(--color-track);
-  letter-spacing: 0.4em;
 }
 
 .secondary {

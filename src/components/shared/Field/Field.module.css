@@ -1,0 +1,83 @@
+/* Поле с плавающей подписью: подпись живёт внутри рамки, при фокусе или значении — на её верхней границе. */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.frame {
+  --field-label-bg: var(--color-surface);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.frame > input,
+.frame > textarea,
+.frame > select {
+  width: 100%;
+}
+
+/* Подпись в состоянии покоя — по вертикали по центру поля, на месте плейсхолдера. */
+.label {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  max-width: calc(100% - 24px);
+  padding: 0 4px;
+  margin-left: -4px;
+  transform: translateY(-50%);
+  transform-origin: left center;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  color: var(--color-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  transition: top 0.15s ease, transform 0.15s ease, color 0.15s ease;
+}
+
+/* У textarea подпись стоит на первой строке, а не по центру высокого поля. */
+.frameArea > .label {
+  top: 10px;
+  transform: none;
+}
+
+/* Круглые поля-фильтры: сдвигаем подпись правее, чтобы не попасть на скругление. */
+.framePill > .label {
+  left: 18px;
+}
+
+/* Подпись «уехала» на рамку: фокус, введённое значение или контрол, который всегда заполнен. */
+.frame > input:focus ~ .label,
+.frame > textarea:focus ~ .label,
+.frame > input:not(:placeholder-shown) ~ .label,
+.frame > textarea:not(:placeholder-shown) ~ .label,
+.frameFilled > .label {
+  top: 0;
+  transform: translateY(-50%) scale(0.82);
+  background: var(--field-label-bg);
+  overflow: visible;
+}
+
+.frame > input:focus ~ .label,
+.frame > textarea:focus ~ .label,
+.frame > select:focus ~ .label {
+  color: var(--color-ink);
+}
+
+.frame > [aria-invalid='true'] ~ .label {
+  color: var(--color-danger);
+}
+
+/* У выключенного поля фон серый — подпись закрывает рамку белым сверху и серым снизу. */
+.frame > :disabled ~ .label {
+  --field-label-bg: linear-gradient(to bottom, var(--color-surface) 50%, var(--color-surface-alt) 50%);
+}

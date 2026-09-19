@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-route
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import FieldError from '../shared/FieldError/FieldError';
+import Field from '../shared/Field/Field';
 import PlatformList from '../shared/PlatformList/PlatformList';
 import { formatRubles } from '../../shared/money';
 import { CAMPAIGN_STATUS_LABELS, PLATFORM_LABELS } from '../../shared/dictionaries';
@@ -210,8 +211,7 @@ const ApplyPage = () => {
           {inactive && <p className={styles.hintBanner}>{renderInactiveNotice()}</p>}
 
           <form className={styles.form} onSubmit={handleSubmit} noValidate>
-            <label className={styles.label}>
-              Ссылка на ролик *
+            <Field label="Ссылка на ролик *">
               <input
                 type="url"
                 name="videoUrl"
@@ -219,7 +219,6 @@ const ApplyPage = () => {
                 onChange={setField}
                 className={styles.input}
                 aria-invalid={videoUrlError ? 'true' : undefined}
-                placeholder="https://youtube.com/shorts/…"
                 maxLength={1024}
                 disabled={sending || inactive}
                 autoFocus
@@ -261,19 +260,17 @@ const ApplyPage = () => {
                   </Link>
                 </span>
               )}
-            </label>
-            <label className={styles.label}>
-              Комментарий заказчику
+            </Field>
+            <Field label="Комментарий заказчику">
               <textarea
                 name="comment"
                 value={form.comment}
                 onChange={setField}
                 className={`${styles.input} ${styles.textarea}`}
                 rows={4}
-                placeholder="Что за формат, когда выйдет ролик"
                 disabled={sending || inactive}
               />
-            </label>
+            </Field>
             {formError && <p className={styles.error}>{formError}</p>}
             <div className={styles.actions}>
               <button type="submit" className={styles.submit} disabled={sending || inactive}>

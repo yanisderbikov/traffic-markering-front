@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import FieldError from '../shared/FieldError/FieldError';
+import Field from '../shared/Field/Field';
 import { formatDate } from '../../shared/dictionaries';
 import {
   clearFieldError,
@@ -132,31 +133,26 @@ const CustomerProfile = () => {
 
       <form className={styles.card} onSubmit={handleSubmit} noValidate>
         <div className={styles.formGrid}>
-          <label className={`${styles.label} ${styles.labelWide}`}>
-            Компания
+          <Field label="Компания" className={styles.labelWide}>
             <input
               type="text"
               name="company"
               value={form.company}
               onChange={setField}
               className={styles.input}
-              placeholder="Название бренда"
               autoComplete="off"
             />
-          </label>
-          <label className={`${styles.label} ${styles.labelWide}`}>
-            О компании
+          </Field>
+          <Field label="О компании" className={styles.labelWide}>
             <textarea
               name="about"
               value={form.about}
               onChange={setField}
               className={styles.textarea}
-              placeholder="Чем занимаетесь и какие интеграции ищете."
               rows={5}
             />
-          </label>
-          <label className={styles.label}>
-            Telegram
+          </Field>
+          <Field label="Telegram">
             <input
               type="text"
               name="telegram"
@@ -164,13 +160,11 @@ const CustomerProfile = () => {
               onChange={setField}
               className={styles.input}
               aria-invalid={invalid('telegram')}
-              placeholder="@nickname"
               autoComplete="off"
             />
             <FieldError>{errors.telegram}</FieldError>
-          </label>
-          <label className={styles.label}>
-            Сайт
+          </Field>
+          <Field label="Сайт">
             <input
               type="text"
               name="website"
@@ -178,11 +172,10 @@ const CustomerProfile = () => {
               onChange={setField}
               className={styles.input}
               aria-invalid={invalid('website')}
-              placeholder="https://example.ru"
               autoComplete="off"
             />
             <FieldError>{errors.website}</FieldError>
-          </label>
+          </Field>
         </div>
 
         <p className={styles.hint}>

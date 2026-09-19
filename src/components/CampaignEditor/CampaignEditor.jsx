@@ -7,6 +7,7 @@ import BudgetBar from '../shared/BudgetBar/BudgetBar';
 import WalletSummary from '../shared/WalletSummary/WalletSummary';
 import CreatorSocials from '../shared/CreatorSocials/CreatorSocials';
 import FieldError from '../shared/FieldError/FieldError';
+import Field from '../shared/Field/Field';
 import MaterialList from '../shared/MaterialList/MaterialList';
 import SocialIcon from '../shared/SocialIcon/SocialIcon';
 import { clearFieldError, hasErrors, validateRequired } from '../../shared/validation';
@@ -396,6 +397,13 @@ const CampaignEditor = () => {
 
   const invalid = (name) => (errors[name] ? 'true' : undefined);
 
+  // На создании спойлер свёрнут; при редактировании раскрываем, если там что-то заполнено.
+  const extraOpen =
+    !isNew &&
+    ['minVideoSeconds', 'minPaidViews', 'maxVideosPerCreator', 'startsOn', 'endsOn'].some(
+      (key) => Boolean(savedForm[key])
+    );
+
   const handlePhotoChange = async (e) => {
     const file = e.target.files?.[0];
     e.target.value = '';
@@ -699,8 +707,7 @@ const CampaignEditor = () => {
               </div>
             </div>
           </div>
-          <label className={`${styles.label} ${styles.labelWide}`}>
-            Заголовок *
+          <Field label="Заголовок *" className={styles.labelWide}>
             <input
               type="text"
               name="title"
@@ -708,25 +715,22 @@ const CampaignEditor = () => {
               onChange={setField}
               className={styles.input}
               aria-invalid={invalid('title')}
-              placeholder="Интеграция в Shorts про кофе"
               maxLength={255}
               autoComplete="off"
             />
             <FieldError>{errors.title}</FieldError>
-          </label>
-          <label className={`${styles.label} ${styles.labelWide}`}>
-            Описание задачи *
+          </Field>
+          <Field label="Описание задачи *" className={styles.labelWide}>
             <textarea
               name="description"
               value={form.description}
               onChange={setField}
               className={styles.textarea}
               aria-invalid={invalid('description')}
-              placeholder="Что показать, что сказать, какие обязательные тезисы и ссылки."
               rows={6}
             />
             <FieldError>{errors.description}</FieldError>
-          </label>
+          </Field>
           <div className={`${styles.label} ${styles.labelWide}`}>
             Площадки *
             <div className={styles.platforms} role="group" aria-label="Площадки">
@@ -805,8 +809,7 @@ const CampaignEditor = () => {
               )}
             </span>
           </div>
-          <label className={styles.label}>
-            Ставка за 1000 просмотров, ₽ *
+          <Field label="Ставка за 1000 просмотров, ₽ *">
             <input
               type="text"
               inputMode="decimal"
@@ -815,13 +818,11 @@ const CampaignEditor = () => {
               onChange={setMoneyField}
               className={styles.input}
               aria-invalid={invalid('rateRub')}
-              placeholder="350"
               autoComplete="off"
             />
             <FieldError>{errors.rateRub}</FieldError>
-          </label>
-          <label className={styles.label}>
-            Бюджет, ₽ *
+          </Field>
+          <Field label="Бюджет, ₽ *">
             <input
               type="text"
               inputMode="decimal"
@@ -830,7 +831,6 @@ const CampaignEditor = () => {
               onChange={setMoneyField}
               className={styles.input}
               aria-invalid={invalid('budgetRub')}
-              placeholder="50 000"
               autoComplete="off"
             />
             <FieldError>{errors.budgetRub}</FieldError>
@@ -850,9 +850,8 @@ const CampaignEditor = () => {
                 Кошелёк
               </Link>
             </span>
-          </label>
-          <label className={styles.label}>
-            Вывод от, ₽ *
+          </Field>
+          <Field label="Вывод от, ₽ *">
             <input
               type="text"
               inputMode="decimal"
@@ -861,7 +860,6 @@ const CampaignEditor = () => {
               onChange={setMoneyField}
               className={styles.input}
               aria-invalid={invalid('minPayoutRub')}
-              placeholder="3 000"
               autoComplete="off"
             />
             <FieldError>{errors.minPayoutRub}</FieldError>
@@ -869,9 +867,8 @@ const CampaignEditor = () => {
               Криатор сможет вывести заработанное по объявлению, когда накопит эту сумму. До
               порога начисления копятся на откликах и в кошелёк не попадают.
             </span>
-          </label>
-          <label className={styles.label}>
-            Статус
+          </Field>
+          <Field label="Статус">
             <select
               name="status"
               value={form.status}
@@ -885,102 +882,88 @@ const CampaignEditor = () => {
               ))}
             </select>
             <span className={styles.hint}>На доске объявлений видны только активные.</span>
-          </label>
+          </Field>
         </div>
 
-        <h2 className={`${styles.cardTitle} ${styles.sectionTitle}`}>Требования к ролику</h2>
-        <p className={styles.sectionLead}>
-          Криатор видит требования на странице объявления до отклика. Пустое поле — без
-          ограничения.
-        </p>
-        <div className={styles.formGrid}>
-          <label className={styles.label}>
-            Длина ролика от, сек
-            <input
-              type="text"
-              inputMode="numeric"
-              name="minVideoSeconds"
-              value={form.minVideoSeconds}
-              onChange={setIntField}
-              className={styles.input}
-              aria-invalid={invalid('minVideoSeconds')}
-              placeholder="30"
-              autoComplete="off"
-            />
-            <FieldError>{errors.minVideoSeconds}</FieldError>
-            <span className={styles.hint}>
-              Хронометраж не проверяется автоматически — слишком короткий ролик отклоните
-              при рассмотрении отклика.
-            </span>
-          </label>
-          <label className={styles.label}>
-            Оплата от, просмотров
-            <input
-              type="text"
-              inputMode="numeric"
-              name="minPaidViews"
-              value={form.minPaidViews}
-              onChange={setIntField}
-              className={styles.input}
-              aria-invalid={invalid('minPaidViews')}
-              placeholder="1 000"
-              autoComplete="off"
-            />
-            <FieldError>{errors.minPaidViews}</FieldError>
-            <span className={styles.hint}>
-              Ролик, не набравший столько просмотров, не оплачивается. Как только порог
-              пройден, оплачиваются все его просмотры.
-            </span>
-          </label>
-          <label className={styles.label}>
-            Роликов от одного криатора
-            <input
-              type="text"
-              inputMode="numeric"
-              name="maxVideosPerCreator"
-              value={form.maxVideosPerCreator}
-              onChange={setIntField}
-              className={styles.input}
-              aria-invalid={invalid('maxVideosPerCreator')}
-              placeholder="3"
-              autoComplete="off"
-            />
-            <FieldError>{errors.maxVideosPerCreator}</FieldError>
-            <span className={styles.hint}>
-              Сколько роликов примете от одного криатора. Отклонённые в лимит не входят.
-            </span>
-          </label>
-          <label className={styles.label}>
-            Приём откликов с
-            <input
-              type="date"
-              name="startsOn"
-              value={form.startsOn}
-              onChange={setField}
-              className={styles.input}
-              aria-invalid={invalid('startsOn')}
-            />
-            <FieldError>{errors.startsOn}</FieldError>
-            <span className={styles.hint}>До этой даты объявление не показывается на доске.</span>
-          </label>
-          <label className={styles.label}>
-            Приём откликов до
-            <input
-              type="date"
-              name="endsOn"
-              value={form.endsOn}
-              onChange={setField}
-              min={form.startsOn || undefined}
-              className={styles.input}
-              aria-invalid={invalid('endsOn')}
-            />
-            <FieldError>{errors.endsOn}</FieldError>
-            <span className={styles.hint}>
-              После этой даты новые отклики не принимаются, а просмотры по уже принятым
-              роликам продолжают оплачиваться. Даты — по Москве, включительно.
-            </span>
-          </label>
-        </div>
+        <details className={styles.extra} open={extraOpen}>
+          <summary className={styles.extraSummary}>
+            <span className={styles.cardTitle}>Дополнительно</span>
+            <span className={styles.extraNote}>сроки, пороги, лимит роликов</span>
+          </summary>
+          <div className={styles.formGrid}>
+            <label className={styles.label}>
+              Длина ролика от, сек
+              <input
+                type="text"
+                inputMode="numeric"
+                name="minVideoSeconds"
+                value={form.minVideoSeconds}
+                onChange={setIntField}
+                className={styles.input}
+                aria-invalid={invalid('minVideoSeconds')}
+                autoComplete="off"
+              />
+              <FieldError>{errors.minVideoSeconds}</FieldError>
+              <span className={styles.hint}>Проверяете вручную.</span>
+            </label>
+            <label className={styles.label}>
+              Оплата от, просмотров
+              <input
+                type="text"
+                inputMode="numeric"
+                name="minPaidViews"
+                value={form.minPaidViews}
+                onChange={setIntField}
+                className={styles.input}
+                aria-invalid={invalid('minPaidViews')}
+                autoComplete="off"
+              />
+              <FieldError>{errors.minPaidViews}</FieldError>
+              <span className={styles.hint}>Ниже порога ролик не оплачивается.</span>
+            </label>
+            <label className={styles.label}>
+              Роликов от одного криатора
+              <input
+                type="text"
+                inputMode="numeric"
+                name="maxVideosPerCreator"
+                value={form.maxVideosPerCreator}
+                onChange={setIntField}
+                className={styles.input}
+                aria-invalid={invalid('maxVideosPerCreator')}
+                autoComplete="off"
+              />
+              <FieldError>{errors.maxVideosPerCreator}</FieldError>
+            </label>
+            <div className={`${styles.label} ${styles.labelWide}`}>
+              Приём откликов
+              <div className={styles.dateRange}>
+                <input
+                  type="date"
+                  name="startsOn"
+                  value={form.startsOn}
+                  onChange={setField}
+                  className={styles.input}
+                  aria-invalid={invalid('startsOn')}
+                  aria-label="Приём откликов с"
+                />
+                <span className={styles.dateDash}>—</span>
+                <input
+                  type="date"
+                  name="endsOn"
+                  value={form.endsOn}
+                  onChange={setField}
+                  min={form.startsOn || undefined}
+                  className={styles.input}
+                  aria-invalid={invalid('endsOn')}
+                  aria-label="Приём откликов до"
+                />
+              </div>
+              <FieldError>{errors.startsOn || errors.endsOn}</FieldError>
+              <span className={styles.hint}>По Москве, включительно.</span>
+            </div>
+          </div>
+        </details>
 
         <h2 className={`${styles.cardTitle} ${styles.sectionTitle}`}>Материалы для криатора</h2>
         <p className={styles.sectionLead}>
@@ -1007,31 +990,33 @@ const CampaignEditor = () => {
             />
           </label>
           <div className={styles.linkForm}>
-            <input
-              type="text"
-              name="url"
-              value={link.url}
-              onChange={setLinkField}
-              onKeyDown={addLinkOnEnter}
-              className={styles.input}
-              aria-invalid={linkError ? 'true' : undefined}
-              placeholder="https://disk.yandex.ru/d/…"
-              maxLength={2048}
-              autoComplete="off"
-              disabled={materialsFull}
-            />
-            <input
-              type="text"
-              name="title"
-              value={link.title}
-              onChange={setLinkField}
-              onKeyDown={addLinkOnEnter}
-              className={styles.input}
-              placeholder="Подпись, например «Референсы»"
-              maxLength={255}
-              autoComplete="off"
-              disabled={materialsFull}
-            />
+            <Field label="Ссылка" className={styles.linkField}>
+              <input
+                type="text"
+                name="url"
+                value={link.url}
+                onChange={setLinkField}
+                onKeyDown={addLinkOnEnter}
+                className={styles.input}
+                aria-invalid={linkError ? 'true' : undefined}
+                maxLength={2048}
+                autoComplete="off"
+                disabled={materialsFull}
+              />
+            </Field>
+            <Field label="Подпись" className={styles.linkField}>
+              <input
+                type="text"
+                name="title"
+                value={link.title}
+                onChange={setLinkField}
+                onKeyDown={addLinkOnEnter}
+                className={styles.input}
+                maxLength={255}
+                autoComplete="off"
+                disabled={materialsFull}
+              />
+            </Field>
             <button
               type="button"
               className={styles.actionBtn}

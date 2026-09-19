@@ -97,17 +97,6 @@
   border-top: 1px solid var(--color-border);
 }
 
-.label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--label-tracking);
-  color: var(--color-muted);
-}
-
 .input {
   font-family: inherit;
   font-size: 0.92rem;

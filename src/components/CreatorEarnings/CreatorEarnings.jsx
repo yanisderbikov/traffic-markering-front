@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import FieldError from '../shared/FieldError/FieldError';
+import Field from '../shared/Field/Field';
 import OperationRows from '../shared/OperationRows/OperationRows';
 import { errorMessage } from '../../shared/auth';
 import { formatRubInput, formatRubles, kopecksToRub, rubToKopecks } from '../../shared/money';
@@ -165,8 +166,7 @@ const CreatorEarnings = () => {
           <form onSubmit={handleSubmit} noValidate>
             <h2 className={styles.cardTitle}>Заявка на вывод</h2>
             <div className={styles.formGrid}>
-              <label className={styles.label}>
-                Сумма, ₽ *
+              <Field label="Сумма, ₽ *">
                 <input
                   type="text"
                   inputMode="decimal"
@@ -183,9 +183,8 @@ const CreatorEarnings = () => {
                 />
                 <FieldError>{errors.amountRub}</FieldError>
                 <span className={styles.hint}>До {formatRubles(balance)}.</span>
-              </label>
-              <label className={`${styles.label} ${styles.labelWide}`}>
-                Адрес кошелька TRON (USDT TRC-20) *
+              </Field>
+              <Field label="Адрес кошелька TRON (USDT TRC-20) *" className={styles.labelWide}>
                 <input
                   type="text"
                   value={address}
@@ -196,7 +195,6 @@ const CreatorEarnings = () => {
                   }}
                   className={styles.input}
                   aria-invalid={errors.address ? 'true' : undefined}
-                  placeholder="TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE"
                   autoComplete="off"
                   spellCheck={false}
                   disabled={saving}
@@ -205,7 +203,7 @@ const CreatorEarnings = () => {
                 <span className={styles.hint}>
                   Проверьте адрес дважды: перевод в сети TRON отменить нельзя.
                 </span>
-              </label>
+              </Field>
             </div>
             {error && <p className={styles.error}>{error}</p>}
             <div className={styles.formActions}>

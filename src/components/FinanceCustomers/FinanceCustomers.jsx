@@ -4,6 +4,7 @@ import apiClient from '../../apiClient';
 import { errorMessage } from '../../shared/auth';
 import { formatRubles } from '../../shared/money';
 import styles from './FinanceCustomers.module.css';
+import Field from '../shared/Field/Field';
 
 const matches = (wallet, query) =>
   [wallet.customerName, wallet.customerEmail, wallet.customerCompany]
@@ -55,14 +56,14 @@ const FinanceCustomers = () => {
     <div className={styles.wrap}>
       <div className={styles.head}>
         <h1 className={styles.title}>Кошельки заказчиков</h1>
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className={styles.search}
-          placeholder="Имя, почта или компания"
-          aria-label="Поиск заказчика"
-        />
+        <Field label="Имя, почта или компания" className={styles.searchField} pill>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className={styles.search}
+          />
+        </Field>
       </div>
 
       {pageError && <p className={styles.banner}>{pageError}</p>}

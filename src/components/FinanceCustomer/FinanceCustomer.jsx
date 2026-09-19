@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import FieldError from '../shared/FieldError/FieldError';
+import Field from '../shared/Field/Field';
 import WalletSummary from '../shared/WalletSummary/WalletSummary';
 import OperationRows from '../shared/OperationRows/OperationRows';
 import ProofUploader from '../shared/ProofUploader/ProofUploader';
@@ -196,8 +197,7 @@ const FinanceCustomer = () => {
           ))}
         </div>
         <div className={styles.formGrid}>
-          <label className={styles.label}>
-            Сумма, ₽ *
+          <Field label="Сумма, ₽ *">
             <input
               type="text"
               inputMode="decimal"
@@ -208,14 +208,12 @@ const FinanceCustomer = () => {
               }}
               className={styles.input}
               aria-invalid={errors.amountRub ? 'true' : undefined}
-              placeholder="50 000"
               autoComplete="off"
               disabled={saving}
             />
             <FieldError>{errors.amountRub}</FieldError>
-          </label>
-          <label className={styles.label}>
-            Номер транзакции *
+          </Field>
+          <Field label="Номер транзакции *">
             <input
               type="text"
               value={txId}
@@ -225,17 +223,15 @@ const FinanceCustomer = () => {
               }}
               className={styles.input}
               aria-invalid={errors.txId ? 'true' : undefined}
-              placeholder="7c1e0f…9a2b"
               maxLength={255}
               autoComplete="off"
               spellCheck={false}
               disabled={saving}
             />
             <FieldError>{errors.txId}</FieldError>
-          </label>
+          </Field>
           {operation === 'WITHDRAWAL' && (
-            <label className={`${styles.label} ${styles.labelWide}`}>
-              Адрес TRON заказчика (USDT TRC-20) *
+            <Field label="Адрес TRON заказчика (USDT TRC-20) *" className={styles.labelWide}>
               <input
                 type="text"
                 value={tronAddress}
@@ -245,13 +241,12 @@ const FinanceCustomer = () => {
                 }}
                 className={styles.input}
                 aria-invalid={errors.tronAddress ? 'true' : undefined}
-                placeholder="TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE"
                 autoComplete="off"
                 spellCheck={false}
                 disabled={saving}
               />
               <FieldError>{errors.tronAddress}</FieldError>
-            </label>
+            </Field>
           )}
           <div className={styles.labelWide}>
             <ProofUploader
@@ -264,20 +259,18 @@ const FinanceCustomer = () => {
             />
             <FieldError>{errors.proofs}</FieldError>
           </div>
-          <label className={`${styles.label} ${styles.labelWide}`}>
-            Основание
+          <Field label="Основание" className={styles.labelWide}>
             <input
               type="text"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               className={styles.input}
-              placeholder="Счёт №14 от 01.09"
               maxLength={500}
               autoComplete="off"
               disabled={saving}
             />
             <span className={styles.hint}>{current.hint}</span>
-          </label>
+          </Field>
         </div>
 
         {error && <p className={styles.error}>{error}</p>}

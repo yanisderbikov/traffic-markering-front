@@ -192,7 +192,6 @@
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
-
 .submit:hover:not(:disabled) {
   background: var(--color-accent);
 }
@@ -624,6 +623,61 @@
   border-top: 1px solid var(--color-border);
 }
 
+/* Необязательные условия — спойлер, чтобы не растягивать форму. */
+.extra {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border);
+}
+
+.extraSummary {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  cursor: pointer;
+  list-style: none;
+  margin-bottom: 14px;
+}
+
+.extraSummary::-webkit-details-marker {
+  display: none;
+}
+
+.extraSummary::before {
+  content: '▸';
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  transition: transform 0.15s;
+}
+
+.extra[open] > .extraSummary::before {
+  transform: rotate(90deg);
+}
+
+.extraSummary .cardTitle {
+  margin: 0;
+}
+
+.extraNote {
+  font-size: 0.78rem;
+  color: var(--color-muted);
+}
+
+.dateRange {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dateRange .input {
+  flex: 1;
+  min-width: 0;
+}
+
+.dateDash {
+  color: var(--color-muted);
+}
+
 .sectionLead {
   margin: 0 0 14px;
   font-size: 0.82rem;
@@ -684,7 +738,7 @@
   min-width: 260px;
 }
 
-.linkForm .input {
+.linkField {
   flex: 1 1 200px;
 }
 
