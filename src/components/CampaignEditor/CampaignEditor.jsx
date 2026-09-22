@@ -10,6 +10,7 @@ import FieldError from '../shared/FieldError/FieldError';
 import Field from '../shared/Field/Field';
 import MaterialList from '../shared/MaterialList/MaterialList';
 import SocialIcon from '../shared/SocialIcon/SocialIcon';
+import { FraudBadge, FraudFlags, TrustBadge } from '../shared/FraudBadge/FraudBadge';
 import { clearFieldError, hasErrors, validateRequired } from '../../shared/validation';
 import { VIDEO_PLATFORMS } from '../../shared/video';
 import {
@@ -1074,15 +1075,21 @@ const CampaignEditor = () => {
               {applications.map((application) => (
                 <li key={application.id} className={styles.item}>
                   <div className={styles.itemHead}>
-                    <span className={styles.creator}>{application.creatorName}</span>
-                    <span
-                      className={`${styles.status} ${
-                        APPLICATION_STATUS_CLASS[application.status] || ''
-                      }`}
-                    >
-                      {application.statusDescription ||
-                        APPLICATION_STATUS_LABELS[application.status] ||
-                        application.status}
+                    <span className={styles.creator}>
+                      {application.creatorName}{' '}
+                      <TrustBadge level={application.creatorTrustLevel} />
+                    </span>
+                    <span className={styles.itemBadges}>
+                      <FraudBadge status={application.fraudStatus} />
+                      <span
+                        className={`${styles.status} ${
+                          APPLICATION_STATUS_CLASS[application.status] || ''
+                        }`}
+                      >
+                        {application.statusDescription ||
+                          APPLICATION_STATUS_LABELS[application.status] ||
+                          application.status}
+                      </span>
                     </span>
                   </div>
 
@@ -1130,6 +1137,19 @@ const CampaignEditor = () => {
                     {' · '}
                     начислено: <b>{formatRubles(application.accruedKopecks ?? 0)}</b>
                   </p>
+
+                  {application.fraudStatus === 'SUSPICIOUS' && (
+                    <p className={styles.fraudNote}>
+                      Антифрод заметил признаки накрутки: деньги криатору заморожены до решения
+                      платформы. Вы можете отклонить отклик сами.
+                    </p>
+                  )}
+                  {application.fraudStatus === 'FRAUD' && (
+                    <p className={styles.fraudNote}>
+                      Накрутка: начисление по ролику обнулено, бюджет не тратится.
+                    </p>
+                  )}
+                  <FraudFlags flags={application.fraudFlags} />
 
                   <div className={styles.actions}>
                     {APPLICATION_ACTIONS.filter(

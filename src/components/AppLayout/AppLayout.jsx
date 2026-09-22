@@ -37,6 +37,14 @@ const MENU = [
     ],
   },
   {
+    title: 'антифрод',
+    section: SECTIONS.FRAUD,
+    items: [
+      { to: '/app/admin/fraud', label: 'Подозрительные ролики' },
+      { to: '/app/admin/fraud/creators', label: 'Репутация криаторов' },
+    ],
+  },
+  {
     title: 'администрирование',
     section: SECTIONS.USERS,
     items: [{ to: '/app/admin/users', label: 'Пользователи и роли' }],

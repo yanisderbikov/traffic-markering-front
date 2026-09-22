@@ -9,6 +9,7 @@ import {
   formatDate,
 } from '../../shared/dictionaries';
 import { DEFAULT_VIEW_REGION, isWorldRegion, viewRegionLabel } from '../../shared/viewRegion';
+import { FraudBadge } from '../shared/FraudBadge/FraudBadge';
 import styles from './CreatorApplications.module.css';
 
 const STATUS_CLASS = {
@@ -171,10 +172,13 @@ const CreatorApplications = () => {
             <li key={application.id} className={styles.item}>
               <div className={styles.itemHead}>
                 <span className={styles.itemTitle}>{application.campaignTitle}</span>
-                <span className={`${styles.status} ${STATUS_CLASS[application.status] || ''}`}>
-                  {application.statusDescription ||
-                    APPLICATION_STATUS_LABELS[application.status] ||
-                    application.status}
+                <span className={styles.itemBadges}>
+                  <FraudBadge status={application.fraudStatus} />
+                  <span className={`${styles.status} ${STATUS_CLASS[application.status] || ''}`}>
+                    {application.statusDescription ||
+                      APPLICATION_STATUS_LABELS[application.status] ||
+                      application.status}
+                  </span>
                 </span>
               </div>
 
@@ -212,7 +216,20 @@ const CreatorApplications = () => {
                 <span className={styles.earned}>
                   заработано: <b>{formatRubles(application.accruedKopecks ?? 0)}</b>
                 </span>
+                {application.creditedKopecks != null && (
+                  <span>
+                    в кошельке: <b>{formatRubles(application.creditedKopecks)}</b>
+                  </span>
+                )}
               </div>
+
+              {(application.fraudStatus === 'SUSPICIOUS' || application.fraudStatus === 'FRAUD') && (
+                <p className={styles.numbersWarn}>
+                  {application.fraudStatus === 'FRAUD'
+                    ? 'Платформа признала просмотры накрученными: начисление обнулено. Если это ошибка, напишите в поддержку.'
+                    : 'Просмотры на проверке: платформа заметила признаки накрутки, деньги заморожены до решения.'}
+                </p>
+              )}
 
               {application.status === 'PENDING' && (
                 <div className={styles.actions}>

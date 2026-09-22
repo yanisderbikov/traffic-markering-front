@@ -40,6 +40,24 @@ export const ROLE_LABELS = {
 
 export const ASSIGNABLE_ROLES = ['CUSTOMER', 'CREATOR', 'FINANCE_MANAGER', 'ADMIN'];
 
+// Вердикт антифрода по отклику.
+export const FRAUD_STATUS_LABELS = {
+  CLEAN: 'чисто',
+  SUSPICIOUS: 'на проверке',
+  FRAUD: 'накрутка',
+  VERIFIED: 'проверен',
+};
+
+// Репутация криатора.
+export const TRUST_LEVEL_LABELS = {
+  NEW: 'новичок',
+  TRUSTED: 'проверенный',
+  RESTRICTED: 'ограничен',
+  BLOCKED: 'заблокирован',
+};
+
+export const TRUST_LEVELS = ['NEW', 'TRUSTED', 'RESTRICTED', 'BLOCKED'];
+
 export const WALLET_TRANSACTION_LABELS = {
   TOP_UP: 'пополнение',
   WITHDRAWAL: 'вывод USDT',

@@ -9,6 +9,7 @@ export const SECTIONS = {
   SOCIALS: 'SOCIALS',
   FINANCE: 'FINANCE',
   USERS: 'USERS',
+  FRAUD: 'FRAUD',
 };
 
 const ROLE_SECTIONS = {
@@ -22,6 +23,7 @@ const ROLE_SECTIONS = {
     SECTIONS.EARNINGS,
     SECTIONS.PROFILE,
     SECTIONS.SOCIALS,
+    SECTIONS.FRAUD,
   ],
   SUPER_ADMIN: [
     SECTIONS.CAMPAIGNS,
@@ -32,6 +34,7 @@ const ROLE_SECTIONS = {
     SECTIONS.SOCIALS,
     SECTIONS.FINANCE,
     SECTIONS.USERS,
+    SECTIONS.FRAUD,
   ],
 };
 
@@ -44,6 +47,7 @@ export const sectionForPath = (pathname) => {
   if (pathname.startsWith('/app/applications')) return SECTIONS.APPLICATIONS;
   if (pathname.startsWith('/app/earnings')) return SECTIONS.EARNINGS;
   if (pathname.startsWith('/app/finance')) return SECTIONS.FINANCE;
+  if (pathname.startsWith('/app/admin/fraud')) return SECTIONS.FRAUD;
   if (pathname.startsWith('/app/admin')) return SECTIONS.USERS;
   if (pathname.startsWith('/app/profile/socials')) return SECTIONS.SOCIALS;
   if (pathname.startsWith('/app/profile')) return SECTIONS.PROFILE;

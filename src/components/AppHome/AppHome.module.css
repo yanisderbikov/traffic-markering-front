@@ -1,4 +1,5 @@
-/* Домашняя страница кабинета: приветствие и плитки-ссылки по роли. */
+/* Домашняя страница кабинета: приветствие, очередь «требует внимания»
+   и полосы состояния по разделам. Навигация — в сайдбаре, плиток-ссылок нет. */
 
 .wrap {
   max-width: var(--page-max-width);
@@ -13,71 +14,235 @@
   }
 }
 
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
 .title {
   font-family: var(--font-display);
+  /* Крупный плакатный заголовок страницы — главный типографический акцент. */
   font-size: clamp(1.9rem, 5vw, 2.6rem);
   font-weight: 700;
   line-height: 1.02;
   text-transform: uppercase;
   letter-spacing: var(--title-tracking);
   color: var(--color-ink);
-  margin: 0 0 8px;
+  margin: 0;
 }
 
-.subtitle {
-  font-size: 0.92rem;
-  color: var(--color-ink-soft);
-  margin: 0 0 22px;
-  max-width: 640px;
+.primaryBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--action-tracking);
+  text-decoration: none;
+  color: #fff;
+  background: var(--color-ink);
+  border: none;
+  border-radius: var(--pill-radius);
+  padding: 10px 22px;
+  cursor: pointer;
+  transition: background 0.15s ease;
 }
 
-.tiles {
-  display: grid;
-  /* min(300px, 100%) вместо голых 300px: на экранах уже 324px колонка в 300px
-     не влезает в контейнер с полями по 12px и тянет всю страницу в горизонтальный скролл. */
-  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
-  gap: 16px;
+.primaryBtn:hover {
+  background: var(--color-accent);
 }
 
-.tile {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+/* Фокус с клавиатуры — общее кольцо кабинета, а не синий контур браузера. */
+.primaryBtn:focus-visible,
+.attentionRow:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.message {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  margin: 8px 0;
+}
+
+/* --- Требует внимания: очередь на действие пользователя --- */
+
+.attention {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--card-radius);
   box-shadow: var(--card-shadow);
-  padding: 22px;
-  text-decoration: none;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  padding: 18px 20px;
+  margin-bottom: 16px;
 }
 
-.tile:hover {
+.attentionTitle {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  color: var(--color-muted);
+  margin: 0;
+}
+
+/* Вся строка — тап-зона, поэтому не меньше 44px по высоте. */
+.attentionRow {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-height: 44px;
+  padding: 10px 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.attentionRow + .attentionRow {
+  border-top: 1px solid var(--color-border);
+}
+
+.attentionRow:hover .attentionText {
+  text-decoration: underline;
+}
+
+.attentionCount {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  min-width: 2ch;
+  flex: none;
+}
+
+.attentionText {
+  font-size: 0.92rem;
+  color: var(--color-ink);
+}
+
+/* --- Полосы состояния: одна карточка на раздел --- */
+
+.strips {
+  display: grid;
+  /* min(420px, 100%) — на узких экранах колонка не выталкивает страницу в горизонтальный скролл. */
+  grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
+  gap: 16px;
+}
+
+.strip {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: 18px 20px;
+  color: inherit;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.strip:hover {
   transform: translate(-3px, -3px);
   border-color: var(--color-ink);
   box-shadow: var(--card-shadow-hover);
 }
 
-/* Стрелка в углу плитки — она же показывает, что это ссылка. */
-.tile::after {
-  content: '→';
-  align-self: flex-end;
-  margin-top: 10px;
-  font-family: var(--font-display);
-  font-size: 1.1rem;
-  color: var(--color-accent);
+.strip:focus-visible {
+  outline: none;
+  border-color: var(--color-ink);
+  box-shadow: var(--focus-ring);
 }
 
-.tileTitle {
+.stripTitle {
   font-family: var(--font-display);
   font-size: 1.05rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: var(--title-tracking);
   color: var(--color-ink);
+  margin-bottom: 12px;
 }
 
-.tileText {
-  font-size: 0.85rem;
+/* Ячейки «лейбл над числом» — 1:1 как в WalletSummary.
+   Порог 140px: на 320px ячейки идут в одну колонку, на 390px — 2+1, на десктопе
+   три в ряд, и самое длинное слово лейбла («рассмотрении», ~139px) не вылезает
+   из своей ячейки. */
+.items {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
+  gap: 12px;
+}
+
+/* Тело карточки прижато к низу: у соседей в ряду сетки строка чисел на одной
+   высоте, даже если в одной карточке лейблы двухстрочные, а в другой нет. */
+.items,
+.empty,
+.error {
+  margin-top: auto;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  /* Прижимаем к низу: двухстрочный лейбл не сбивает строку чисел у соседей. */
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 0;
+}
+
+.label {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  color: var(--color-muted);
+  /* Страховка: слишком длинный лейбл ломается внутри своей ячейки, а не лезет к соседу. */
+  overflow-wrap: anywhere;
+}
+
+.value {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  /* Сумма и «₽» — одно целое, переноса между ними быть не должно. */
+  white-space: nowrap;
+}
+
+.good {
+  color: var(--color-success);
+}
+
+/* Очередь: ноль — спокойный серый, больше нуля — акцент. */
+.queue {
+  color: var(--color-muted);
+}
+
+.queueActive {
+  color: var(--color-accent);
+}
+
+/* «…» пока грузится. */
+.pending {
+  color: var(--color-muted);
+}
+
+.empty {
+  font-size: 0.88rem;
   color: var(--color-ink-soft);
+  margin: 0;
+}
+
+.error {
+  font-size: 0.85rem;
+  color: var(--color-danger);
+  margin: 0;
 }

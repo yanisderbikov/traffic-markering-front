@@ -311,6 +311,19 @@
   background: var(--color-ink);
 }
 
+.itemBadges {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.fraudNote {
+  font-size: 0.82rem;
+  color: var(--color-danger);
+  margin: 0;
+}
+
 .itemMeta {
   font-size: 0.8rem;
   color: var(--color-muted);

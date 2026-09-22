@@ -264,6 +264,13 @@
   background: var(--color-ink);
 }
 
+.itemBadges {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
 .rate {
   font-family: var(--font-display);
   font-size: 1.15rem;

@@ -144,6 +144,11 @@ const CreatorEarnings = () => {
           <span className={styles.summaryValue}>{formatRubles(wallet?.pendingKopecks ?? 0)}</span>
         </div>
       </div>
+      <p className={styles.text}>
+        Начисленное уезжает в кошелёк ночью, когда сумма по объявлению дошла до его порога вывода,
+        и только за просмотры старше семи дней: за это время площадка списывает ботов, а
+        платформа проверяет ролик.
+      </p>
 
       <section className={styles.card}>
         {!formOpen ? (
