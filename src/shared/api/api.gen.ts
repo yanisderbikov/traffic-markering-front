@@ -22,7 +22,7 @@ export interface CustomerProfileRequestDTO {
   /** О компании: чем занимаетесь, что рекламируете */
   about?: string;
   /**
-   * Telegram для связи с криаторами
+   * Telegram для связи с креаторами
    * @minLength 0
    * @maxLength 255
    * @example "@demo_brand"
@@ -56,10 +56,10 @@ export interface CustomerProfileDTO {
   updatedAt?: string;
 }
 
-/** Сохранение профиля криатора */
+/** Сохранение профиля креатора */
 export interface CreatorProfileRequestDTO {
   /**
-   * Как показывать криатора заказчику; пусто — имя из учётки
+   * Как показывать креатора заказчику; пусто — имя из учётки
    * @minLength 0
    * @maxLength 255
    * @example "аня снимает"
@@ -94,12 +94,12 @@ export interface CreatorProfileRequestDTO {
   youtubeShorts?: string;
 }
 
-/** Профиль криатора */
+/** Профиль креатора */
 export interface CreatorProfileDTO {
   /** @format uuid */
   id?: string;
   /**
-   * ID пользователя-криатора
+   * ID пользователя-креатора
    * @format int64
    */
   userId?: number;
@@ -146,7 +146,7 @@ export interface CampaignCreateUpdateRequestDTO {
    */
   budgetKopecks: number;
   /**
-   * С какой накопленной по объявлению суммы криатор может выводить заработанное, в копейках
+   * С какой накопленной по объявлению суммы креатор может выводить заработанное, в копейках
    * @format int64
    * @example 300000
    */
@@ -175,7 +175,7 @@ export interface CampaignCreateUpdateRequestDTO {
    */
   minPaidViews?: number;
   /**
-   * Сколько роликов может подать один криатор; null — без ограничения
+   * Сколько роликов может подать один креатор; null — без ограничения
    * @format int32
    * @example 3
    */
@@ -193,7 +193,7 @@ export interface CampaignCreateUpdateRequestDTO {
    */
   endsAt?: string;
   /**
-   * Материалы для криатора: файлы и ссылки, в порядке показа; null — без материалов
+   * Материалы для креатора: файлы и ссылки, в порядке показа; null — без материалов
    * @maxItems 10
    * @minItems 0
    */
@@ -205,7 +205,7 @@ export interface CampaignCreateUpdateRequestDTO {
   status?: "DRAFT" | "ACTIVE" | "PAUSED" | "COMPLETED";
 }
 
-/** Материал для криатора: загруженный файл или ссылка */
+/** Материал для креатора: загруженный файл или ссылка */
 export interface CampaignMaterialRequestDTO {
   /**
    * FILE — файл из /api/files/campaign-material/presign, LINK — внешняя ссылка
@@ -270,7 +270,7 @@ export interface CampaignDTO {
    */
   budgetKopecks?: number;
   /**
-   * Уже начислено криаторам, в копейках
+   * Уже начислено креаторам, в копейках
    * @format int64
    */
   spentKopecks?: number;
@@ -280,7 +280,7 @@ export interface CampaignDTO {
    */
   remainingKopecks?: number;
   /**
-   * С какой накопленной по объявлению суммы криатор может выводить заработанное, в копейках
+   * С какой накопленной по объявлению суммы креатор может выводить заработанное, в копейках
    * @format int64
    */
   minPayoutKopecks?: number;
@@ -311,7 +311,7 @@ export interface CampaignDTO {
    */
   minPaidViews?: number;
   /**
-   * Сколько роликов может подать один криатор; null — без ограничения
+   * Сколько роликов может подать один креатор; null — без ограничения
    * @format int32
    */
   maxVideosPerCreator?: number;
@@ -321,7 +321,7 @@ export interface CampaignDTO {
   endsAt?: string;
   /** Принимает ли объявление отклики прямо сейчас: статус ACTIVE и период действия не истёк */
   acceptingApplications?: boolean;
-  /** Материалы для криатора в порядке показа */
+  /** Материалы для креатора в порядке показа */
   materials?: CampaignMaterialDTO[];
   /** @format int64 */
   customerId?: number;
@@ -342,7 +342,7 @@ export interface CampaignDTO {
   updatedAt?: string;
 }
 
-/** Материал для криатора: файл со временной ссылкой на скачивание или внешняя ссылка */
+/** Материал для креатора: файл со временной ссылкой на скачивание или внешняя ссылка */
 export interface CampaignMaterialDTO {
   /** FILE или LINK */
   kind?: string;
@@ -380,7 +380,7 @@ export interface RegisterRequestDTO {
    */
   name: string;
   /**
-   * Роль: CUSTOMER (заказчик) или CREATOR (криатор)
+   * Роль: CUSTOMER (заказчик) или CREATOR (креатор)
    * @example "CREATOR"
    */
   role: "CUSTOMER" | "CREATOR" | "ADMIN" | "SERVICE";
@@ -420,7 +420,7 @@ export interface AuthResponseDTO {
   name?: string;
 }
 
-/** Отклик криатора на объявление */
+/** Отклик креатора на объявление */
 export interface ApplicationCreateRequestDTO {
   /**
    * ID объявления
@@ -438,7 +438,7 @@ export interface ApplicationCreateRequestDTO {
   comment?: string;
 }
 
-/** Отклик криатора: и в списке заказчика, и в списке криатора */
+/** Отклик креатора: и в списке заказчика, и в списке креатора */
 export interface ApplicationDTO {
   /** @format uuid */
   id?: string;
@@ -453,7 +453,7 @@ export interface ApplicationDTO {
    */
   ratePerThousandKopecks?: number;
   /**
-   * Порог вывода объявления: с какой накопленной по нему суммы криатор может выводить, в копейках
+   * Порог вывода объявления: с какой накопленной по нему суммы креатор может выводить, в копейках
    * @format int64
    */
   minPayoutKopecks?: number;
@@ -467,7 +467,7 @@ export interface ApplicationDTO {
   /** @format int64 */
   creatorId?: number;
   creatorName?: string;
-  /** Telegram криатора из профиля; null — не заполнен */
+  /** Telegram креатора из профиля; null — не заполнен */
   creatorTelegram?: string;
   /** Площадка: TELEGRAM, INSTAGRAM, TIKTOK, YOUTUBE_SHORTS */
   platform?: string;
@@ -498,7 +498,7 @@ export interface ApplicationDTO {
   /** Известна ли география просмотров; false — площадка её не отдаёт, и по региону уже РФ/СНГ просмотры не оплачиваются */
   viewsGeographyKnown?: boolean;
   /**
-   * Начислено криатору, в копейках
+   * Начислено креатору, в копейках
    * @format int64
    */
   accruedKopecks?: number;
@@ -561,7 +561,7 @@ export interface CampaignBoardDTO {
    */
   budgetKopecks?: number;
   /**
-   * Уже начислено криаторам, в копейках
+   * Уже начислено креаторам, в копейках
    * @format int64
    */
   spentKopecks?: number;
@@ -571,7 +571,7 @@ export interface CampaignBoardDTO {
    */
   remainingKopecks?: number;
   /**
-   * С какой накопленной по объявлению суммы криатор может выводить заработанное, в копейках
+   * С какой накопленной по объявлению суммы креатор может выводить заработанное, в копейках
    * @format int64
    */
   minPayoutKopecks?: number;
@@ -595,7 +595,7 @@ export interface CampaignBoardDTO {
    */
   minPaidViews?: number;
   /**
-   * Сколько роликов может подать один криатор; null — без ограничения
+   * Сколько роликов может подать один креатор; null — без ограничения
    * @format int32
    */
   maxVideosPerCreator?: number;
@@ -666,7 +666,7 @@ export interface WalletDTO {
    */
   allocatedKopecks?: number;
   /**
-   * Уже начислено криаторам по всем объявлениям, в копейках
+   * Уже начислено креаторам по всем объявлениям, в копейках
    * @format int64
    */
   spentKopecks?: number;
@@ -833,7 +833,7 @@ export interface TransferDTO {
   /** Финансист, который провёл или отклонил */
   processedByName?: string;
   /**
-   * Владелец кошелька: криатор для выплаты, заказчик для пополнения и вывода
+   * Владелец кошелька: креатор для выплаты, заказчик для пополнения и вывода
    * @format int64
    */
   ownerId?: number;
@@ -851,7 +851,7 @@ export interface OperationDetailDTO {
   transfer?: TransferDTO;
 }
 
-/** Кошелёк криатора: сколько доступно к выводу и что уже было */
+/** Кошелёк креатора: сколько доступно к выводу и что уже было */
 export interface CreatorWalletDTO {
   /** @format int64 */
   userId?: number;
@@ -885,7 +885,7 @@ export interface CreatorWalletDTO {
   updatedAt?: string;
 }
 
-/** Заявка криатора на вывод USDT (TRC-20) */
+/** Заявка креатора на вывод USDT (TRC-20) */
 export interface PayoutCreateRequestDTO {
   /**
    * Сколько вывести, в копейках; не больше доступного
@@ -1174,11 +1174,11 @@ export class Api<
       }),
 
     /**
-     * @description Профиль текущего криатора; если его почему-то нет — заводится пустой, а не 404
+     * @description Профиль текущего креатора; если его почему-то нет — заводится пустой, а не 404
      *
      * @tags Profile
      * @name GetCreatorProfile
-     * @summary Мой профиль криатора
+     * @summary Мой профиль креатора
      * @request GET:/api/profile/creator
      * @secure
      */
@@ -1195,7 +1195,7 @@ export class Api<
      *
      * @tags Profile
      * @name UpdateCreatorProfile
-     * @summary Сохранить профиль криатора
+     * @summary Сохранить профиль креатора
      * @request PUT:/api/profile/creator
      * @secure
      */
@@ -1253,7 +1253,7 @@ export class Api<
       }),
 
     /**
-     * @description Только пока по объявлению нет откликов, иначе 409: удаление стёрло бы историю начислений криаторам
+     * @description Только пока по объявлению нет откликов, иначе 409: удаление стёрло бы историю начислений креаторам
      *
      * @tags Campaign
      * @name DeleteCampaign
@@ -1331,7 +1331,7 @@ export class Api<
       }),
 
     /**
-     * @description Presigned PUT-ссылка на файл для криатора: бриф, баннер, референсы. Полученный key передаётся в materials при сохранении объявления вместе с именем, типом и размером файла
+     * @description Presigned PUT-ссылка на файл для креатора: бриф, баннер, референсы. Полученный key передаётся в materials при сохранении объявления вместе с именем, типом и размером файла
      *
      * @tags File
      * @name PresignCampaignMaterial
@@ -1353,7 +1353,7 @@ export class Api<
       }),
 
     /**
-     * @description Роль — CUSTOMER (заказчик) или CREATOR (криатор). Заводится учётка с пустым профилем нужного типа и на почту уходит код входа; токен выдаёт verify. 409, если почта уже занята подтверждённой учёткой
+     * @description Роль — CUSTOMER (заказчик) или CREATOR (креатор). Заводится учётка с пустым профилем нужного типа и на почту уходит код входа; токен выдаёт verify. 409, если почта уже занята подтверждённой учёткой
      *
      * @tags Auth
      * @name Register
@@ -1404,7 +1404,7 @@ export class Api<
       }),
 
     /**
-     * @description Криатор прикладывает ссылку на ролик. Откликнуться можно только на активное объявление, один раз и не на своё; повторный отклик — 409
+     * @description Креатор прикладывает ссылку на ролик. Откликнуться можно только на активное объявление, один раз и не на своё; повторный отклик — 409
      *
      * @tags Application
      * @name Apply
@@ -1492,11 +1492,11 @@ export class Api<
       }),
 
     /**
-     * @description Витрина криатора: отображаемое имя, «о себе» и соцсети — заказчик смотрит, кому отдаёт заказ
+     * @description Витрина креатора: отображаемое имя, «о себе» и соцсети — заказчик смотрит, кому отдаёт заказ
      *
      * @tags PublicBoard
      * @name PublicCreator
-     * @summary Профиль криатора
+     * @summary Профиль креатора
      * @request GET:/api/public/creators/{userId}
      */
     publicCreator: (userId: number, params: RequestParams = {}) =>
@@ -1537,7 +1537,7 @@ export class Api<
       }),
 
     /**
-     * @description Криаторы, ссылки на ролики, просмотры и начисленные суммы; старые сверху
+     * @description Креаторы, ссылки на ролики, просмотры и начисленные суммы; старые сверху
      *
      * @tags Campaign
      * @name CampaignApplications
@@ -1571,7 +1571,7 @@ export class Api<
       }),
 
     /**
-     * @description Отклики текущего криатора со ставкой объявления, просмотрами и начислением. Новые сверху
+     * @description Отклики текущего креатора со ставкой объявления, просмотрами и начислением. Новые сверху
      *
      * @tags Application
      * @name MyApplications
@@ -1588,7 +1588,7 @@ export class Api<
       }),
 
     /**
-     * @description Криатор убирает свой отклик, пока заказчик его не рассмотрел: после решения — 409
+     * @description Креатор убирает свой отклик, пока заказчик его не рассмотрел: после решения — 409
      *
      * @tags Application
      * @name DeleteApplication
@@ -1604,7 +1604,7 @@ export class Api<
         ...params,
       }),
     /**
-     * @description Свободный остаток, сумма бюджетов объявлений и сколько уже начислено криаторам; суммы в копейках
+     * @description Свободный остаток, сумма бюджетов объявлений и сколько уже начислено креаторам; суммы в копейках
      *
      * @tags Wallet
      * @name MyWallet
@@ -1622,7 +1622,7 @@ export class Api<
 
 
     /**
-     * @description Все заказчики с кошельком: свободный остаток, сумма бюджетов объявлений и начислено криаторам
+     * @description Все заказчики с кошельком: свободный остаток, сумма бюджетов объявлений и начислено креаторам
      *
      * @tags Finance
      * @name FinanceCustomers
@@ -1772,7 +1772,7 @@ export class Api<
       }),
 
     /**
-     * @description Только для заявки в статусе SENT: криатор увидел USDT на своём кошельке
+     * @description Только для заявки в статусе SENT: креатор увидел USDT на своём кошельке
      *
      * @tags Earnings
      * @name ConfirmPayout
@@ -1810,7 +1810,7 @@ export class Api<
      *
      * @tags Finance
      * @name FinancePayouts
-     * @summary Заявки криаторов на вывод
+     * @summary Заявки креаторов на вывод
      * @request GET:/api/finance/payouts
      * @secure
      */
@@ -1824,7 +1824,7 @@ export class Api<
 
 
     /**
-     * @description Только из PENDING. Номер транзакции и скриншоты обязательны; заявка переходит в SENT и ждёт подтверждения криатора
+     * @description Только из PENDING. Номер транзакции и скриншоты обязательны; заявка переходит в SENT и ждёт подтверждения креатора
      *
      * @tags Finance
      * @name MarkPayoutSent
@@ -1870,7 +1870,7 @@ export class Api<
       }),
 
     /**
-     * @description Для менеджера финансов: presigned PUT-ссылка на скриншот перевода USDT. Полученный key передаётся в пополнение, вывод заказчику или отправку выплаты криатору
+     * @description Для менеджера финансов: presigned PUT-ссылка на скриншот перевода USDT. Полученный key передаётся в пополнение, вывод заказчику или отправку выплаты креатору
      *
      * @tags File
      * @name PresignTransferProof
@@ -1942,7 +1942,7 @@ export class Api<
       }),
 
     /**
-     * @description Одна таблица: пополнения, резервы, начисления криаторам и выводы; у каждой строки откуда → куда, сумма и статус. Фильтры необязательны; новые сверху
+     * @description Одна таблица: пополнения, резервы, начисления креаторам и выводы; у каждой строки откуда → куда, сумма и статус. Фильтры необязательны; новые сверху
      *
      * @tags Finance
      * @name FinanceOperations

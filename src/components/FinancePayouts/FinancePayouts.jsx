@@ -47,7 +47,7 @@ const FinancePayouts = () => {
 
   return (
     <div className={styles.wrap}>
-      <h1 className={styles.title}>Выплаты криаторам</h1>
+      <h1 className={styles.title}>Выплаты креаторам</h1>
       <p className={styles.subtitle}>
         {pendingCount
           ? `Ждут отправки: ${pendingCount} на ${formatRubles(pendingTotal)}.`

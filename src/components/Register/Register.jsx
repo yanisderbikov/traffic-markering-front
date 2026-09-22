@@ -21,7 +21,7 @@ import styles from './Register.module.css';
 const ROLE_OPTIONS = [
   {
     value: 'CREATOR',
-    label: 'я криатор',
+    label: 'я креатор',
     hint: 'снимаю ролики и зарабатываю на просмотрах',
   },
   {

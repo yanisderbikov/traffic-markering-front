@@ -15,7 +15,7 @@ const WalletSummary = ({ wallet }) => (
       <span className={styles.value}>{formatRubles(wallet?.allocatedKopecks ?? 0)}</span>
     </div>
     <div className={styles.item}>
-      <span className={styles.label}>начислено криаторам</span>
+      <span className={styles.label}>начислено креаторам</span>
       <span className={styles.value}>{formatRubles(wallet?.spentKopecks ?? 0)}</span>
     </div>
   </div>

@@ -32,7 +32,7 @@ export const APPLICATION_STATUS_LABELS = {
 
 export const ROLE_LABELS = {
   CUSTOMER: 'заказчик',
-  CREATOR: 'криатор',
+  CREATOR: 'креатор',
   FINANCE_MANAGER: 'менеджер финансов',
   ADMIN: 'администратор',
   SUPER_ADMIN: 'супер-админ',
@@ -48,7 +48,7 @@ export const FRAUD_STATUS_LABELS = {
   VERIFIED: 'проверен',
 };
 
-// Репутация криатора.
+// Репутация креатора.
 export const TRUST_LEVEL_LABELS = {
   NEW: 'новичок',
   TRUSTED: 'проверенный',

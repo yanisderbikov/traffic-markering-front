@@ -53,7 +53,7 @@ const CampaignPage = () => {
       return (
         <div className={styles.applyBlock}>
           <p className={styles.noticeText}>
-            чтобы взять заказ в работу, войдите как криатор или заведите аккаунт — это минута.
+            чтобы взять заказ в работу, войдите как креатор или заведите аккаунт — это минута.
           </p>
           <div className={styles.noticeActions}>
             <Link to={`/login?from=${from}`} className={styles.primaryLink}>
@@ -71,7 +71,7 @@ const CampaignPage = () => {
       return (
         <div className={styles.applyBlock}>
           <p className={styles.noticeText}>
-            отклики оставляют криаторы. вы вошли как {role === 'CUSTOMER' ? 'заказчик' : 'администратор'} —
+            отклики оставляют креаторы. вы вошли как {role === 'CUSTOMER' ? 'заказчик' : 'администратор'} —
             своё объявление можно вести в личном кабинете.
           </p>
           <div className={styles.noticeActions}>

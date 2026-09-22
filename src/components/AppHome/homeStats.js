@@ -56,7 +56,7 @@ export const awaitingWalletOperations = (rows) =>
     (row) => row.status === 'SENT' && (row.type === 'TOP_UP' || row.type === 'WITHDRAWAL')
   );
 
-// ---- Отклики криатора (myApplications) ----
+// ---- Отклики креатора (myApplications) ----
 
 export const applicationStats = (rows) => {
   const list = asList(rows);
@@ -72,9 +72,9 @@ export const applicationStats = (rows) => {
   };
 };
 
-// ---- Заработок криатора (myOperations) ----
+// ---- Заработок креатора (myOperations) ----
 
-/** Выплаты, которые финансист отправил и ждёт подтверждения криатора. */
+/** Выплаты, которые финансист отправил и ждёт подтверждения креатора. */
 export const awaitingPayoutConfirmations = (rows) =>
   countBy(asList(rows), (row) => row.status === 'SENT');
 

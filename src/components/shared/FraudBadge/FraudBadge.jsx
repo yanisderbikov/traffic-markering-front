@@ -30,11 +30,11 @@ export const FraudBadge = ({ status, score, showClean = false }) => {
   );
 };
 
-/** Репутация криатора: новичок, проверенный, ограничен, заблокирован. */
+/** Репутация креатора: новичок, проверенный, ограничен, заблокирован. */
 export const TrustBadge = ({ level }) => {
   if (!level) return null;
   return (
-    <span className={`${styles.badge} ${TRUST_CLASS[level] || ''}`} title="Репутация криатора">
+    <span className={`${styles.badge} ${TRUST_CLASS[level] || ''}`} title="Репутация креатора">
       {TRUST_LEVEL_LABELS[level] || level}
     </span>
   );

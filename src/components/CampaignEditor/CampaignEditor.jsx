@@ -481,7 +481,7 @@ const CampaignEditor = () => {
 
     const nextErrors = {
       title: validateRequired(title, 'Укажите заголовок'),
-      description: validateRequired(description, 'Опишите задачу для криатора'),
+      description: validateRequired(description, 'Опишите задачу для креатора'),
       photoKey: form.photoKey ? '' : 'Загрузите фотографию',
       rateRub:
         ratePerThousandKopecks == null || ratePerThousandKopecks <= 0
@@ -771,7 +771,7 @@ const CampaignEditor = () => {
             </div>
             <FieldError>{errors.platforms}</FieldError>
             <span className={styles.hint}>
-              Криатор сможет подать ролик только с выбранных площадок — ссылку с другой
+              Креатор сможет подать ролик только с выбранных площадок — ссылку с другой
               площадки отклик не примет.
             </span>
           </div>
@@ -803,7 +803,7 @@ const CampaignEditor = () => {
                   <span className={styles.hintWarn}>
                     {platformLabels(blindPlatforms)} географию просмотров{' '}
                     {blindPlatforms.length > 1 ? 'не отдают' : 'не отдаёт'} — ролики оттуда по
-                    такому региону не оплатятся; географию отдаёт только YouTube (криатор
+                    такому региону не оплатятся; географию отдаёт только YouTube (креатор
                     должен подключить канал с доступом к аналитике).
                   </span>
                 </>
@@ -865,7 +865,7 @@ const CampaignEditor = () => {
             />
             <FieldError>{errors.minPayoutRub}</FieldError>
             <span className={styles.hint}>
-              Криатор сможет вывести заработанное по объявлению, когда накопит эту сумму. До
+              Креатор сможет вывести заработанное по объявлению, когда накопит эту сумму. До
               порога начисления копятся на откликах и в кошелёк не попадают.
             </span>
           </Field>
@@ -923,7 +923,7 @@ const CampaignEditor = () => {
               <span className={styles.hint}>Ниже порога ролик не оплачивается.</span>
             </label>
             <label className={styles.label}>
-              Роликов от одного криатора
+              Роликов от одного креатора
               <input
                 type="text"
                 inputMode="numeric"
@@ -966,9 +966,9 @@ const CampaignEditor = () => {
           </div>
         </details>
 
-        <h2 className={`${styles.cardTitle} ${styles.sectionTitle}`}>Материалы для криатора</h2>
+        <h2 className={`${styles.cardTitle} ${styles.sectionTitle}`}>Материалы для креатора</h2>
         <p className={styles.sectionLead}>
-          Бриф, баннеры, референсы — файлом или ссылкой. Криатор откроет или скачает их со
+          Бриф, баннеры, референсы — файлом или ссылкой. Креатор откроет или скачает их со
           страницы объявления.
         </p>
         <MaterialList
@@ -1031,7 +1031,7 @@ const CampaignEditor = () => {
         <FieldError>{linkError}</FieldError>
         <p className={styles.sectionLead}>
           Файлы до 100 МБ, всего до {MATERIALS_MAX} материалов. Загруженный файл станет
-          доступен криаторам после сохранения объявления.
+          доступен креаторам после сохранения объявления.
         </p>
 
         {error && <p className={styles.error}>{error}</p>}
@@ -1068,7 +1068,7 @@ const CampaignEditor = () => {
             <p className={styles.message}>Загрузка откликов…</p>
           ) : applications.length === 0 ? (
             <p className={styles.message}>
-              Откликов пока нет. Активное объявление видно криаторам на доске.
+              Откликов пока нет. Активное объявление видно креаторам на доске.
             </p>
           ) : (
             <ul className={styles.list}>
@@ -1140,7 +1140,7 @@ const CampaignEditor = () => {
 
                   {application.fraudStatus === 'SUSPICIOUS' && (
                     <p className={styles.fraudNote}>
-                      Антифрод заметил признаки накрутки: деньги криатору заморожены до решения
+                      Антифрод заметил признаки накрутки: деньги креатору заморожены до решения
                       платформы. Вы можете отклонить отклик сами.
                     </p>
                   )}

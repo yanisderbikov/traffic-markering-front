@@ -98,7 +98,7 @@ const STRIPS = [
     cells: (data) => [
       { label: 'свободно', value: formatRubles(data?.balanceKopecks ?? 0), tone: 'good' },
       { label: 'в объявлениях', value: formatRubles(data?.allocatedKopecks ?? 0) },
-      { label: 'начислено криаторам', value: formatRubles(data?.spentKopecks ?? 0) },
+      { label: 'начислено креаторам', value: formatRubles(data?.spentKopecks ?? 0) },
     ],
   },
   {

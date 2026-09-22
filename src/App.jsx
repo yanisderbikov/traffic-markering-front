@@ -80,7 +80,7 @@ const PAGE_SEO = {
   },
   '/register': {
     title: 'регистрация — offer',
-    description: 'Регистрация заказчика или криатора в offer.',
+    description: 'Регистрация заказчика или креатора в offer.',
   },
   '/info': {
     title: 'о сервисе — offer',

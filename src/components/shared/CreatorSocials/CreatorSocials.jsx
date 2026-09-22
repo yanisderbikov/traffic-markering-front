@@ -12,7 +12,7 @@ const SOCIAL_FIELDS = [
 ];
 
 /**
- * Соцсети криатора для заказчика: в отклике приходит только имя и телеграм,
+ * Соцсети креатора для заказчика: в отклике приходит только имя и телеграм,
  * а решение «брать или нет» принимается по всем площадкам. Профиль тянем
  * по клику, а не вместе со списком откликов: на объявлении их могут быть десятки,
  * и грузить профиль каждого ради свёрнутого блока незачем.
@@ -50,7 +50,7 @@ const CreatorSocials = ({ userId }) => {
   return (
     <div className={styles.wrap}>
       <button type="button" className={styles.toggle} onClick={toggle} aria-expanded={open}>
-        {open ? 'скрыть соцсети' : 'соцсети криатора'}
+        {open ? 'скрыть соцсети' : 'соцсети креатора'}
       </button>
 
       {open && (
@@ -61,7 +61,7 @@ const CreatorSocials = ({ userId }) => {
             <>
               {profile.bio && <p className={styles.bio}>{profile.bio}</p>}
               {filled.length === 0 ? (
-                <p className={styles.message}>Криатор пока не заполнил соцсети.</p>
+                <p className={styles.message}>Креатор пока не заполнил соцсети.</p>
               ) : (
                 <ul className={styles.socials}>
                   {filled.map((field) => (

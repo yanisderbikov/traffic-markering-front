@@ -122,7 +122,7 @@ const CreatorProfile = () => {
 
   return (
     <div className={styles.wrap}>
-      <h1 className={styles.title}>Профиль криатора</h1>
+      <h1 className={styles.title}>Профиль креатора</h1>
       <p className={styles.subtitle}>
         Имя учётной записи: {profile?.name || '—'}
         {profile?.updatedAt ? ` · обновлён ${formatDate(profile.updatedAt)}` : ''}

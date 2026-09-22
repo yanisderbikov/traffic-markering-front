@@ -26,7 +26,7 @@ const AdminCreators = () => {
       setCreators(Array.isArray(res.data) ? res.data : []);
       setPageError('');
     } catch (err) {
-      setPageError(errorMessage(err, 'Не удалось загрузить криаторов'));
+      setPageError(errorMessage(err, 'Не удалось загрузить креаторов'));
     } finally {
       setLoading(false);
     }
@@ -64,7 +64,7 @@ const AdminCreators = () => {
 
   return (
     <div className={styles.wrap}>
-      <h1 className={styles.title}>Репутация криаторов</h1>
+      <h1 className={styles.title}>Репутация креаторов</h1>
       <p className={styles.subtitle}>
         Новичку оплачивается ограниченное число просмотров на ролик, после трёх чистых оплаченных
         роликов он становится проверенным. Подтверждённая накрутка ограничивает: деньги уходят
@@ -74,7 +74,7 @@ const AdminCreators = () => {
 
       <section className={styles.card}>
         <div className={styles.listHead}>
-          <h2 className={styles.cardTitle}>Криаторы</h2>
+          <h2 className={styles.cardTitle}>Креаторы</h2>
           <div className={styles.controls}>
             <input
               type="search"
@@ -93,7 +93,7 @@ const AdminCreators = () => {
           <p className={styles.message}>Загрузка…</p>
         ) : visible.length === 0 ? (
           <p className={styles.message}>
-            {normalizedQuery ? 'Никого не нашлось по запросу.' : 'Криаторов пока нет.'}
+            {normalizedQuery ? 'Никого не нашлось по запросу.' : 'Креаторов пока нет.'}
           </p>
         ) : (
           <ul className={styles.list}>

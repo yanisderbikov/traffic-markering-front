@@ -20,7 +20,7 @@ const STATUS_CLASS = {
 };
 
 // Взятыми в работу считаем и одобренные, и уже завершённые отклики —
-// по ним криатору начисляются деньги.
+// по ним креатору начисляются деньги.
 const isApproved = (application) =>
   application.status === 'APPROVED' || application.status === 'COMPLETED';
 

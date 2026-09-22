@@ -35,7 +35,7 @@ const SENT_LABEL = {
 };
 
 const OWNER_LABEL = {
-  PAYOUT: 'криатор',
+  PAYOUT: 'креатор',
   TOP_UP: 'заказчик',
   WITHDRAWAL: 'заказчик',
 };

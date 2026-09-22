@@ -60,9 +60,9 @@ export const campaignRequirements = (campaign) => {
     const videos = `до ${limit} ${pluralize(limit, ['ролика', 'роликов', 'роликов'])}`;
     rows.push({
       key: 'limit',
-      label: 'от одного криатора',
+      label: 'от одного креатора',
       value: videos,
-      short: `${videos} от криатора`,
+      short: `${videos} от креатора`,
     });
   }
   const period = describePeriod(campaign.startsAt, campaign.endsAt);

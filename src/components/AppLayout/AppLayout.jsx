@@ -7,7 +7,7 @@ import { ROLE_LABELS } from '../../shared/dictionaries';
 import styles from './AppLayout.module.css';
 
 // Меню кабинета. Группа показывается, только если её секция разрешена роли
-// (см. permissions.js) — заказчик не видит отклики, криатор не видит объявления.
+// (см. permissions.js) — заказчик не видит отклики, креатор не видит объявления.
 const MENU = [
   {
     title: 'объявления',
@@ -41,7 +41,7 @@ const MENU = [
     section: SECTIONS.FRAUD,
     items: [
       { to: '/app/admin/fraud', label: 'Подозрительные ролики' },
-      { to: '/app/admin/fraud/creators', label: 'Репутация криаторов' },
+      { to: '/app/admin/fraud/creators', label: 'Репутация креаторов' },
     ],
   },
   {

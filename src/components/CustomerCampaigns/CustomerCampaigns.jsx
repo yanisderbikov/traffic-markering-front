@@ -59,7 +59,7 @@ const CustomerCampaigns = () => {
           <p className={styles.emptyTitle}>Объявлений пока нет</p>
           <p className={styles.emptyText}>
             Создайте первое: опишите задачу, укажите ставку за 1000 просмотров и бюджет —
-            криаторы увидят его на доске.
+            креаторы увидят его на доске.
           </p>
           <Link to="/app/campaigns/new" className={styles.primaryBtn}>
             Новое объявление

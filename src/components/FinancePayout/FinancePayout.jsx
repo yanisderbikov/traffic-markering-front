@@ -48,7 +48,7 @@ const FinancePayout = () => {
     };
     setErrors(nextErrors);
     if (nextErrors.txId || nextErrors.proofs) return;
-    if (!window.confirm(`Отметить выплату ${amount} отправленной? Криатор увидит её в кабинете.`)) {
+    if (!window.confirm(`Отметить выплату ${amount} отправленной? Креатор увидит её в кабинете.`)) {
       return;
     }
     setBusy(true);
@@ -72,7 +72,7 @@ const FinancePayout = () => {
   };
 
   const reject = async () => {
-    const reason = window.prompt('Причина отклонения — её увидит криатор. Деньги вернутся ему в доступные.');
+    const reason = window.prompt('Причина отклонения — её увидит креатор. Деньги вернутся ему в доступные.');
     if (reason == null) return;
     if (!reason.trim()) {
       toast.error('Без причины отклонить нельзя');
@@ -83,7 +83,7 @@ const FinancePayout = () => {
     try {
       const res = await apiClient.api.rejectOperation(Number(payoutId), { reason: reason.trim() });
       setDetail(res.data);
-      toast.success('Заявка отклонена, деньги возвращены криатору');
+      toast.success('Заявка отклонена, деньги возвращены креатору');
     } catch (err) {
       toast.error(errorMessage(err, 'Не удалось отклонить заявку'));
     } finally {
@@ -126,7 +126,7 @@ const FinancePayout = () => {
             <h2 className={styles.formTitle}>Отправка USDT</h2>
             <p className={styles.formText}>
               Переведите {amount} в USDT (TRC-20) на адрес выше, укажите номер транзакции и
-              приложите скриншот — заявка перейдёт в ожидание подтверждения от криатора.
+              приложите скриншот — заявка перейдёт в ожидание подтверждения от креатора.
             </p>
             <Field label="Номер транзакции *">
               <input
@@ -183,8 +183,8 @@ const FinancePayout = () => {
         {status === 'SENT' && (
           <div className={styles.actions}>
             <p className={styles.formText}>
-              Ждём, когда криатор подтвердит получение. Если перевод не прошёл — отклоните заявку,
-              деньги вернутся криатору в доступные.
+              Ждём, когда креатор подтвердит получение. Если перевод не прошёл — отклоните заявку,
+              деньги вернутся креатору в доступные.
             </p>
             <button type="button" className={styles.dangerBtn} onClick={reject} disabled={busy}>
               Отклонить

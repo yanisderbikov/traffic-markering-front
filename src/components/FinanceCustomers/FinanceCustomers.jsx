@@ -84,7 +84,7 @@ const FinanceCustomers = () => {
           <span className={styles.totalValue}>{formatRubles(totals.allocated)}</span>
         </div>
         <div className={styles.totalItem}>
-          <span className={styles.totalLabel}>начислено криаторам</span>
+          <span className={styles.totalLabel}>начислено креаторам</span>
           <span className={styles.totalValue}>{formatRubles(totals.spent)}</span>
         </div>
       </div>

@@ -110,7 +110,7 @@ const Board = ({ embedded = false }) => {
       {!embedded && (
         <div className={styles.banner}>
           <p className={styles.bannerText}>
-            войдите как криатор, чтобы брать заказы: снимаете ролик, прикрепляете ссылку
+            войдите как креатор, чтобы брать заказы: снимаете ролик, прикрепляете ссылку
             и получаете за просмотры.
           </p>
           <div className={styles.bannerActions}>
