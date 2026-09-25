@@ -3,9 +3,16 @@ import { Link } from 'react-router-dom';
 import apiClient from '../../apiClient';
 import Icon from '../shared/Icon/Icon';
 import { errorMessage } from '../../shared/auth';
+import { CampaignOverviewSkeleton } from './CampaignSkeletons';
 import ui from '../../shared/ui.module.css';
 
-const CampaignLoader = ({ campaignId, children }) => {
+const BackLink = () => (
+  <Link to="/app/campaigns" className={ui.backLink}>
+    <Icon name="arrowLeft" size={16} /> Мои кампании
+  </Link>
+);
+
+const CampaignLoader = ({ campaignId, skeleton = <CampaignOverviewSkeleton />, children }) => {
   const [campaign, setCampaign] = useState(null);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState('');
@@ -28,8 +35,9 @@ const CampaignLoader = ({ campaignId, children }) => {
 
   if (loading) {
     return (
-      <div className={ui.page}>
-        <p className={ui.message}>Загрузка кампании…</p>
+      <div className={ui.page} aria-busy="true">
+        <BackLink />
+        {skeleton}
       </div>
     );
   }
@@ -37,9 +45,7 @@ const CampaignLoader = ({ campaignId, children }) => {
   if (!campaign) {
     return (
       <div className={ui.page}>
-        <Link to="/app/campaigns" className={ui.backLink}>
-          <Icon name="arrowLeft" size={16} /> Мои кампании
-        </Link>
+        <BackLink />
         <p className={ui.errorBanner}>{pageError}</p>
       </div>
     );

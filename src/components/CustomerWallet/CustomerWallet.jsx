@@ -9,6 +9,8 @@ import Icon from '../shared/Icon/Icon';
 import { errorMessage } from '../../shared/auth';
 import { formatRubInput, formatRubles, rubToKopecks } from '../../shared/money';
 import { formatDate } from '../../shared/dictionaries';
+import FitRubles from '../shared/FitRubles/FitRubles';
+import Skeleton from '../shared/Skeleton/Skeleton';
 import ui from '../../shared/ui.module.css';
 import styles from './CustomerWallet.module.css';
 
@@ -90,13 +92,14 @@ const CustomerWallet = () => {
     .reduce((sum, row) => sum + (row.amountKopecks || 0), 0);
   const topUpAvailable = Boolean(wallet?.topUpTronAddress);
 
-  if (loading) {
-    return (
-      <div className={ui.page}>
-        <p className={ui.message}>Загрузка кошелька…</p>
-      </div>
+  const amount = (kopecks, className) =>
+    loading ? (
+      <span className={className}>
+        <Skeleton width="7ch" />
+      </span>
+    ) : (
+      <FitRubles className={className} kopecks={kopecks ?? 0} />
     );
-  }
 
   if (pageError && !wallet) {
     return (
@@ -127,26 +130,30 @@ const CustomerWallet = () => {
 
       {pageError && <p className={ui.errorBanner}>{pageError}</p>}
 
-      <div className={styles.top}>
+      <div className={styles.top} aria-busy={loading || undefined}>
         <section className={styles.balance}>
           <span className={styles.balanceLabel}>Свободно в кошельке</span>
-          <span className={styles.balanceValue}>{formatRubles(wallet?.balanceKopecks ?? 0)}</span>
+          {amount(wallet?.balanceKopecks, styles.balanceValue)}
           <span className={styles.balanceNote}>
-            {onReviewKopecks > 0
-              ? `Ещё ${formatRubles(onReviewKopecks)} на проверке — зачислим, как только увидим перевод`
-              : 'Бюджет кампании резервируется из кошелька при создании'}
+            {transactionsLoading ? (
+              <Skeleton width="min(24rem, 90%)" />
+            ) : onReviewKopecks > 0 ? (
+              `Ещё ${formatRubles(onReviewKopecks)} на проверке — зачислим, как только увидим перевод`
+            ) : (
+              'Бюджет кампании резервируется из кошелька при создании'
+            )}
           </span>
         </section>
 
         <div className={styles.stats}>
           <div className={ui.stat}>
             <span className={ui.statLabel}>В кампаниях</span>
-            <span className={ui.statValue}>{formatRubles(wallet?.allocatedKopecks ?? 0)}</span>
+            {amount(wallet?.allocatedKopecks, ui.statValue)}
             <span className={ui.statNote}>зарезервировано под бюджеты</span>
           </div>
           <div className={ui.stat}>
             <span className={ui.statLabel}>Начислено креаторам</span>
-            <span className={ui.statValue}>{formatRubles(wallet?.spentKopecks ?? 0)}</span>
+            {amount(wallet?.spentKopecks, ui.statValue)}
             <span className={ui.statNote}>за подтверждённые просмотры</span>
           </div>
         </div>
@@ -174,19 +181,19 @@ const CustomerWallet = () => {
                 className={ui.input}
                 aria-invalid={amountError ? 'true' : undefined}
                 autoComplete="off"
-                disabled={creating || !topUpAvailable}
+                disabled={loading || creating || !topUpAvailable}
               />
               <FieldError>{amountError}</FieldError>
             </Field>
             <button
               type="submit"
               className={ui.btnPrimary}
-              disabled={creating || !topUpAvailable}
+              disabled={loading || creating || !topUpAvailable}
             >
               {creating ? 'Создаём…' : 'Создать заявку'}
             </button>
           </div>
-          {!topUpAvailable && (
+          {!loading && !topUpAvailable && (
             <p className={ui.hintWarn}>
               Адрес для пополнения ещё не настроен — напишите менеджеру финансов.
             </p>

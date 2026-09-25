@@ -5,6 +5,7 @@ import Icon from '../shared/Icon/Icon';
 import { CAMPAIGN_STATUS_LABELS } from '../../shared/dictionaries';
 import CampaignLoader from './CampaignLoader';
 import CampaignPreview from './CampaignPreview';
+import { CampaignFormSkeleton } from './CampaignSkeletons';
 import { CAMPAIGN_CHIP, campaignStatusLabel } from './CampaignOverview';
 import { STEP_FIELDS } from './CampaignSections';
 import { FORM_STEPS } from './campaignForm';
@@ -110,7 +111,7 @@ const CampaignEditForm = ({ campaign: initialCampaign }) => {
 const CampaignEditPage = () => {
   const { campaignId } = useParams();
   return (
-    <CampaignLoader key={campaignId} campaignId={campaignId}>
+    <CampaignLoader key={campaignId} campaignId={campaignId} skeleton={<CampaignFormSkeleton />}>
       {({ campaign }) => <CampaignEditForm campaign={campaign} />}
     </CampaignLoader>
   );

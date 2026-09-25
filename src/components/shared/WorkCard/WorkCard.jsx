@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FraudBadge } from '../FraudBadge/FraudBadge';
+import Skeleton from '../Skeleton/Skeleton';
 import { formatRubles, formatViews } from '../../../shared/money';
 import { PLATFORM_LABELS, formatDate } from '../../../shared/dictionaries';
 import { isWorldRegion } from '../../../shared/viewRegion';
@@ -157,5 +158,40 @@ const WorkCard = ({ application, onWithdraw, busy = false }) => {
     </article>
   );
 };
+
+export const WorkCardSkeleton = () => (
+  <article className={styles.card} aria-hidden="true">
+    <div className={styles.head}>
+      <div className={styles.headMain}>
+        <Skeleton width={48} height={48} radius={12} />
+        <div className={styles.titles}>
+          <span className={styles.kicker}>
+            <Skeleton width="18ch" />
+          </span>
+          <h3 className={styles.title}>
+            <Skeleton width="14ch" />
+          </h3>
+        </div>
+      </div>
+      <Skeleton width="10rem" height={30} radius="999px" />
+    </div>
+    <ol className={styles.stages}>
+      {STAGES.map((label) => (
+        <li key={label} className={styles.stage}>
+          <Skeleton width="70%" />
+        </li>
+      ))}
+    </ol>
+    <Skeleton block height={6} radius={3} />
+    <div className={styles.numbers}>
+      <Skeleton width="9rem" />
+      <Skeleton width="8rem" />
+      <Skeleton width="9rem" />
+    </div>
+    <p className={styles.hint}>
+      <Skeleton width="min(28rem, 90%)" />
+    </p>
+  </article>
+);
 
 export default WorkCard;

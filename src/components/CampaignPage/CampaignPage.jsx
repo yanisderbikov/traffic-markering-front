@@ -4,6 +4,7 @@ import apiClient from '../../apiClient';
 import MaterialList from '../shared/MaterialList/MaterialList';
 import SocialIcon from '../shared/SocialIcon/SocialIcon';
 import Icon from '../shared/Icon/Icon';
+import Skeleton, { SkeletonText } from '../shared/Skeleton/Skeleton';
 import { budgetProgress, campaignAvailability } from '../shared/CampaignCard/CampaignCard';
 import { formatRubles, formatViews } from '../../shared/money';
 import { PLATFORM_LABELS } from '../../shared/dictionaries';
@@ -12,6 +13,83 @@ import { campaignRequirements, formatSeconds } from '../../shared/requirements';
 import { DEFAULT_VIEW_REGION, isWorldRegion, viewRegionHint, viewRegionLabel } from '../../shared/viewRegion';
 import ui from '../../shared/ui.module.css';
 import styles from './CampaignPage.module.css';
+
+const SKELETON_TERMS = ['Осталось в бюджете', 'Порог вывода', 'Срок приёма работ', 'Откликов'];
+
+const CampaignPageSkeleton = ({ boardPath }) => (
+  <div className={ui.page} aria-busy="true">
+    <Link to={boardPath} className={ui.backLink}>
+      <Icon name="arrowLeft" size={16} /> К офферам
+    </Link>
+
+    <header className={ui.pageHead}>
+      <div className={ui.pageHeadMain}>
+        <h1 className={ui.title}>
+          <Skeleton width="16ch" />
+        </h1>
+        <p className={styles.crumbs}>
+          <Skeleton width="14rem" />
+        </p>
+      </div>
+    </header>
+
+    <section className={styles.hero}>
+      <div className={styles.heroBody}>
+        <span className={styles.heroKicker}>
+          <Skeleton width="12rem" />
+        </span>
+        <h2 className={styles.heroTitle}>
+          <Skeleton width="min(22ch, 90%)" />
+        </h2>
+        <p className={styles.heroText}>
+          <Skeleton width="min(26rem, 80%)" />
+        </p>
+      </div>
+    </section>
+
+    <div className={styles.columns}>
+      <section className={ui.card}>
+        <div className={ui.chips}>
+          <Skeleton width="6rem" height={30} radius="999px" />
+          <Skeleton width="5rem" height={30} radius="999px" />
+          <Skeleton width="11rem" height={30} radius="999px" />
+        </div>
+        <h2 className={styles.blockTitle}>О кампании</h2>
+        <p className={styles.description}>
+          <SkeletonText lines={4} />
+        </p>
+        <div className={ui.divider} />
+        <h2 className={styles.blockTitle}>Что нужно сделать</h2>
+        <p className={styles.description}>
+          <SkeletonText lines={3} lastWidth="45%" />
+        </p>
+      </section>
+
+      <aside className={styles.aside}>
+        <section className={ui.card}>
+          <span className={ui.eyebrow}>Ставка за результат</span>
+          <p className={styles.rate}>
+            <Skeleton width="5ch" />
+          </p>
+          <p className={styles.rateUnit}>за 1 000 подтверждённых просмотров</p>
+          <div className={ui.divider} />
+          {SKELETON_TERMS.map((label) => (
+            <div key={label} className={ui.kv}>
+              <span className={ui.kvKey}>{label}</span>
+              <span className={ui.kvValue}>
+                <Skeleton width="6ch" />
+              </span>
+            </div>
+          ))}
+          <div className={styles.budgetTrack}>
+            <Skeleton block height={6} radius={3} />
+          </div>
+          <Skeleton block height={52} radius="var(--button-radius)" />
+        </section>
+      </aside>
+    </div>
+  </div>
+);
 
 const CampaignPage = () => {
   const { publicId } = useParams();
@@ -46,11 +124,7 @@ const CampaignPage = () => {
   }, [loadCampaign]);
 
   if (loading) {
-    return (
-      <div className={ui.page}>
-        <p className={ui.message}>Загрузка оффера…</p>
-      </div>
-    );
+    return <CampaignPageSkeleton boardPath={authorized ? '/app/board' : '/board'} />;
   }
 
   if (pageError || !campaign) {

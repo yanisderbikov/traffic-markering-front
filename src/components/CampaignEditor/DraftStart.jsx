@@ -6,6 +6,7 @@ import { errorMessage } from '../../shared/auth';
 import { formatRubles } from '../../shared/money';
 import { formatDate } from '../../shared/dictionaries';
 import { pluralize } from '../../shared/requirements';
+import { CampaignFormSkeleton } from './CampaignSkeletons';
 import {
   CAMPAIGN_STEPS,
   firstIncompleteStep,
@@ -164,7 +165,9 @@ const DraftStart = () => {
           </button>
         </>
       ) : (
-        <p className={ui.message}>Готовим новую кампанию…</p>
+        <div aria-busy="true">
+          <CampaignFormSkeleton stepper />
+        </div>
       )}
     </div>
   );

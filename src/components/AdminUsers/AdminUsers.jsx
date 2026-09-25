@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import FieldError from '../shared/FieldError/FieldError';
 import Field from '../shared/Field/Field';
+import { SkeletonTableRows } from '../shared/Skeleton/Skeleton';
 import { errorMessage } from '../../shared/auth';
 import { clearFieldError, hasErrors, validateEmail } from '../../shared/validation';
 import { ASSIGNABLE_ROLES, ROLE_LABELS, formatDate } from '../../shared/dictionaries';
@@ -18,6 +19,12 @@ const ROLE_CHIP = {
   ADMIN: ui.chipWarning,
   SUPER_ADMIN: ui.chipDanger,
 };
+
+const SKELETON_COLUMNS = [
+  { width: '12ch', lines: 3 },
+  { width: '8rem' },
+  { width: '10rem', className: ui.right },
+];
 
 const emptyForm = { email: '', name: '', role: 'FINANCE_MANAGER' };
 
@@ -189,9 +196,7 @@ const AdminUsers = () => {
 
         {pageError && <p className={ui.errorBanner}>{pageError}</p>}
 
-        {loading ? (
-          <p className={ui.message}>Загрузка пользователей…</p>
-        ) : visible.length === 0 ? (
+        {!loading && visible.length === 0 ? (
           <p className={ui.message}>
             {normalizedQuery ? 'Никого не нашлось по запросу.' : 'Пользователей пока нет.'}
           </p>
@@ -205,7 +210,8 @@ const AdminUsers = () => {
                   <th className={ui.right}>Сменить роль</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody aria-busy={loading || undefined}>
+                {loading && <SkeletonTableRows columns={SKELETON_COLUMNS} />}
                 {visible.map((user) => {
                   const locked = user.role === 'SUPER_ADMIN';
                   return (

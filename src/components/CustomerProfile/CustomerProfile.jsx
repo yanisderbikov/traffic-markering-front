@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import FieldError from '../shared/FieldError/FieldError';
 import Field from '../shared/Field/Field';
+import Skeleton, { SkeletonPageHead } from '../shared/Skeleton/Skeleton';
 import { formatDate } from '../../shared/dictionaries';
 import {
   clearFieldError,
@@ -108,8 +109,20 @@ const CustomerProfile = () => {
 
   if (loading) {
     return (
-      <div className={ui.page}>
-        <p className={ui.message}>Загрузка профиля…</p>
+      <div className={ui.page} aria-busy="true">
+        <SkeletonPageHead eyebrow="Рекламодатель" title="Профиль рекламодателя" />
+        <div className={`${ui.card} ${styles.card}`}>
+          <div className={styles.formGrid}>
+            <Skeleton className={styles.wide} block height={48} radius="var(--field-radius)" />
+            <Skeleton className={styles.wide} block height={138} radius="var(--field-radius)" />
+            {Array.from({ length: 2 }, (_, index) => (
+              <Skeleton key={index} block height={48} radius="var(--field-radius)" />
+            ))}
+          </div>
+          <div className={styles.formActions}>
+            <Skeleton width="8rem" height={44} radius="var(--button-radius)" />
+          </div>
+        </div>
       </div>
     );
   }

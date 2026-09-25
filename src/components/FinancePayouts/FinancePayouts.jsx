@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import apiClient from '../../apiClient';
 import OperationRows from '../shared/OperationRows/OperationRows';
+import Skeleton from '../shared/Skeleton/Skeleton';
 import { errorMessage } from '../../shared/auth';
 import { formatRubles } from '../../shared/money';
 import ui from '../../shared/ui.module.css';
@@ -53,9 +54,13 @@ const FinancePayouts = () => {
           <span className={ui.eyebrow}>Финансы</span>
           <h1 className={ui.title}>Выплаты креаторам</h1>
           <p className={ui.subtitle}>
-            {pendingCount
-              ? `Ждут отправки: ${pendingCount} на ${formatRubles(pendingTotal)}.`
-              : 'Все заявки отправлены — новых пока нет.'}
+            {loading ? (
+              <Skeleton width="min(20rem, 80%)" />
+            ) : pendingCount ? (
+              `Ждут отправки: ${pendingCount} на ${formatRubles(pendingTotal)}.`
+            ) : (
+              'Все заявки отправлены — новых пока нет.'
+            )}
           </p>
         </div>
       </header>
@@ -72,7 +77,7 @@ const FinancePayouts = () => {
               aria-pressed={filter === item.key}
             >
               {item.label}
-              <span className={styles.count}>{count}</span>
+              <span className={styles.count}>{loading ? <Skeleton width="1ch" /> : count}</span>
             </button>
           );
         })}

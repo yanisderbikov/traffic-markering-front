@@ -74,3 +74,26 @@ export const parseIntInput = (value) => {
   const digits = String(value).replace(/\D/g, '');
   return digits === '' ? null : Number(digits);
 };
+
+const COMPACT_RUB_FORMATTER = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
+
+const COMPACT_RUB_UNITS = [
+  { size: 1_000_000_000, suffix: ' млрд ₽' },
+  { size: 1_000_000, suffix: ' млн ₽' },
+  { size: 1_000, suffix: ' к₽' },
+];
+
+const compactRubUnit = (rubles) => {
+  const index = COMPACT_RUB_UNITS.findIndex(({ size }) => rubles >= size);
+  if (index === -1) return null;
+  const roundsToNextUnit = index > 0 && rubles / COMPACT_RUB_UNITS[index].size >= 999.95;
+  return COMPACT_RUB_UNITS[roundsToNextUnit ? index - 1 : index];
+};
+
+export const formatRublesCompact = (kopecks) => {
+  if (kopecks == null) return '—';
+  const rubles = Number(kopecks) / 100;
+  const unit = compactRubUnit(Math.abs(rubles));
+  if (!unit) return formatRubles(kopecks);
+  return `${COMPACT_RUB_FORMATTER.format(rubles / unit.size)}${unit.suffix}`;
+};

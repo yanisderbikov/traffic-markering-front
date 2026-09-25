@@ -1,5 +1,6 @@
 import React from 'react';
 import apiClient from '../../apiClient';
+import Skeleton from '../shared/Skeleton/Skeleton';
 import { formatRubles, rubToKopecks } from '../../shared/money';
 import { viewRegionLabel } from '../../shared/viewRegion';
 import { PLATFORM_LABELS } from '../../shared/dictionaries';
@@ -8,7 +9,7 @@ import ui from '../../shared/ui.module.css';
 import styles from './CampaignEditor.module.css';
 
 const CampaignPreview = ({ editor, showWallet = false }) => {
-  const { form, wallet } = editor;
+  const { form, wallet, walletLoading } = editor;
   const customerName = apiClient.getJwtMetadata()?.name || '';
   const rateKopecks = rubToKopecks(form.rateRub) || 0;
   const budgetKopecks = rubToKopecks(form.budgetRub) || 0;
@@ -63,6 +64,17 @@ const CampaignPreview = ({ editor, showWallet = false }) => {
         </p>
       </section>
 
+      {showWallet && walletLoading && (
+        <section className={ui.card} aria-busy="true">
+          <span className={ui.eyebrow}>Кошелёк</span>
+          <p className={styles.previewRate}>
+            <Skeleton width="7ch" />
+          </p>
+          <p className={styles.previewNote}>
+            <Skeleton width="90%" />
+          </p>
+        </section>
+      )}
       {showWallet && wallet && (
         <section className={ui.card}>
           <span className={ui.eyebrow}>Кошелёк</span>

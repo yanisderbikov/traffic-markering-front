@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import apiClient from '../../../apiClient';
 import SocialIcon from '../SocialIcon/SocialIcon';
+import Skeleton from '../Skeleton/Skeleton';
 import styles from './CreatorSocials.module.css';
 
 const SOCIAL_FIELDS = [
@@ -47,7 +48,20 @@ const CreatorSocials = ({ userId }) => {
 
       {open && (
         <div className={styles.panel}>
-          {loading && <p className={styles.message}>Загрузка профиля…</p>}
+          {loading && (
+            <ul className={styles.socials} aria-busy="true">
+              {SOCIAL_FIELDS.slice(0, 2).map((field) => (
+                <li key={field.key} className={styles.social}>
+                  <span className={styles.socialLabel}>
+                    <Skeleton width="7rem" />
+                  </span>
+                  <span className={styles.socialValue}>
+                    <Skeleton width="10rem" />
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
           {error && <p className={styles.error}>{error}</p>}
           {profile && (
             <>

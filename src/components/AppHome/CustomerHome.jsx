@@ -12,6 +12,8 @@ import {
 import { errorMessage } from '../../shared/auth';
 import { formatRubles, formatViews } from '../../shared/money';
 import { CAMPAIGN_STATUS_LABELS } from '../../shared/dictionaries';
+import FitRubles from '../shared/FitRubles/FitRubles';
+import Skeleton, { SkeletonTableRows } from '../shared/Skeleton/Skeleton';
 import ui from '../../shared/ui.module.css';
 import styles from './AppHome.module.css';
 
@@ -29,6 +31,16 @@ const STATUS_CHIP = {
 };
 
 const CHART_BARS = 7;
+
+const SKELETON_BAR_HEIGHTS = [92, 70, 58, 44, 36, 24, 16];
+
+const SKELETON_TABLE_COLUMNS = [
+  { width: '14ch' },
+  { width: '6ch' },
+  { width: '7ch' },
+  { width: '2ch' },
+  { width: '7rem' },
+];
 
 const formatCompactViews = (views) => {
   const n = Number(views) || 0;
@@ -115,27 +127,47 @@ const CustomerHome = () => {
         <div className={ui.stat}>
           <span className={ui.statLabel}>Подтверждённые просмотры</span>
           <span className={ui.statValue}>
-            {campaigns.loading ? '…' : formatCompactViews(stats.views)}
+            {campaigns.loading ? <Skeleton width="5ch" /> : formatCompactViews(stats.views)}
           </span>
           <span className={ui.statNote}>по всем кампаниям</span>
         </div>
         <div className={ui.stat}>
           <span className={ui.statLabel}>Начислено креаторам</span>
-          <span className={ui.statValue}>{campaigns.loading ? '…' : formatRubles(spent)}</span>
-          <span className={ui.statNote}>из бюджета {formatRubles(allocated)}</span>
+          {campaigns.loading ? (
+            <span className={ui.statValue}>
+              <Skeleton width="6ch" />
+            </span>
+          ) : (
+            <FitRubles className={ui.statValue} kopecks={spent} />
+          )}
+          <span className={ui.statNote}>
+            {campaigns.loading ? <Skeleton width="70%" /> : `из бюджета ${formatRubles(allocated)}`}
+          </span>
         </div>
         <div className={ui.stat}>
           <span className={ui.statLabel}>Средняя цена просмотра</span>
           <span className={ui.statValue}>
-            {campaigns.loading ? '…' : cpv > 0 ? formatRubles(Math.round(cpv)) : '—'}
+            {campaigns.loading ? (
+              <Skeleton width="4ch" />
+            ) : cpv > 0 ? (
+              formatRubles(Math.round(cpv))
+            ) : (
+              '—'
+            )}
           </span>
           <span className={ui.statNote}>в рамках заданных ставок</span>
         </div>
         <div className={ui.stat}>
           <span className={ui.statLabel}>Откликов креаторов</span>
-          <span className={ui.statValue}>{campaigns.loading ? '…' : stats.applications}</span>
+          <span className={ui.statValue}>
+            {campaigns.loading ? <Skeleton width="3ch" /> : stats.applications}
+          </span>
           <span className={ui.statNote}>
-            {stats.active} {plural(stats.active, ['активная кампания', 'активные кампании', 'активных кампаний'])}
+            {campaigns.loading ? (
+              <Skeleton width="70%" />
+            ) : (
+              `${stats.active} ${plural(stats.active, ['активная кампания', 'активные кампании', 'активных кампаний'])}`
+            )}
           </span>
         </div>
       </div>
@@ -146,7 +178,19 @@ const CustomerHome = () => {
             <h2 className={ui.cardTitle}>Просмотры по кампаниям</h2>
           </div>
           {campaigns.loading ? (
-            <p className={ui.message}>Загрузка…</p>
+            <div className={styles.chart} aria-busy="true">
+              {SKELETON_BAR_HEIGHTS.map((height, index) => (
+                <span key={index} className={styles.bar}>
+                  <span className={styles.barValue}>
+                    <Skeleton width="4ch" />
+                  </span>
+                  <Skeleton block width="min(100%, 64px)" height={`${height}%`} radius={8} />
+                  <span className={styles.barLabel}>
+                    <Skeleton width="70%" />
+                  </span>
+                </span>
+              ))}
+            </div>
           ) : topByViews.length === 0 ? (
             <p className={ui.message}>
               Просмотров пока нет. Они появятся, когда креаторы опубликуют первые ролики.
@@ -175,19 +219,27 @@ const CustomerHome = () => {
         <section className={ui.card}>
           <h2 className={ui.cardTitle}>Бюджет под контролем</h2>
           <p className={styles.budgetValue}>
-            {campaigns.loading ? '…' : formatRubles(remaining)}
+            {campaigns.loading ? <Skeleton width="7ch" /> : formatRubles(remaining)}
           </p>
           <p className={styles.budgetNote}>Осталось в активных кампаниях</p>
-          <div className={ui.track} aria-hidden="true">
-            <div className={ui.fill} style={{ width: `${usedPercent}%` }} />
-          </div>
-          <p className={styles.budgetNote}>Использовано {usedPercent}% бюджета</p>
+          {campaigns.loading ? (
+            <Skeleton block height={6} radius={3} />
+          ) : (
+            <div className={ui.track} aria-hidden="true">
+              <div className={ui.fill} style={{ width: `${usedPercent}%` }} />
+            </div>
+          )}
           <p className={styles.budgetNote}>
-            {wallet.loading
-              ? 'Кошелёк: …'
-              : wallet.error
-                ? errorMessage(wallet.error, 'Кошелёк недоступен')
-                : `Свободно в кошельке: ${formatRubles(wallet.data?.balanceKopecks ?? 0)}`}
+            {campaigns.loading ? <Skeleton width="12rem" /> : `Использовано ${usedPercent}% бюджета`}
+          </p>
+          <p className={styles.budgetNote}>
+            {wallet.loading ? (
+              <Skeleton width="14rem" />
+            ) : wallet.error ? (
+              errorMessage(wallet.error, 'Кошелёк недоступен')
+            ) : (
+              `Свободно в кошельке: ${formatRubles(wallet.data?.balanceKopecks ?? 0)}`
+            )}
           </p>
           <Link to="/app/wallet" className={`${ui.btnSecondary} ${ui.btnBlock}`}>
             Управлять бюджетом
@@ -202,9 +254,7 @@ const CustomerHome = () => {
         </Link>
       </div>
       <section className={ui.card}>
-        {campaigns.loading ? (
-          <p className={ui.message}>Загрузка кампаний…</p>
-        ) : active.length === 0 ? (
+        {!campaigns.loading && active.length === 0 ? (
           <div className={ui.empty}>
             <p className={ui.emptyTitle}>Активных кампаний нет</p>
             <p className={ui.emptyText}>
@@ -226,7 +276,8 @@ const CustomerHome = () => {
                   <th>Статус</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody aria-busy={campaigns.loading || undefined}>
+                {campaigns.loading && <SkeletonTableRows columns={SKELETON_TABLE_COLUMNS} />}
                 {active.map((row) => (
                   <tr key={row.id}>
                     <td>

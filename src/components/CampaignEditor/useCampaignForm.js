@@ -33,7 +33,9 @@ const useCampaignForm = (initialCampaign) => {
   const [link, setLink] = useState({ url: '', title: '' });
   const [linkError, setLinkError] = useState('');
   const [wallet, setWallet] = useState(null);
+  const [walletLoading, setWalletLoading] = useState(true);
   const [benchmarks, setBenchmarks] = useState(null);
+  const [benchmarksLoading, setBenchmarksLoading] = useState(true);
   const ratePrefilled = useRef(false);
   const ownsWallet = apiClient.getJwtMetadata()?.role === 'CUSTOMER';
 
@@ -43,6 +45,8 @@ const useCampaignForm = (initialCampaign) => {
       setWallet(res.data);
     } catch {
       setWallet(null);
+    } finally {
+      setWalletLoading(false);
     }
   }, []);
 
@@ -54,7 +58,8 @@ const useCampaignForm = (initialCampaign) => {
     apiClient.api
       .campaignBenchmarks()
       .then((res) => setBenchmarks(res.data))
-      .catch(() => setBenchmarks(null));
+      .catch(() => setBenchmarks(null))
+      .finally(() => setBenchmarksLoading(false));
   }, []);
 
   useEffect(() => {
@@ -321,7 +326,9 @@ const useCampaignForm = (initialCampaign) => {
     link,
     linkError,
     wallet,
+    walletLoading,
     benchmarks,
+    benchmarksLoading,
     availableKopecks,
     savedBudgetKopecks,
     setField,

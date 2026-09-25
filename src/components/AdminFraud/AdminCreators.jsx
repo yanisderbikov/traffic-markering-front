@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import { TrustBadge } from '../shared/FraudBadge/FraudBadge';
 import { errorMessage } from '../../shared/auth';
+import AdminListSkeleton from './AdminListSkeleton';
 import { TRUST_LEVELS, TRUST_LEVEL_LABELS, formatDate } from '../../shared/dictionaries';
 import ui from '../../shared/ui.module.css';
 import styles from './AdminFraud.module.css';
@@ -96,7 +97,7 @@ const AdminCreators = () => {
         {pageError && <p className={ui.errorBanner}>{pageError}</p>}
 
         {loading ? (
-          <p className={ui.message}>Загрузка…</p>
+          <AdminListSkeleton meta={false} />
         ) : visible.length === 0 ? (
           <p className={ui.message}>
             {normalizedQuery ? 'Никого не нашлось по запросу.' : 'Креаторов пока нет.'}

@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
-import TransferCard from '../shared/TransferCard/TransferCard';
+import TransferCard, { TransferCardSkeleton } from '../shared/TransferCard/TransferCard';
+import { SkeletonPageHead } from '../shared/Skeleton/Skeleton';
 import ProofUploader from '../shared/ProofUploader/ProofUploader';
 import FieldError from '../shared/FieldError/FieldError';
 import Field from '../shared/Field/Field';
@@ -102,9 +103,10 @@ const FinancePayout = () => {
 
   if (loading) {
     return (
-      <div className={`${ui.page} ${styles.narrow}`}>
+      <div className={`${ui.page} ${styles.narrow}`} aria-busy="true">
         {backLink}
-        <p className={ui.message}>Загрузка заявки…</p>
+        <SkeletonPageHead eyebrow="Финансы" title="Заявка на выплату" subtitle={false} />
+        <TransferCardSkeleton />
       </div>
     );
   }

@@ -4,6 +4,7 @@ import { formatRubles, signedRubles } from '../../../shared/money';
 import { WALLET_TRANSACTION_LABELS, formatDate } from '../../../shared/dictionaries';
 import { MoneyFlow, StatusBadge } from '../OperationRows/OperationRows';
 import Icon from '../Icon/Icon';
+import Skeleton from '../Skeleton/Skeleton';
 import styles from './TransferCard.module.css';
 
 const URL_SPLIT_RE = /(https?:\/\/\S+)/g;
@@ -235,5 +236,35 @@ const TransferCard = ({ detail, showOwner = false, children }) => {
     </section>
   );
 };
+
+const SKELETON_FACTS = ['16rem', '12rem', '20rem', '9rem', '18rem'];
+
+export const TransferCardSkeleton = () => (
+  <section className={styles.card} aria-busy="true">
+    <div className={styles.head}>
+      <div className={styles.headMain}>
+        <span className={styles.type}>
+          <Skeleton width="9ch" />
+        </span>
+        <span className={styles.amount}>
+          <Skeleton width="7ch" />
+        </span>
+      </div>
+      <Skeleton width="8rem" height={28} radius="999px" />
+    </div>
+    <dl className={styles.facts}>
+      {SKELETON_FACTS.map((width, index) => (
+        <React.Fragment key={index}>
+          <dt>
+            <Skeleton width="7rem" />
+          </dt>
+          <dd>
+            <Skeleton width={width} />
+          </dd>
+        </React.Fragment>
+      ))}
+    </dl>
+  </section>
+);
 
 export default TransferCard;

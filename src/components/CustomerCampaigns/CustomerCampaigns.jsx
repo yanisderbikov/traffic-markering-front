@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import apiClient from '../../apiClient';
 import BudgetBar from '../shared/BudgetBar/BudgetBar';
 import PlatformList from '../shared/PlatformList/PlatformList';
+import Skeleton from '../shared/Skeleton/Skeleton';
 import { formatRubles, formatViews } from '../../shared/money';
 import { CAMPAIGN_STATUS_LABELS, formatDate } from '../../shared/dictionaries';
 import { DEFAULT_VIEW_REGION, viewRegionLabel } from '../../shared/viewRegion';
@@ -24,6 +25,36 @@ const FILTERS = [
   { id: 'DRAFT', label: 'Черновики' },
   { id: 'COMPLETED', label: 'Завершённые' },
 ];
+
+const SKELETON_ROWS = 3;
+
+const CampaignRowSkeleton = () => (
+  <li aria-hidden="true">
+    <div className={`${ui.card} ${styles.row}`}>
+      <div className={styles.media}>
+        <Skeleton block height="100%" radius={0} />
+      </div>
+      <div className={styles.body}>
+        <div className={styles.head}>
+          <h2 className={styles.title}>
+            <Skeleton width="16ch" />
+          </h2>
+          <Skeleton width="6rem" height={30} radius="999px" />
+        </div>
+        <div className={styles.rateRow}>
+          <span className={styles.rate}>
+            <Skeleton width="12rem" />
+          </span>
+          <Skeleton width="6rem" />
+        </div>
+        <Skeleton block height={6} radius={3} />
+        <p className={styles.meta}>
+          <Skeleton width="min(26rem, 90%)" />
+        </p>
+      </div>
+    </div>
+  </li>
+);
 
 const DraftProgress = ({ campaign }) => {
   const missing = missingLabels(formFromCampaign(campaign));
@@ -92,14 +123,17 @@ const CustomerCampaigns = () => {
             className={filter === item.id ? ui.chipActive : ui.chip}
             onClick={() => setFilter(item.id)}
           >
-            {item.label}
-            {!loading && ` ${countOf(item.id)}`}
+            {item.label} {loading ? <Skeleton width="1ch" /> : countOf(item.id)}
           </button>
         ))}
       </div>
 
       {loading ? (
-        <p className={ui.message}>Загрузка кампаний…</p>
+        <ul className={styles.list} aria-busy="true">
+          {Array.from({ length: SKELETON_ROWS }, (_, index) => (
+            <CampaignRowSkeleton key={index} />
+          ))}
+        </ul>
       ) : campaigns.length === 0 ? (
         <div className={ui.empty}>
           <p className={ui.emptyTitle}>Кампаний пока нет</p>

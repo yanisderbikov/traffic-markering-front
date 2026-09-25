@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import apiClient from '../../apiClient';
 import OperationRows from '../shared/OperationRows/OperationRows';
+import Skeleton from '../shared/Skeleton/Skeleton';
 import { errorMessage } from '../../shared/auth';
 import { formatRubles } from '../../shared/money';
 import ui from '../../shared/ui.module.css';
@@ -46,9 +47,13 @@ const FinanceTopUps = () => {
           <span className={ui.eyebrow}>Финансы</span>
           <h1 className={ui.title}>Пополнения</h1>
           <p className={ui.subtitle}>
-            {onReview.length
-              ? `На проверке: ${onReview.length} на ${formatRubles(onReviewTotal)}. Сверьте поступление на адрес платформы и зачислите.`
-              : 'Рекламодатели заводят заявки сами — сейчас проверять нечего.'}
+            {loading ? (
+              <Skeleton width="min(28rem, 90%)" />
+            ) : onReview.length ? (
+              `На проверке: ${onReview.length} на ${formatRubles(onReviewTotal)}. Сверьте поступление на адрес платформы и зачислите.`
+            ) : (
+              'Рекламодатели заводят заявки сами — сейчас проверять нечего.'
+            )}
           </p>
         </div>
       </header>
@@ -65,7 +70,7 @@ const FinanceTopUps = () => {
               aria-pressed={filter === item.key}
             >
               {item.label}
-              <span className={styles.count}>{count}</span>
+              <span className={styles.count}>{loading ? <Skeleton width="1ch" /> : count}</span>
             </button>
           );
         })}

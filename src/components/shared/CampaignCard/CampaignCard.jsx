@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import SocialIcon from '../SocialIcon/SocialIcon';
+import Skeleton from '../Skeleton/Skeleton';
 import { formatRubles } from '../../../shared/money';
 import { PLATFORM_LABELS } from '../../../shared/dictionaries';
 import { formatDay, periodState } from '../../../shared/dates';
@@ -33,6 +34,19 @@ export const campaignAvailability = (campaign) => {
   };
 };
 
+const TicketStub = ({ patternId }) => (
+  <div className={styles.stub} aria-hidden="true">
+    <svg className={styles.teeth} width="10" height="100%">
+      <defs>
+        <pattern id={patternId} width="10" height="16" patternUnits="userSpaceOnUse">
+          <path d={TEETH} fill="currentColor" />
+        </pattern>
+      </defs>
+      <rect width="10" height="100%" fill={`url(#${patternId})`} />
+    </svg>
+  </div>
+);
+
 const CampaignCard = ({ campaign, to, index }) => {
   if (!campaign) return null;
 
@@ -42,7 +56,6 @@ const CampaignCard = ({ campaign, to, index }) => {
   const region = campaign.viewRegion || DEFAULT_VIEW_REGION;
   const { budget, spent, percent } = budgetProgress(campaign);
   const availability = campaignAvailability(campaign);
-  const patternId = `teeth-${campaign.publicId || campaign.id}`;
 
   return (
     <Link to={target} className={styles.card}>
@@ -88,18 +101,41 @@ const CampaignCard = ({ campaign, to, index }) => {
         </p>
       </div>
 
-      <div className={styles.stub} aria-hidden="true">
-        <svg className={styles.teeth} width="10" height="100%">
-          <defs>
-            <pattern id={patternId} width="10" height="16" patternUnits="userSpaceOnUse">
-              <path d={TEETH} fill="currentColor" />
-            </pattern>
-          </defs>
-          <rect width="10" height="100%" fill={`url(#${patternId})`} />
-        </svg>
-      </div>
+      <TicketStub patternId={`teeth-${campaign.publicId || campaign.id}`} />
     </Link>
   );
 };
+
+export const CampaignCardSkeleton = ({ index }) => (
+  <div className={styles.card} aria-hidden="true">
+    <div className={styles.body}>
+      <p className={styles.kicker}>
+        <Skeleton width="16ch" />
+      </p>
+      <h2 className={styles.title}>
+        <Skeleton width="80%" />
+      </h2>
+      <div className={styles.chips}>
+        <Skeleton width="6.5rem" height={28} radius="999px" />
+        <Skeleton width="5.5rem" height={28} radius="999px" />
+      </div>
+      <p className={styles.rate}>
+        <span className={styles.rateValue}>
+          <Skeleton width="5ch" />
+        </span>
+        <Skeleton width="9rem" />
+      </p>
+      <div className={styles.budget}>
+        <Skeleton width="14rem" />
+        <Skeleton width="3ch" />
+      </div>
+      <Skeleton block height={5} radius={3} />
+      <p className={styles.footer}>
+        <Skeleton width="12rem" />
+      </p>
+    </div>
+    <TicketStub patternId={`teeth-skeleton-${index}`} />
+  </div>
+);
 
 export default CampaignCard;

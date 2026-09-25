@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import { formatRubles } from '../../shared/money';
-import WorkCard from '../shared/WorkCard/WorkCard';
+import WorkCard, { WorkCardSkeleton } from '../shared/WorkCard/WorkCard';
+import Skeleton from '../shared/Skeleton/Skeleton';
 import Icon from '../shared/Icon/Icon';
 import ui from '../../shared/ui.module.css';
 import styles from './CreatorApplications.module.css';
@@ -14,6 +15,8 @@ const isActiveWork = (application) =>
   application.status === 'PENDING' || application.status === 'APPROVED';
 const isFinishedWork = (application) =>
   application.status === 'COMPLETED' || application.status === 'REJECTED';
+
+const SKELETON_WORKS = 3;
 
 const TABS = [
   { id: 'active', label: 'В работе', match: isActiveWork },
@@ -116,18 +119,20 @@ const CreatorApplications = () => {
       <div className={ui.grid3}>
         <div className={ui.stat}>
           <span className={ui.statLabel}>Всего работ</span>
-          <span className={ui.statValue}>{loading ? '…' : applications.length}</span>
+          <span className={ui.statValue}>
+            {loading ? <Skeleton width="2ch" /> : applications.length}
+          </span>
           <span className={ui.statNote}>откликов на офферы</span>
         </div>
         <div className={ui.stat}>
           <span className={ui.statLabel}>В работе</span>
-          <span className={ui.statValue}>{loading ? '…' : approvedCount}</span>
+          <span className={ui.statValue}>{loading ? <Skeleton width="2ch" /> : approvedCount}</span>
           <span className={ui.statNote}>одобрено брендом</span>
         </div>
         <div className={ui.stat}>
           <span className={ui.statLabel}>Заработано</span>
           <span className={`${ui.statValue} ${ui.statUp}`}>
-            {loading ? '…' : formatRubles(earnedKopecks)}
+            {loading ? <Skeleton width="6ch" /> : formatRubles(earnedKopecks)}
           </span>
           <span className={ui.statNote}>начислено за просмотры</span>
         </div>
@@ -145,13 +150,18 @@ const CreatorApplications = () => {
             className={tab === item.id ? ui.chipActive : ui.chip}
             onClick={() => setTab(item.id)}
           >
-            {item.label} {applications.filter(item.match).length}
+            {item.label}{' '}
+            {loading ? <Skeleton width="1ch" /> : applications.filter(item.match).length}
           </button>
         ))}
       </div>
 
       {loading ? (
-        <p className={ui.message}>Загрузка работ…</p>
+        <div className={styles.list} aria-busy="true">
+          {Array.from({ length: SKELETON_WORKS }, (_, index) => (
+            <WorkCardSkeleton key={index} />
+          ))}
+        </div>
       ) : shown.length === 0 ? (
         <div className={ui.empty}>
           <p className={ui.emptyTitle}>{EMPTY_TITLE[tab]}</p>

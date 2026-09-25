@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
-import TransferCard from '../shared/TransferCard/TransferCard';
+import TransferCard, { TransferCardSkeleton } from '../shared/TransferCard/TransferCard';
+import { SkeletonPageHead } from '../shared/Skeleton/Skeleton';
 import ProofUploader from '../shared/ProofUploader/ProofUploader';
 import Field from '../shared/Field/Field';
 import Icon from '../shared/Icon/Icon';
@@ -141,9 +142,10 @@ const OperationPage = ({ scope = 'earnings' }) => {
 
   if (loading) {
     return (
-      <div className={`${ui.page} ${styles.narrow}`}>
+      <div className={`${ui.page} ${styles.narrow}`} aria-busy="true">
         {backLink}
-        <p className={ui.message}>Загрузка операции…</p>
+        <SkeletonPageHead eyebrow="Операция" subtitle={false} />
+        <TransferCardSkeleton />
       </div>
     );
   }

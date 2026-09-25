@@ -6,6 +6,7 @@ import { errorMessage } from '../../shared/auth';
 import { formatRubles, formatViews } from '../../shared/money';
 import { ROLE_LABELS } from '../../shared/dictionaries';
 import { useRequest } from './useRequest';
+import Skeleton from '../shared/Skeleton/Skeleton';
 import {
   applicationStats,
   asList,
@@ -147,8 +148,8 @@ const Strip = ({ strip, state }) => {
           {cells.map((cell) => (
             <div key={cell.label} className={styles.stripCell}>
               <span className={styles.stripLabel}>{cell.label}</span>
-              <span className={`${styles.stripValue} ${loading ? ui.faint : TONE_CLASS[cell.tone] || ''}`}>
-                {loading ? '…' : cell.value}
+              <span className={`${styles.stripValue} ${loading ? '' : TONE_CLASS[cell.tone] || ''}`}>
+                {loading ? <Skeleton width="5ch" /> : cell.value}
               </span>
             </div>
           ))}

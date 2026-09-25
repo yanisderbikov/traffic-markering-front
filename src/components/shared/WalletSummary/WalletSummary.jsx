@@ -1,22 +1,34 @@
 import React from 'react';
-import { formatRubles } from '../../../shared/money';
+import FitRubles from '../FitRubles/FitRubles';
+import Skeleton from '../Skeleton/Skeleton';
 import styles from './WalletSummary.module.css';
 
-const WalletSummary = ({ wallet }) => (
-  <div className={styles.summary}>
+const Amount = ({ loading, kopecks, className }) =>
+  loading ? (
+    <span className={className}>
+      <Skeleton width="7ch" />
+    </span>
+  ) : (
+    <FitRubles className={className} kopecks={kopecks ?? 0} />
+  );
+
+const WalletSummary = ({ wallet, loading = false }) => (
+  <div className={styles.summary} aria-busy={loading || undefined}>
     <div className={styles.item}>
       <span className={styles.label}>Свободно</span>
-      <span className={`${styles.value} ${styles.free}`}>
-        {formatRubles(wallet?.balanceKopecks ?? 0)}
-      </span>
+      <Amount
+        loading={loading}
+        className={`${styles.value} ${styles.free}`}
+        kopecks={wallet?.balanceKopecks}
+      />
     </div>
     <div className={styles.item}>
       <span className={styles.label}>В кампаниях</span>
-      <span className={styles.value}>{formatRubles(wallet?.allocatedKopecks ?? 0)}</span>
+      <Amount loading={loading} className={styles.value} kopecks={wallet?.allocatedKopecks} />
     </div>
     <div className={styles.item}>
       <span className={styles.label}>Начислено креаторам</span>
-      <span className={styles.value}>{formatRubles(wallet?.spentKopecks ?? 0)}</span>
+      <Amount loading={loading} className={styles.value} kopecks={wallet?.spentKopecks} />
     </div>
   </div>
 );

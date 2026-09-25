@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import apiClient from '../../apiClient';
 import OperationRows from '../shared/OperationRows/OperationRows';
+import Skeleton from '../shared/Skeleton/Skeleton';
 import { errorMessage } from '../../shared/auth';
 import { OPERATION_STATUS_LABELS, WALLET_TRANSACTION_LABELS } from '../../shared/dictionaries';
 import { financeOperationLink } from '../../shared/routes';
@@ -98,7 +99,7 @@ const FinanceOperations = () => {
           ))}
         </select>
         <span className={styles.count}>
-          {visible.length} из {rows.length}
+          {loading ? <Skeleton width="6ch" /> : `${visible.length} из ${rows.length}`}
         </span>
       </div>
 

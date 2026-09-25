@@ -5,6 +5,7 @@ import apiClient from '../../apiClient';
 import FieldError from '../shared/FieldError/FieldError';
 import SocialIcon from '../shared/SocialIcon/SocialIcon';
 import Icon from '../shared/Icon/Icon';
+import Skeleton, { SkeletonPageHead } from '../shared/Skeleton/Skeleton';
 import { formatRubles } from '../../shared/money';
 import { CAMPAIGN_STATUS_LABELS, PLATFORM_LABELS } from '../../shared/dictionaries';
 import { formatDay, periodState } from '../../shared/dates';
@@ -19,6 +20,49 @@ import {
 import { detectPlatform } from '../../shared/video';
 import ui from '../../shared/ui.module.css';
 import styles from './ApplyPage.module.css';
+
+const ApplySkeleton = () => (
+  <div aria-busy="true">
+    <SkeletonPageHead eyebrow="Креатор" title="Отклик на оффер" />
+    <div className={styles.columns}>
+      <div className={`${ui.card} ${styles.form}`}>
+        <div className={styles.field}>
+          <span className={ui.label}>Ссылка на ролик *</span>
+          <Skeleton block height={48} radius="var(--field-radius)" />
+        </div>
+        <div className={styles.field}>
+          <span className={ui.label}>Комментарий заказчику</span>
+          <Skeleton block height={120} radius="var(--field-radius)" />
+        </div>
+        <div className={styles.actions}>
+          <Skeleton width="11rem" height={44} radius="var(--button-radius)" />
+          <Skeleton width="7rem" height={44} radius="var(--button-radius)" />
+        </div>
+      </div>
+      <aside className={styles.aside}>
+        <section className={ui.card}>
+          <span className={ui.eyebrow}>Ставка за результат</span>
+          <p className={styles.rate}>
+            <Skeleton width="5ch" />
+          </p>
+          <p className={styles.rateUnit}>за 1 000 подтверждённых просмотров</p>
+          <div className={ui.divider} />
+          <div className={ui.chips}>
+            <Skeleton width="6rem" height={30} radius="999px" />
+            <Skeleton width="5rem" height={30} radius="999px" />
+          </div>
+          <div className={ui.divider} />
+          {Array.from({ length: 3 }, (_, index) => (
+            <div key={index} className={ui.kv}>
+              <Skeleton width="8rem" />
+              <Skeleton width="5rem" />
+            </div>
+          ))}
+        </section>
+      </aside>
+    </div>
+  </div>
+);
 
 const emptyForm = {
   videoUrl: '',
@@ -179,7 +223,7 @@ const ApplyPage = () => {
       </Link>
 
       {loading ? (
-        <p className={ui.message}>Загрузка оффера…</p>
+        <ApplySkeleton />
       ) : pageError ? (
         <p className={ui.errorBanner}>{pageError}</p>
       ) : !campaign ? (

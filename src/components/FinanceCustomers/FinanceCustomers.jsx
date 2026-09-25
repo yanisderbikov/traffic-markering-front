@@ -3,8 +3,18 @@ import { Link } from 'react-router-dom';
 import apiClient from '../../apiClient';
 import { errorMessage } from '../../shared/auth';
 import { formatRubles } from '../../shared/money';
+import FitRubles from '../shared/FitRubles/FitRubles';
+import Skeleton, { SkeletonTableRows } from '../shared/Skeleton/Skeleton';
 import ui from '../../shared/ui.module.css';
 import styles from './FinanceCustomers.module.css';
+
+const SKELETON_COLUMNS = [
+  { width: '14ch', lines: 2 },
+  { width: '8ch', className: ui.right },
+  { width: '8ch', className: ui.right },
+  { width: '8ch', className: ui.right },
+  { width: '8ch', className: ui.right },
+];
 
 const matches = (wallet, query) =>
   [wallet.customerName, wallet.customerEmail, wallet.customerCompany]
@@ -52,6 +62,15 @@ const FinanceCustomers = () => {
     [wallets]
   );
 
+  const amount = (kopecks, className) =>
+    loading ? (
+      <span className={className}>
+        <Skeleton width="7ch" />
+      </span>
+    ) : (
+      <FitRubles className={className} kopecks={kopecks} />
+    );
+
   return (
     <div className={ui.page}>
       <header className={ui.pageHead}>
@@ -76,29 +95,27 @@ const FinanceCustomers = () => {
 
       {pageError && <p className={ui.errorBanner}>{pageError}</p>}
 
-      <div className={`${ui.grid4} ${styles.totals}`}>
+      <div className={`${ui.grid4} ${styles.totals}`} aria-busy={loading || undefined}>
         <div className={ui.stat}>
           <span className={ui.statLabel}>Рекламодателей</span>
-          <span className={ui.statValue}>{wallets.length}</span>
+          <span className={ui.statValue}>{loading ? <Skeleton width="3ch" /> : wallets.length}</span>
         </div>
         <div className={ui.stat}>
           <span className={ui.statLabel}>Свободно всего</span>
-          <span className={`${ui.statValue} ${ui.success}`}>{formatRubles(totals.balance)}</span>
+          {amount(totals.balance, `${ui.statValue} ${ui.success}`)}
         </div>
         <div className={ui.stat}>
           <span className={ui.statLabel}>В кампаниях</span>
-          <span className={ui.statValue}>{formatRubles(totals.allocated)}</span>
+          {amount(totals.allocated, ui.statValue)}
         </div>
         <div className={ui.stat}>
           <span className={ui.statLabel}>Начислено креаторам</span>
-          <span className={ui.statValue}>{formatRubles(totals.spent)}</span>
+          {amount(totals.spent, ui.statValue)}
         </div>
       </div>
 
       <section className={ui.card}>
-        {loading ? (
-          <p className={ui.message}>Загрузка кошельков…</p>
-        ) : visible.length === 0 ? (
+        {!loading && visible.length === 0 ? (
           <p className={ui.message}>
             {normalizedQuery ? 'Никого не нашлось по запросу.' : 'Рекламодателей с кошельком пока нет.'}
           </p>
@@ -114,7 +131,8 @@ const FinanceCustomers = () => {
                   <th />
                 </tr>
               </thead>
-              <tbody>
+              <tbody aria-busy={loading || undefined}>
+                {loading && <SkeletonTableRows columns={SKELETON_COLUMNS} />}
                 {visible.map((wallet) => (
                   <tr key={wallet.userId}>
                     <td>

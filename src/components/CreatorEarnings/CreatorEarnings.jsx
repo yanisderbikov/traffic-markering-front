@@ -7,6 +7,8 @@ import OperationRows from '../shared/OperationRows/OperationRows';
 import { errorMessage } from '../../shared/auth';
 import { formatRubInput, formatRubles, kopecksToRub, rubToKopecks } from '../../shared/money';
 import { pluralize } from '../../shared/requirements';
+import FitRubles from '../shared/FitRubles/FitRubles';
+import Skeleton from '../shared/Skeleton/Skeleton';
 import ui from '../../shared/ui.module.css';
 import styles from './CreatorEarnings.module.css';
 
@@ -102,14 +104,6 @@ const CreatorEarnings = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className={ui.page}>
-        <p className={ui.message}>Загрузка финансов…</p>
-      </div>
-    );
-  }
-
   if (pageError && !wallet) {
     return (
       <div className={ui.page}>
@@ -125,6 +119,15 @@ const CreatorEarnings = () => {
   const confirmedPayouts = rows.filter(
     (row) => row.type === 'PAYOUT' && row.status === 'CONFIRMED'
   ).length;
+
+  const amount = (kopecks, className) =>
+    loading ? (
+      <span className={className}>
+        <Skeleton width="7ch" />
+      </span>
+    ) : (
+      <FitRubles className={className} kopecks={kopecks ?? 0} />
+    );
 
   return (
     <div className={ui.page}>
@@ -146,15 +149,19 @@ const CreatorEarnings = () => {
         </div>
       </header>
 
-      <div className={styles.top}>
+      <div className={styles.top} aria-busy={loading || undefined}>
         <section className={styles.balance}>
           <span className={styles.balanceLabel}>Доступно к выводу</span>
-          <span className={styles.balanceValue}>{formatRubles(balance)}</span>
+          {amount(balance, styles.balanceValue)}
           <div className={styles.balanceRow}>
             <span className={styles.balanceNote}>
-              {canPayout
-                ? 'Вывод в USDT на кошелёк TRON (TRC-20)'
-                : 'Пока нечего выводить: деньги появятся, когда заработанное по офферу дойдёт до его порога'}
+              {loading ? (
+                <Skeleton width="min(22rem, 90%)" />
+              ) : canPayout ? (
+                'Вывод в USDT на кошелёк TRON (TRC-20)'
+              ) : (
+                'Пока нечего выводить: деньги появятся, когда заработанное по офферу дойдёт до его порога'
+              )}
             </span>
             {canPayout && (
               <button type="button" className={ui.btnOnAccent} onClick={openForm} disabled={formOpen}>
@@ -165,16 +172,20 @@ const CreatorEarnings = () => {
         </section>
         <div className={ui.stat}>
           <span className={ui.statLabel}>Ожидает подтверждения</span>
-          <span className={ui.statValue}>{formatRubles(wallet?.pendingKopecks ?? 0)}</span>
+          {amount(wallet?.pendingKopecks, ui.statValue)}
           <span className={ui.statNote}>просмотры моложе 7 дней и ниже порога вывода</span>
         </div>
         <div className={ui.stat}>
           <span className={ui.statLabel}>Выплачено за всё время</span>
-          <span className={ui.statValue}>{formatRubles(wallet?.paidOutKopecks ?? 0)}</span>
+          {amount(wallet?.paidOutKopecks, ui.statValue)}
           <span className={`${ui.statNote} ${confirmedPayouts ? ui.statUp : ''}`}>
-            {confirmedPayouts
-              ? `${confirmedPayouts} ${pluralize(confirmedPayouts, ['успешная выплата', 'успешные выплаты', 'успешных выплат'])}`
-              : `в заявках ${formatRubles(wallet?.reservedKopecks ?? 0)}`}
+            {loading || rowsLoading ? (
+              <Skeleton width="70%" />
+            ) : confirmedPayouts ? (
+              `${confirmedPayouts} ${pluralize(confirmedPayouts, ['успешная выплата', 'успешные выплаты', 'успешных выплат'])}`
+            ) : (
+              `в заявках ${formatRubles(wallet?.reservedKopecks ?? 0)}`
+            )}
           </span>
         </div>
       </div>

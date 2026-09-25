@@ -4,6 +4,7 @@ import FieldError from '../shared/FieldError/FieldError';
 import MaterialList from '../shared/MaterialList/MaterialList';
 import SocialIcon from '../shared/SocialIcon/SocialIcon';
 import Icon from '../shared/Icon/Icon';
+import Skeleton from '../shared/Skeleton/Skeleton';
 import { VIDEO_PLATFORMS } from '../../shared/video';
 import {
   VIEW_REGIONS,
@@ -82,8 +83,15 @@ const MEDIAN_TONES = {
   even: { className: '', text: 'на уровне среднего по площадке' },
 };
 
-const MedianComparison = ({ value, medianKopecks }) => {
+const MedianComparison = ({ value, medianKopecks, loading }) => {
   const settledValue = useDebouncedValue(value, MEDIAN_SETTLE_MS);
+  if (loading) {
+    return (
+      <span className={styles.median}>
+        <Skeleton width="min(18rem, 90%)" />
+      </span>
+    );
+  }
   if (medianKopecks == null) return null;
   const median = <span className={styles.medianValue}>{formatRubles(medianKopecks)}</span>;
   const kopecks = rubToKopecks(value);
@@ -372,7 +380,17 @@ export const TermsFields = ({ editor }) => {
 const isPlainClick = (e) => e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
 
 export const BudgetFields = ({ editor, onOpenWallet }) => {
-  const { form, errors, availableKopecks, savedBudgetKopecks, campaign, benchmarks, prefillRate } = editor;
+  const {
+    form,
+    errors,
+    availableKopecks,
+    savedBudgetKopecks,
+    campaign,
+    benchmarks,
+    benchmarksLoading,
+    walletLoading,
+    prefillRate,
+  } = editor;
   const launched = campaign.status !== 'DRAFT';
 
   useEffect(() => {
@@ -396,6 +414,7 @@ export const BudgetFields = ({ editor, onOpenWallet }) => {
         <MedianComparison
           value={form.rateRub}
           medianKopecks={benchmarks?.medianRatePerThousandKopecks}
+          loading={benchmarksLoading}
         />
       </div>
       <div className={styles.field}>
@@ -404,9 +423,19 @@ export const BudgetFields = ({ editor, onOpenWallet }) => {
         </FieldLabel>
         <MoneyInput editor={editor} id="campaign-budget" name="budgetRub" />
         <FieldError>{errors.budgetRub}</FieldError>
-        <MedianComparison value={form.budgetRub} medianKopecks={benchmarks?.medianBudgetKopecks} />
+        <MedianComparison
+          value={form.budgetRub}
+          medianKopecks={benchmarks?.medianBudgetKopecks}
+          loading={benchmarksLoading}
+        />
         <span className={ui.hint}>
           Резервируется из кошелька при сохранении.
+          {walletLoading && (
+            <>
+              {' '}
+              <Skeleton width="10rem" />
+            </>
+          )}
           {availableKopecks != null && (
             <>
               {' '}

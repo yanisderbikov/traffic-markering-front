@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import Skeleton from '../Skeleton/Skeleton';
 import { signedRubles } from '../../../shared/money';
 import {
   WALLET_TRANSACTION_LABELS,
@@ -50,24 +51,67 @@ export const MoneyFlow = ({ source, destination }) => (
   </span>
 );
 
+const SKELETON_ROWS = 4;
+
+const HeaderRow = () => (
+  <div className={`${styles.row} ${styles.header}`} role="row">
+    <span role="columnheader">Дата</span>
+    <span role="columnheader">Операция</span>
+    <span role="columnheader">Откуда → куда</span>
+    <span role="columnheader" className={styles.right}>
+      Сумма
+    </span>
+    <span role="columnheader" className={styles.right}>
+      Статус
+    </span>
+  </div>
+);
+
+const SkeletonRow = () => (
+  <div className={styles.row} aria-hidden="true">
+    <span className={styles.date}>
+      <Skeleton width="9ch" />
+    </span>
+    <span className={styles.what}>
+      <span className={styles.title}>
+        <Skeleton width="11ch" />
+      </span>
+      <span className={styles.subtitle}>
+        <Skeleton width="16ch" />
+      </span>
+    </span>
+    <span className={styles.flowCell}>
+      <span className={styles.flow}>
+        <Skeleton width="10ch" height="1.9em" radius="999px" />
+        <Skeleton width="10ch" height="1.9em" radius="999px" />
+      </span>
+    </span>
+    <span className={styles.amount}>
+      <Skeleton width="8ch" />
+    </span>
+    <span className={styles.statusCell}>
+      <Skeleton width="11ch" height="2.2em" radius="999px" />
+    </span>
+  </div>
+);
+
 const OperationRows = ({ rows, loading, error, linkFor, emptyText }) => {
   if (error) return <p className={styles.banner}>{error}</p>;
-  if (loading) return <p className={styles.message}>Загрузка операций…</p>;
+  if (loading) {
+    return (
+      <div className={styles.table} role="table" aria-busy="true">
+        <HeaderRow />
+        {Array.from({ length: SKELETON_ROWS }, (_, index) => (
+          <SkeletonRow key={index} />
+        ))}
+      </div>
+    );
+  }
   if (!rows.length) return <p className={styles.message}>{emptyText || 'Операций пока нет.'}</p>;
 
   return (
     <div className={styles.table} role="table">
-      <div className={`${styles.row} ${styles.header}`} role="row">
-        <span role="columnheader">Дата</span>
-        <span role="columnheader">Операция</span>
-        <span role="columnheader">Откуда → куда</span>
-        <span role="columnheader" className={styles.right}>
-          Сумма
-        </span>
-        <span role="columnheader" className={styles.right}>
-          Статус
-        </span>
-      </div>
+      <HeaderRow />
       {rows.map((row) => {
         const closed = row.status === 'REJECTED' || row.status === 'CANCELLED';
         return (

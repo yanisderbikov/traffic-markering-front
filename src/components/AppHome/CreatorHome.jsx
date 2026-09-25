@@ -7,7 +7,9 @@ import { errorMessage } from '../../shared/auth';
 import { formatRubles, formatViews, signedRubles } from '../../shared/money';
 import { PLATFORM_LABELS } from '../../shared/dictionaries';
 import { formatShortDate } from '../../shared/dates';
-import WorkCard from '../shared/WorkCard/WorkCard';
+import WorkCard, { WorkCardSkeleton } from '../shared/WorkCard/WorkCard';
+import FitRubles from '../shared/FitRubles/FitRubles';
+import Skeleton from '../shared/Skeleton/Skeleton';
 import ui from '../../shared/ui.module.css';
 import styles from './AppHome.module.css';
 
@@ -17,6 +19,9 @@ const LOADERS = {
   operations: () => apiClient.api.myOperations(),
   accounts: () => apiClient.instance.get('/api/social/accounts'),
 };
+
+const SKELETON_WORKS = 2;
+const SKELETON_ACCRUALS = 3;
 
 const isActiveWork = (row) => row.status === 'PENDING' || row.status === 'APPROVED';
 const isFinishedWork = (row) => row.status === 'COMPLETED' || row.status === 'REJECTED';
@@ -78,16 +83,24 @@ const CreatorHome = () => {
       <div className={styles.creatorTop}>
         <section className={styles.balance}>
           <span className={styles.balanceLabel}>Доступно к выводу</span>
-          <span className={styles.balanceValue}>
-            {earnings.loading ? '…' : formatRubles(balance)}
-          </span>
+          {earnings.loading ? (
+            <span className={styles.balanceValue}>
+              <Skeleton width="6ch" />
+            </span>
+          ) : (
+            <FitRubles className={styles.balanceValue} kopecks={balance} />
+          )}
           <div className={styles.balanceRow}>
             <span className={styles.balanceNote}>
-              {earnings.error
-                ? errorMessage(earnings.error, 'Не удалось загрузить кошелёк')
-                : pending > 0
-                  ? `Ещё ${formatRubles(pending)} ожидают подтверждения`
-                  : 'Начисления приходят после проверки просмотров'}
+              {earnings.loading ? (
+                <Skeleton width="16rem" />
+              ) : earnings.error ? (
+                errorMessage(earnings.error, 'Не удалось загрузить кошелёк')
+              ) : pending > 0 ? (
+                `Ещё ${formatRubles(pending)} ожидают подтверждения`
+              ) : (
+                'Начисления приходят после проверки просмотров'
+              )}
             </span>
             <Link to="/app/earnings" className={ui.btnOnAccent}>
               Вывести средства
@@ -99,26 +112,34 @@ const CreatorHome = () => {
           <div className={ui.stat}>
             <span className={ui.statLabel}>Твои просмотры</span>
             <span className={ui.statValue}>
-              {applications.loading ? '…' : formatViews(stats.views)}
+              {applications.loading ? <Skeleton width="5ch" /> : formatViews(stats.views)}
             </span>
             <span className={ui.statNote}>по одобренным работам</span>
           </div>
           <div className={ui.stat}>
             <span className={ui.statLabel}>Активные работы</span>
-            <span className={ui.statValue}>{applications.loading ? '…' : stats.approved}</span>
+            <span className={ui.statValue}>
+              {applications.loading ? <Skeleton width="2ch" /> : stats.approved}
+            </span>
             <span className={ui.statNote}>
-              {stats.pending > 0
-                ? `${stats.pending} ${plural(stats.pending, ['ждёт', 'ждут', 'ждут'])} решения бренда`
-                : 'всё одобрено'}
+              {applications.loading ? (
+                <Skeleton width="70%" />
+              ) : stats.pending > 0 ? (
+                `${stats.pending} ${plural(stats.pending, ['ждёт', 'ждут', 'ждут'])} решения бренда`
+              ) : (
+                'всё одобрено'
+              )}
             </span>
           </div>
           <div className={styles.connected}>
             <span className={ui.muted}>
-              {accounts.loading
-                ? 'Проверяем подключения…'
-                : connectedLabel
-                  ? `Подключено: ${connectedLabel}`
-                  : 'Соцсети не подключены'}
+              {accounts.loading ? (
+                <Skeleton width="14rem" />
+              ) : connectedLabel ? (
+                `Подключено: ${connectedLabel}`
+              ) : (
+                'Соцсети не подключены'
+              )}
             </span>
             <Link to="/app/profile/socials" className={ui.linkAccent}>
               Управлять →
@@ -141,7 +162,7 @@ const CreatorHome = () => {
           className={tab === 'active' ? ui.chipActive : ui.chip}
           onClick={() => setTab('active')}
         >
-          В работе {activeRows.length}
+          В работе {applications.loading ? <Skeleton width="1ch" /> : activeRows.length}
         </button>
         <button
           type="button"
@@ -150,7 +171,7 @@ const CreatorHome = () => {
           className={tab === 'finished' ? ui.chipActive : ui.chip}
           onClick={() => setTab('finished')}
         >
-          Завершённые {finishedRows.length}
+          Завершённые {applications.loading ? <Skeleton width="1ch" /> : finishedRows.length}
         </button>
       </div>
 
@@ -160,7 +181,7 @@ const CreatorHome = () => {
             {errorMessage(applications.error, 'Не удалось загрузить работы')}
           </p>
         ) : applications.loading ? (
-          <p className={ui.message}>Загрузка работ…</p>
+          Array.from({ length: SKELETON_WORKS }, (_, index) => <WorkCardSkeleton key={index} />)
         ) : shown.length === 0 ? (
           <div className={ui.empty}>
             <p className={ui.emptyTitle}>
@@ -190,7 +211,26 @@ const CreatorHome = () => {
             {errorMessage(operations.error, 'Не удалось загрузить начисления')}
           </p>
         ) : operations.loading ? (
-          <p className={ui.message}>Загрузка начислений…</p>
+          <ul className={styles.accruals} aria-busy="true">
+            {Array.from({ length: SKELETON_ACCRUALS }, (_, index) => (
+              <li key={index}>
+                <span className={styles.accrual}>
+                  <Skeleton width={36} height={36} radius={10} />
+                  <span className={styles.accrualBody}>
+                    <span className={styles.accrualTitle}>
+                      <Skeleton width="16rem" />
+                    </span>
+                    <span className={styles.accrualMeta}>
+                      <Skeleton width="6rem" />
+                    </span>
+                  </span>
+                  <span className={styles.accrualAmount}>
+                    <Skeleton width="6ch" />
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
         ) : accruals.length === 0 ? (
           <p className={ui.message}>
             Начислений пока нет. Они появятся, когда просмотры по одобренной работе пройдут проверку.

@@ -18,6 +18,8 @@ import {
   formatDate,
 } from '../../shared/dictionaries';
 import { formatCompactViews } from './campaignForm';
+import FitRubles from '../shared/FitRubles/FitRubles';
+import Skeleton from '../shared/Skeleton/Skeleton';
 import ui from '../../shared/ui.module.css';
 import styles from './CampaignEditor.module.css';
 
@@ -43,6 +45,41 @@ export const CAMPAIGN_CHIP = {
 
 export const campaignStatusLabel = (campaign) =>
   campaign.statusDescription || CAMPAIGN_STATUS_LABELS[campaign.status] || campaign.status;
+
+const SKELETON_APPLICATIONS = 3;
+
+const ApplicationRowSkeleton = () => (
+  <li className={styles.appItem} aria-hidden="true">
+    <div className={styles.appRow}>
+      <span className={styles.appCreator}>
+        <Skeleton width={36} height={36} radius="50%" />
+        <span className={styles.appCreatorText}>
+          <span className={styles.appName}>
+            <Skeleton width="9rem" />
+          </span>
+          <span className={styles.appMeta}>
+            <Skeleton width="11rem" />
+          </span>
+        </span>
+      </span>
+      <span className={styles.appCell}>
+        <span className={styles.appCellLabel}>Просмотры</span>
+        <span className={styles.appCellValue}>
+          <Skeleton width="5ch" />
+        </span>
+      </span>
+      <span className={styles.appCell}>
+        <span className={styles.appCellLabel}>Начислено</span>
+        <span className={styles.appCellValue}>
+          <Skeleton width="6ch" />
+        </span>
+      </span>
+      <span className={styles.appStatus}>
+        <Skeleton width="7rem" height={30} radius="999px" />
+      </span>
+    </div>
+  </li>
+);
 
 const isPublished = (application) =>
   application.status === 'APPROVED' || application.status === 'COMPLETED';
@@ -157,16 +194,20 @@ const CampaignOverview = ({ campaign, onReload }) => {
         </div>
         <div className={ui.stat}>
           <span className={ui.statLabel}>Потрачено</span>
-          <span className={ui.statValue}>{formatRubles(spentKopecks)}</span>
+          <FitRubles className={ui.statValue} kopecks={spentKopecks} />
           <span className={ui.statNote}>{budgetPercent}% бюджета</span>
         </div>
         <div className={ui.stat}>
           <span className={ui.statLabel}>Роликов в работе</span>
-          <span className={ui.statValue}>{applicationsLoading ? '…' : published.length}</span>
+          <span className={ui.statValue}>
+            {applicationsLoading ? <Skeleton width="2ch" /> : published.length}
+          </span>
           <span className={`${ui.statNote} ${creators ? ui.statUp : ''}`}>
-            {applicationsLoading
-              ? ''
-              : `${creators} ${pluralize(creators, ['креатор', 'креатора', 'креаторов'])}`}
+            {applicationsLoading ? (
+              <Skeleton width="60%" />
+            ) : (
+              `${creators} ${pluralize(creators, ['креатор', 'креатора', 'креаторов'])}`
+            )}
           </span>
         </div>
         <div className={ui.stat}>
@@ -196,17 +237,24 @@ const CampaignOverview = ({ campaign, onReload }) => {
               <li key={row.label} className={styles.funnelRow}>
                 <div className={styles.funnelHead}>
                   <span className={styles.funnelLabel}>{row.label}</span>
-                  <span className={styles.funnelValue}>{applicationsLoading ? '…' : row.value}</span>
+                  <span className={styles.funnelValue}>
+                    {applicationsLoading ? <Skeleton width="2ch" /> : row.value}
+                  </span>
                   <span className={styles.funnelPercent}>
-                    {applicationsLoading ? '' : `${Math.round((row.value / funnelMax) * 100)}%`}
+                    {applicationsLoading ? (
+                      <Skeleton width="3ch" />
+                    ) : (
+                      `${Math.round((row.value / funnelMax) * 100)}%`
+                    )}
                   </span>
                 </div>
-                <div className={ui.track} aria-hidden="true">
-                  <div
-                    className={ui.fill}
-                    style={{ width: `${applicationsLoading ? 0 : (row.value / funnelMax) * 100}%` }}
-                  />
-                </div>
+                {applicationsLoading ? (
+                  <Skeleton block height={6} radius={3} />
+                ) : (
+                  <div className={ui.track} aria-hidden="true">
+                    <div className={ui.fill} style={{ width: `${(row.value / funnelMax) * 100}%` }} />
+                  </div>
+                )}
               </li>
             ))}
           </ul>
@@ -227,7 +275,11 @@ const CampaignOverview = ({ campaign, onReload }) => {
       <section className={`${ui.card} ${styles.applications}`}>
         {applicationsError && <p className={ui.errorBanner}>{applicationsError}</p>}
         {applicationsLoading ? (
-          <p className={ui.message}>Загрузка откликов…</p>
+          <ul className={styles.appList} aria-busy="true">
+            {Array.from({ length: SKELETON_APPLICATIONS }, (_, index) => (
+              <ApplicationRowSkeleton key={index} />
+            ))}
+          </ul>
         ) : applications.length === 0 ? (
           <p className={ui.message}>Откликов пока нет. Активная кампания видна креаторам в офферах.</p>
         ) : (

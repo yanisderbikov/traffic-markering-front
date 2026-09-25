@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import { FraudBadge, FraudFlags, TrustBadge } from '../shared/FraudBadge/FraudBadge';
 import { errorMessage } from '../../shared/auth';
+import AdminListSkeleton from './AdminListSkeleton';
 import { formatRubles, formatViews } from '../../shared/money';
 import { APPLICATION_STATUS_LABELS, PLATFORM_LABELS, formatDate } from '../../shared/dictionaries';
 import ui from '../../shared/ui.module.css';
@@ -160,7 +161,7 @@ const AdminFraud = () => {
         {pageError && <p className={ui.errorBanner}>{pageError}</p>}
 
         {loading ? (
-          <p className={ui.message}>Загрузка…</p>
+          <AdminListSkeleton />
         ) : items.length === 0 ? (
           <p className={ui.message}>Пусто: подозрительных роликов нет.</p>
         ) : (

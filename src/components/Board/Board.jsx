@@ -1,14 +1,20 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import apiClient from '../../apiClient';
-import CampaignCard, { campaignAvailability } from '../shared/CampaignCard/CampaignCard';
+import CampaignCard, {
+  CampaignCardSkeleton,
+  campaignAvailability,
+} from '../shared/CampaignCard/CampaignCard';
+import Skeleton from '../shared/Skeleton/Skeleton';
 import PublicLayout from '../shared/PublicLayout/PublicLayout';
 import Icon from '../shared/Icon/Icon';
-import { formatRubles } from '../../shared/money';
 import { PLATFORM_LABELS } from '../../shared/dictionaries';
 import { VIDEO_PLATFORMS } from '../../shared/video';
 import { pluralize } from '../../shared/requirements';
+import FitRubles from '../shared/FitRubles/FitRubles';
 import ui from '../../shared/ui.module.css';
 import styles from './Board.module.css';
+
+const SKELETON_CARDS = 4;
 
 const SORTS = [
   { value: 'new', label: 'Сначала новые' },
@@ -113,10 +119,18 @@ const Board = ({ embedded = false }) => {
       <div className={styles.stats}>
         <div className={styles.statBudget}>
           <span className={styles.statLabel}>Общий остаток бюджета</span>
-          <span className={styles.statValue}>{loading ? '…' : formatRubles(totalRemaining)}</span>
+          {loading ? (
+            <span className={styles.statValue}>
+              <Skeleton width="7ch" />
+            </span>
+          ) : (
+            <FitRubles className={styles.statValue} kopecks={totalRemaining} />
+          )}
         </div>
         <div className={styles.statCount}>
-          <span className={styles.statCountValue}>{loading ? '…' : openCount}</span>
+          <span className={styles.statCountValue}>
+            {loading ? <Skeleton width="2ch" /> : openCount}
+          </span>
           <span className={styles.statCountLabel}>
             <span>активных</span>
             <span>{pluralize(openCount, ['оффер', 'оффера', 'офферов'])}</span>
@@ -163,7 +177,11 @@ const Board = ({ embedded = false }) => {
       {error && <p className={ui.errorBanner}>{error}</p>}
 
       {loading ? (
-        <p className={ui.message}>Загрузка офферов…</p>
+        <div className={styles.grid} aria-busy="true">
+          {Array.from({ length: SKELETON_CARDS }, (_, index) => (
+            <CampaignCardSkeleton key={index} index={index} />
+          ))}
+        </div>
       ) : visible.length === 0 ? (
         <div className={ui.empty}>
           <p className={ui.emptyTitle}>

@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import SocialIcon from '../shared/SocialIcon/SocialIcon';
+import Skeleton from '../shared/Skeleton/Skeleton';
 import ui from '../../shared/ui.module.css';
 import styles from './CreatorSocialAccounts.module.css';
 
@@ -129,7 +130,33 @@ const CreatorSocialAccounts = () => {
       </header>
 
       {error && <p className={ui.errorBanner}>{error}</p>}
-      {loading && <p className={ui.message}>Загрузка аккаунтов…</p>}
+      {loading && (
+        <div className={ui.grid3} aria-busy="true">
+          {PLATFORMS.map((platform) => (
+            <section key={platform.slug} className={`${ui.card} ${styles.platform}`}>
+              <div className={styles.platformHead}>
+                <span className={styles.platformName}>
+                  <SocialIcon name={platform.slug} className={styles.platformIcon} />
+                  {platform.label}
+                </span>
+                <Skeleton width="6rem" height={30} radius="999px" />
+              </div>
+              <div className={styles.account}>
+                <Skeleton width={36} height={36} radius="50%" />
+                <span className={styles.accountInfo}>
+                  <span className={styles.accountName}>
+                    <Skeleton width="8rem" />
+                  </span>
+                  <span className={styles.accountMeta}>
+                    <Skeleton width="10rem" />
+                  </span>
+                </span>
+              </div>
+              <Skeleton block height={44} radius="var(--button-radius)" />
+            </section>
+          ))}
+        </div>
+      )}
 
       {!loading && (
         <div className={ui.grid3}>

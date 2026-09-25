@@ -8,6 +8,7 @@ import Icon from '../shared/Icon/Icon';
 import WalletSummary from '../shared/WalletSummary/WalletSummary';
 import OperationRows from '../shared/OperationRows/OperationRows';
 import ProofUploader from '../shared/ProofUploader/ProofUploader';
+import { SkeletonPageHead } from '../shared/Skeleton/Skeleton';
 import { financeOperationLink } from '../../shared/routes';
 import { errorMessage } from '../../shared/auth';
 import { formatRubInput, formatRubles, rubToKopecks } from '../../shared/money';
@@ -128,16 +129,7 @@ const FinanceCustomer = () => {
     </Link>
   );
 
-  if (loading) {
-    return (
-      <div className={ui.page}>
-        {backLink}
-        <p className={ui.message}>Загрузка кошелька…</p>
-      </div>
-    );
-  }
-
-  if (pageError && !wallet) {
+  if (!loading && pageError && !wallet) {
     return (
       <div className={ui.page}>
         {backLink}
@@ -146,22 +138,28 @@ const FinanceCustomer = () => {
     );
   }
 
+  const locked = saving || loading;
+
   return (
     <div className={ui.page}>
       {backLink}
-      <header className={ui.pageHead}>
-        <div className={ui.pageHeadMain}>
-          <span className={ui.eyebrow}>Кошелёк рекламодателя</span>
-          <h1 className={ui.title}>{wallet.customerName || wallet.customerEmail}</h1>
-          <p className={ui.subtitle}>
-            {wallet.customerEmail}
-            {wallet.customerCompany ? ` · ${wallet.customerCompany}` : ''}
-            {wallet.updatedAt ? ` · кошелёк обновлён ${formatDate(wallet.updatedAt)}` : ''}
-          </p>
-        </div>
-      </header>
+      {loading ? (
+        <SkeletonPageHead eyebrow="Кошелёк рекламодателя" />
+      ) : (
+        <header className={ui.pageHead}>
+          <div className={ui.pageHeadMain}>
+            <span className={ui.eyebrow}>Кошелёк рекламодателя</span>
+            <h1 className={ui.title}>{wallet.customerName || wallet.customerEmail}</h1>
+            <p className={ui.subtitle}>
+              {wallet.customerEmail}
+              {wallet.customerCompany ? ` · ${wallet.customerCompany}` : ''}
+              {wallet.updatedAt ? ` · кошелёк обновлён ${formatDate(wallet.updatedAt)}` : ''}
+            </p>
+          </div>
+        </header>
+      )}
 
-      <WalletSummary wallet={wallet} />
+      <WalletSummary wallet={wallet} loading={loading} />
 
       <form className={`${ui.card} ${styles.block}`} onSubmit={handleSubmit} noValidate>
         <h2 className={ui.cardTitle}>Вывести рекламодателю</h2>
@@ -185,7 +183,7 @@ const FinanceCustomer = () => {
               className={ui.input}
               aria-invalid={errors.amountRub ? 'true' : undefined}
               autoComplete="off"
-              disabled={saving}
+              disabled={locked}
             />
             <FieldError>{errors.amountRub}</FieldError>
           </Field>
@@ -202,7 +200,7 @@ const FinanceCustomer = () => {
               maxLength={255}
               autoComplete="off"
               spellCheck={false}
-              disabled={saving}
+              disabled={locked}
             />
             <FieldError>{errors.txId}</FieldError>
           </Field>
@@ -218,7 +216,7 @@ const FinanceCustomer = () => {
               aria-invalid={errors.tronAddress ? 'true' : undefined}
               autoComplete="off"
               spellCheck={false}
-              disabled={saving}
+              disabled={locked}
             />
             <FieldError>{errors.tronAddress}</FieldError>
           </Field>
@@ -229,7 +227,7 @@ const FinanceCustomer = () => {
                 setProofs(next);
                 clearError('proofs');
               }}
-              disabled={saving}
+              disabled={locked}
             />
             <FieldError>{errors.proofs}</FieldError>
           </div>
@@ -241,7 +239,7 @@ const FinanceCustomer = () => {
               className={ui.input}
               maxLength={500}
               autoComplete="off"
-              disabled={saving}
+              disabled={locked}
             />
             <span className={ui.hint}>
               USDT уже отправлены рекламодателю. Списать можно только из свободного остатка: деньги
@@ -253,7 +251,7 @@ const FinanceCustomer = () => {
         {error && <p className={`${ui.errorText} ${styles.formError}`}>{error}</p>}
 
         <div className={styles.formActions}>
-          <button type="submit" className={ui.btnDanger} disabled={saving}>
+          <button type="submit" className={ui.btnDanger} disabled={locked}>
             {saving ? 'Проводим…' : 'Вывести'}
           </button>
         </div>
