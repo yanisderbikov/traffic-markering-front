@@ -6,6 +6,7 @@ import PlatformList from '../shared/PlatformList/PlatformList';
 import { formatRubles, formatViews } from '../../shared/money';
 import { CAMPAIGN_STATUS_LABELS, formatDate } from '../../shared/dictionaries';
 import { DEFAULT_VIEW_REGION, viewRegionLabel } from '../../shared/viewRegion';
+import { formFromCampaign, missingLabels } from '../CampaignEditor/campaignForm';
 import ui from '../../shared/ui.module.css';
 import styles from './CustomerCampaigns.module.css';
 
@@ -23,6 +24,15 @@ const FILTERS = [
   { id: 'DRAFT', label: 'Черновики' },
   { id: 'COMPLETED', label: 'Завершённые' },
 ];
+
+const DraftProgress = ({ campaign }) => {
+  const missing = missingLabels(formFromCampaign(campaign));
+  return missing.length ? (
+    <p className={ui.hintWarn}>Осталось заполнить: {missing.join(', ')}</p>
+  ) : (
+    <p className={ui.hintOk}>Всё заполнено — осталось запустить</p>
+  );
+};
 
 const CustomerCampaigns = () => {
   const [campaigns, setCampaigns] = useState([]);
@@ -123,7 +133,7 @@ const CustomerCampaigns = () => {
 
                 <div className={styles.body}>
                   <div className={styles.head}>
-                    <h2 className={styles.title}>{campaign.title}</h2>
+                    <h2 className={styles.title}>{campaign.title || 'Новая кампания'}</h2>
                     <div className={ui.chips}>
                       <span className={STATUS_CHIP[campaign.status] || ui.chipOutline}>
                         {campaign.statusDescription ||
@@ -141,11 +151,15 @@ const CustomerCampaigns = () => {
                     <PlatformList platforms={campaign.platforms} compact />
                   </div>
 
-                  <BudgetBar
-                    budgetKopecks={campaign.budgetKopecks}
-                    spentKopecks={campaign.spentKopecks}
-                    compact
-                  />
+                  {campaign.status === 'DRAFT' ? (
+                    <DraftProgress campaign={campaign} />
+                  ) : (
+                    <BudgetBar
+                      budgetKopecks={campaign.budgetKopecks}
+                      spentKopecks={campaign.spentKopecks}
+                      compact
+                    />
+                  )}
 
                   <p className={styles.meta}>
                     <span>Откликов: {campaign.applicationsCount ?? 0}</span>

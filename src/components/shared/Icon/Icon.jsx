@@ -19,7 +19,6 @@ const PATHS = {
   arrowRight: 'M5 12H19M13 6L19 12L13 18',
   arrowLeft: 'M19 12H5M11 6L5 12L11 18',
   chevronRight: 'M9 5L16 12L9 19',
-  chevronDown: 'M5 9L12 16L19 9',
   refresh: 'M20 12A8 8 0 1 1 17.5 6.2M20 4V9H15',
   copy: 'M8 8H20V20H8ZM4 16V4H16',
   download: 'M12 3V15M6 10L12 16L18 10M4 20H20',

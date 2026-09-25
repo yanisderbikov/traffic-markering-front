@@ -119,54 +119,49 @@ export interface CreatorProfileDTO {
 /** Создание/обновление объявления */
 export interface CampaignCreateUpdateRequestDTO {
   /**
-   * Заголовок объявления
+   * Заголовок объявления; обязателен для запуска
    * @minLength 0
    * @maxLength 255
    * @example "Обзор приложения для доставки еды"
    */
-  title: string;
-  /** Что нужно снять: формат, хронометраж, требования */
-  description: string;
+  title?: string;
+  /** Что нужно снять: формат, хронометраж, требования; обязательно для запуска */
+  description?: string;
   /**
-   * Ключ загруженной фотографии из /api/files/campaign-photo/presign
+   * Ключ загруженной фотографии из /api/files/campaign-photo/presign; обязателен для запуска
    * @minLength 0
    * @maxLength 512
    */
-  photoKey: string;
+  photoKey?: string;
   /**
-   * Ставка за 1000 просмотров, в копейках
+   * Ставка за 1000 просмотров, в копейках; обязательна для запуска
    * @format int64
    * @example 35000
    */
-  ratePerThousandKopecks: number;
+  ratePerThousandKopecks?: number;
   /**
-   * Выделенный бюджет, в копейках
+   * Выделенный бюджет, в копейках; обязателен для запуска
    * @format int64
    * @example 5000000
    */
-  budgetKopecks: number;
+  budgetKopecks?: number;
   /**
-   * С какой накопленной по объявлению суммы креатор может выводить заработанное, в копейках
+   * С какой накопленной по объявлению суммы креатор может выводить заработанное, в копейках; обязателен для запуска
    * @format int64
    * @example 300000
    */
-  minPayoutKopecks: number;
+  minPayoutKopecks?: number;
   /**
-   * Площадки, с которых заказчик принимает ролики: INSTAGRAM, TIKTOK, YOUTUBE_SHORTS
+   * Площадки, с которых заказчик принимает ролики: INSTAGRAM, TIKTOK, YOUTUBE_SHORTS; для запуска нужна хотя бы одна
    * @uniqueItems true
    * @example ["TIKTOK","YOUTUBE_SHORTS"]
    */
-  platforms: ("TELEGRAM" | "INSTAGRAM" | "TIKTOK" | "YOUTUBE_SHORTS")[];
+  platforms?: ("TELEGRAM" | "INSTAGRAM" | "TIKTOK" | "YOUTUBE_SHORTS")[];
   /**
-   * Регион, просмотры из которого оплачиваются: RUSSIA — только РФ, CIS — СНГ, WORLD — весь мир
-   * @example "WORLD"
+   * Регион, просмотры из которого оплачиваются: RUSSIA (только РФ), CIS (СНГ), WORLD (весь мир); null — весь мир
+   * @example "RUSSIA"
    */
-  viewRegion: "RUSSIA" | "CIS" | "WORLD";
-  /**
-   * Минимальная длина ролика в секундах; null — без ограничения
-   * @format int32
-   * @example 30
-   */
+  viewRegion?: "RUSSIA" | "CIS" | "WORLD";
   minVideoSeconds?: number;
   /**
    * Сколько просмотров должен набрать ролик, чтобы его оплатили; ниже порога начислений нет, null — оплачиваются все просмотры
@@ -245,6 +240,22 @@ export interface CampaignMaterialRequestDTO {
    * @example 1048576
    */
   sizeBytes?: number;
+}
+
+/** Медианы по запущенным объявлениям площадки; пока объявлений нет — базовые значения */
+export interface CampaignBenchmarkDTO {
+  /**
+   * Медианная ставка за 1000 просмотров, в копейках
+   * @format int64
+   * @example 15000
+   */
+  medianRatePerThousandKopecks: number;
+  /**
+   * Медианный бюджет объявления, в копейках
+   * @format int64
+   * @example 10000000
+   */
+  medianBudgetKopecks: number;
 }
 
 /** Объявление целиком: карточка заказчика и публичная страница */
@@ -1213,6 +1224,23 @@ export class Api<
       }),
 
     /**
+     * @description Медианная ставка за 1000 просмотров и медианный бюджет по всем запущенным объявлениям, в копейках; пока таких объявлений нет — 150 ₽ и 100 000 ₽
+     *
+     * @tags Campaign
+     * @name CampaignBenchmarks
+     * @summary Медианы ставки и бюджета
+     * @request GET:/api/campaigns/benchmarks
+     * @secure
+     */
+    campaignBenchmarks: (params: RequestParams = {}) =>
+      this.request<CampaignBenchmarkDTO, any>({
+        path: `/api/campaigns/benchmarks`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
      * @description Только своё объявление; админ видит любое
      *
      * @tags Campaign
@@ -1230,7 +1258,7 @@ export class Api<
       }),
 
     /**
-     * @description Полное обновление полей; смена ставки или бюджета пересчитывает начисления по откликам
+     * @description Полное обновление полей: пустое поле в запросе очищает его. Черновик можно сохранять частично, остальные статусы требуют заполненного объявления, а запущенное нельзя вернуть в черновик; смена ставки или бюджета пересчитывает начисления по откликам
      *
      * @tags Campaign
      * @name UpdateCampaign
@@ -1287,7 +1315,31 @@ export class Api<
       }),
 
     /**
-     * @description Ставка и бюджет в копейках; статус можно не передавать — тогда объявление создаётся черновиком
+     * @description У заказчика не больше одного незаконченного черновика. Без restart возвращает его, если он есть, иначе создаёт пустой; с restart=true удаляет незаконченный черновик, возвращая его бюджет в кошелёк, и создаёт пустой. Черновик заполняется по шагам через PUT
+     *
+     * @tags Campaign
+     * @name StartCampaignDraft
+     * @summary Начать новое объявление
+     * @request POST:/api/campaigns/drafts
+     * @secure
+     */
+    startCampaignDraft: (
+      query?: {
+        /** @default false */
+        restart?: boolean;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<CampaignDTO, any>({
+        path: `/api/campaigns/drafts`,
+        method: "POST",
+        query: query,
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * @description Ставка и бюджет в копейках; статус можно не передавать — тогда объявление создаётся черновиком; второй незаконченный черновик создать нельзя — 409
      *
      * @tags Campaign
      * @name CreateCampaign
@@ -1446,7 +1498,7 @@ export class Api<
       }),
 
     /**
-     * @description На публичной доске показываются только объявления в статусе ACTIVE
+     * @description На публичной доске показываются только объявления в статусе ACTIVE; из черновика можно выйти, только когда объявление заполнено, а вернуться в него нельзя
      *
      * @tags Campaign
      * @name UpdateCampaignStatus

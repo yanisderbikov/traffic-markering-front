@@ -14,6 +14,7 @@ import AppLayout from './components/AppLayout/AppLayout';
 import AppHome from './components/AppHome/AppHome';
 import CustomerCampaigns from './components/CustomerCampaigns/CustomerCampaigns';
 import CampaignEditor from './components/CampaignEditor/CampaignEditor';
+import CampaignEditPage from './components/CampaignEditor/CampaignEditPage';
 import CreatorApplications from './components/CreatorApplications/CreatorApplications';
 import Profile from './components/Profile/Profile';
 import CreatorSocialAccounts from './components/CreatorSocialAccounts/CreatorSocialAccounts';
@@ -184,6 +185,7 @@ function App() {
           <Route path="/app/campaigns" element={<CustomerCampaigns />} />
           {/* campaignId = "new" — создание объявления, uuid — правка и отклики. */}
           <Route path="/app/campaigns/:campaignId" element={<CampaignEditor />} />
+          <Route path="/app/campaigns/:campaignId/edit" element={<CampaignEditPage />} />
           <Route path="/app/wallet" element={<CustomerWallet />} />
           <Route path="/app/wallet/:operationId" element={<OperationPage scope="wallet" />} />
           <Route path="/app/applications" element={<CreatorApplications />} />
