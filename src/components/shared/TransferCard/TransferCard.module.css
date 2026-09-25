@@ -1,9 +1,9 @@
 .card {
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--card-radius);
-  box-shadow: var(--card-shadow);
-  padding: 20px;
+  padding: 24px;
+  min-width: 0;
 }
 
 .head {
@@ -12,7 +12,7 @@
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .headMain {
@@ -24,16 +24,14 @@
 
 .type {
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: var(--title-tracking);
   color: var(--color-ink);
 }
 
 .amount {
   font-family: var(--font-display);
-  font-size: 1.6rem;
+  font-size: 1.7rem;
   font-weight: 700;
   color: var(--color-ink);
   white-space: nowrap;
@@ -46,24 +44,21 @@
 .facts {
   display: grid;
   grid-template-columns: max-content 1fr;
-  gap: 8px 16px;
+  gap: 12px 20px;
   margin: 0;
   font-size: 0.88rem;
 }
 
 .facts dt {
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--label-tracking);
+  padding-top: 2px;
+  font-size: 0.82rem;
   color: var(--color-muted);
-  padding-top: 3px;
 }
 
 .facts dd {
   margin: 0;
-  color: var(--color-ink);
   min-width: 0;
+  color: var(--color-ink);
   overflow-wrap: anywhere;
 }
 
@@ -75,23 +70,26 @@
 }
 
 .address {
-  font-size: 0.86rem;
-  background: var(--color-surface-alt);
-  border-radius: 8px;
   padding: 4px 8px;
+  border-radius: 8px;
+  background: var(--color-field);
+  font-size: 0.84rem;
+  color: var(--color-ink-soft);
 }
 
 .copyBtn {
-  font-family: inherit;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: var(--label-tracking);
-  color: var(--color-ink);
-  background: transparent;
-  border: 1px solid var(--color-field-border);
-  border-radius: var(--pill-radius);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
   padding: 4px 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--pill-radius);
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--color-muted);
   cursor: pointer;
   transition: border-color 0.15s ease, color 0.15s ease;
 }
@@ -101,48 +99,55 @@
   color: var(--color-accent);
 }
 
+.timeline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+
 .step {
-  display: inline-block;
-  margin-right: 14px;
   color: var(--color-ink-soft);
 }
 
 .reject,
 .proofBlock {
-  margin-top: 16px;
-  padding-top: 14px;
+  margin-top: 20px;
+  padding-top: 18px;
   border-top: 1px solid var(--color-border);
-}
-
-.reject {
-  color: var(--color-danger);
 }
 
 .blockTitle {
   display: block;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--label-tracking);
-  color: var(--color-muted);
   margin-bottom: 6px;
+  font-size: 0.82rem;
+  color: var(--color-muted);
 }
 
 .text {
-  font-size: 0.88rem;
   margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--color-ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.rejectText {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--color-danger);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
 .link {
-  color: var(--color-ink);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  color: var(--color-accent);
+  text-decoration: none;
 }
 
 .link:hover {
-  color: var(--color-accent);
+  color: var(--color-accent-hover);
 }
 
 .proofs {
@@ -157,9 +162,14 @@
   width: 160px;
   aspect-ratio: 4 / 3;
   overflow: hidden;
-  border: 1px solid var(--color-field-border);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--field-radius);
   background: var(--color-surface-alt);
+  transition: border-color 0.15s ease;
+}
+
+.proof:hover {
+  border-color: var(--color-faint);
 }
 
 .proofImage {
@@ -168,13 +178,17 @@
   object-fit: cover;
 }
 
-@media (max-width: 520px) {
+@media (max-width: 560px) {
+  .card {
+    padding: 20px 16px;
+  }
+
   .facts {
     grid-template-columns: 1fr;
     gap: 4px;
   }
 
   .facts dd {
-    margin-bottom: 8px;
+    margin-bottom: 10px;
   }
 }

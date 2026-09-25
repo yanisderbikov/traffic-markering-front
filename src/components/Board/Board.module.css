@@ -1,114 +1,128 @@
-/* Публичная доска объявлений — первая страница, которую видит гость. */
-
-.wrap {
-  max-width: var(--page-max-width);
-  width: 100%;
-  margin: 0 auto;
-  padding: 1rem 12px 3rem;
+.publicWrap {
+  padding: 40px 0 24px;
 }
 
-@media (min-width: 769px) {
-  .wrap {
-    padding-left: 50px;
-    padding-right: 50px;
-  }
-}
-
-.brand {
+.stats {
   display: flex;
-  margin: 6px 0 20px;
-  font-size: 1.2rem;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
 }
 
-.head {
+.statBudget {
+  position: relative;
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 22px;
-  padding-bottom: 18px;
-  /* Чернильная линия под шапкой доски держит сетку, как в постерных макетах. */
-  border-bottom: 2px solid var(--color-ink);
-}
-
-.headMain {
-  min-width: 0;
-}
-
-.title {
-  margin: 0 0 6px;
-  font-family: var(--font-display);
-  /* Крупный плакатный заголовок страницы — главный типографический акцент. */
-  font-size: clamp(1.9rem, 5vw, 2.6rem);
-  font-weight: 700;
-  line-height: 1.02;
-  text-transform: uppercase;
-  letter-spacing: var(--title-tracking);
-  color: var(--color-ink);
-}
-
-.subtitle {
-  margin: 8px 0 0;
-  max-width: 46rem;
-  font-size: 0.95rem;
-  line-height: 1.45;
-  color: var(--color-ink-soft);
-}
-
-.headActions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: none;
-}
-
-.cabinetLink {
-  font-family: var(--font-display);
-  font-size: 0.82rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: var(--action-tracking);
-  color: var(--color-ink);
-  background: var(--color-surface);
-  border: 1px solid var(--color-ink);
-  border-radius: var(--pill-radius);
-  padding: 8px 16px;
-  text-decoration: none;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.cabinetLink:hover {
-  background: var(--color-ink);
-  color: var(--color-surface);
-}
-
-.refreshBtn {
-  display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
+  gap: 4px;
+  min-width: 260px;
+  min-height: 64px;
+  padding: 10px 22px 10px 26px;
   background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.statBudget::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 5px;
+  background: var(--color-accent);
+}
+
+.statLabel {
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--color-faint);
+}
+
+.statValue {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 900;
+  line-height: 1.1;
+  color: var(--color-accent);
+  white-space: nowrap;
+}
+
+.statCount {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 10px 22px;
+  border-radius: 12px;
+  background: var(--color-accent);
+  color: var(--color-page);
+}
+
+.statCountValue {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.statCountLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.statCountLabel span:first-child {
+  color: var(--color-on-accent-dim);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.sort {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sortLabel {
+  font-size: 0.82rem;
+  color: var(--color-muted);
+}
+
+.sortSelect {
+  min-height: 34px;
+  padding: 6px 36px 6px 16px;
+  border-radius: var(--pill-radius);
+  background: var(--color-surface-alt)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a0a7a1' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 9L12 16L19 9'/%3E%3C/svg%3E")
+    no-repeat right 14px center;
+  border: 1px solid var(--color-border-strong);
+  font-size: 0.78rem;
+  font-weight: 700;
   color: var(--color-ink);
+  appearance: none;
   cursor: pointer;
-  flex-shrink: 0;
-  transition: background 0.2s ease;
 }
 
-.refreshBtn:hover:not(:disabled) {
-  background: var(--color-surface-alt);
-}
-
-.refreshBtn:disabled {
-  cursor: default;
-  opacity: 0.7;
-}
-
-.refreshBtn svg {
-  display: block;
+.grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(min(420px, 100%), 1fr));
 }
 
 .spinning {
@@ -124,105 +138,18 @@
   }
 }
 
-/* ── баннер для гостя ── */
-.banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  flex-wrap: wrap;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--card-radius);
-  box-shadow: var(--card-shadow);
-  padding: 16px 20px;
-  margin-bottom: 22px;
-}
-
-.bannerText {
-  margin: 0;
-  font-size: 0.9rem;
-  line-height: 1.45;
-  color: var(--color-ink-soft);
-  min-width: 0;
-}
-
-.bannerActions {
-  display: flex;
-  gap: 10px;
-  flex: none;
-}
-
-.primaryLink {
-  font-family: var(--font-display);
-  font-size: 0.85rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: var(--action-tracking);
-  color: var(--color-surface);
-  background: var(--color-ink);
-  border-radius: var(--pill-radius);
-  padding: 9px 22px;
-  text-decoration: none;
-  transition: background 0.15s ease;
-}
-
-.primaryLink:hover {
-  background: var(--color-accent);
-}
-
-.secondaryLink {
-  font-family: var(--font-display);
-  font-size: 0.85rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: var(--action-tracking);
-  color: var(--color-ink);
-  background: transparent;
-  border: 1px solid var(--color-ink);
-  border-radius: var(--pill-radius);
-  padding: 9px 22px;
-  text-decoration: none;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.secondaryLink:hover {
-  background: var(--color-ink);
-  color: var(--color-surface);
-}
-
-/* ── состояния ── */
-.errorBanner {
-  background: var(--color-danger-soft);
-  border-left: 3px solid var(--color-danger);
-  color: var(--color-danger);
-  border-radius: var(--field-radius);
-  padding: 10px 14px;
-  font-size: 0.85rem;
-  margin: 0 0 16px;
-}
-
-.message {
-  margin: 24px 0;
-  font-size: 0.9rem;
-  color: var(--color-muted);
-}
-
-.grid {
-  display: grid;
-  /* min(300px, 100%) вместо голых 300px: на экранах уже 324px колонка в 300px
-     не влезает в контейнер с полями по 12px и тянет всю страницу в горизонтальный скролл. */
-  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
-  gap: 16px;
-}
-
-@media (max-width: 600px) {
-  .head {
-    flex-direction: column;
-    align-items: stretch;
+@media (max-width: 640px) {
+  .statBudget {
+    flex: 1 1 100%;
+    min-width: 0;
   }
 
-  .headActions {
-    justify-content: space-between;
+  .statCount {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  .grid {
+    gap: 16px;
   }
 }

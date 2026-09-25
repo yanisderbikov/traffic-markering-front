@@ -3,6 +3,8 @@ import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import apiClient from './apiClient';
 import styles from './App.module.css';
 import Board from './components/Board/Board';
+import Landing from './components/Landing/Landing';
+import ShellSwitch from './components/AppLayout/ShellSwitch';
 import CampaignPage from './components/CampaignPage/CampaignPage';
 import ApplyPage from './components/ApplyPage/ApplyPage';
 import Login from './components/Login/Login';
@@ -34,6 +36,7 @@ import Terms from './components/Info/Terms';
 // динамические шаблоны ниже, — 404 (и такие страницы закрываем от индексации).
 const KNOWN_PATHS = new Set([
   '/',
+  '/board',
   '/login',
   '/register',
   '/info',
@@ -70,9 +73,14 @@ const DYNAMIC_PATHS = [
 // Заголовок и описание вкладки по пути. Ключ — уже нормализованный pathname.
 const PAGE_SEO = {
   '/': {
-    title: 'offer — доска рекламных объявлений',
+    title: 'offer — монетизируй охваты',
     description:
-      'Объявления на рекламные интеграции: ставка за 1000 просмотров и бюджет заказчика. Берите заказ в работу и зарабатывайте на просмотрах.',
+      'Бренды покупают измеримый охват, креаторы создают контент и зарабатывают на просмотрах. Прозрачные ставки, понятный бюджет.',
+  },
+  '/board': {
+    title: 'офферы — offer',
+    description:
+      'Открытые офферы на рекламные интеграции: ставка за 1000 просмотров и остаток бюджета. Берите оффер в работу и зарабатывайте на просмотрах.',
   },
   '/login': {
     title: 'вход — offer',
@@ -158,10 +166,13 @@ function App() {
       <Routes>
         <Route
           path="/"
-          element={apiClient.hasLiveToken() ? <Navigate to="/app" replace /> : <Board />}
+          element={apiClient.hasLiveToken() ? <Navigate to="/app" replace /> : <Landing />}
         />
-        <Route path="/campaigns/:publicId" element={<CampaignPage />} />
-        <Route path="/campaigns/:publicId/apply" element={<ApplyPage />} />
+        <Route path="/board" element={<Board />} />
+        <Route element={<ShellSwitch />}>
+          <Route path="/campaigns/:publicId" element={<CampaignPage />} />
+          <Route path="/campaigns/:publicId/apply" element={<ApplyPage />} />
+        </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/info" element={<Info />} />

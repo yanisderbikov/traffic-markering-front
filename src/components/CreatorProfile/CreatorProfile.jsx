@@ -6,6 +6,7 @@ import FieldError from '../shared/FieldError/FieldError';
 import Field from '../shared/Field/Field';
 import { formatDate } from '../../shared/dictionaries';
 import { clearFieldError, hasErrors, validateTelegram } from '../../shared/validation';
+import ui from '../../shared/ui.module.css';
 import styles from './CreatorProfile.module.css';
 
 const emptyForm = {
@@ -17,8 +18,6 @@ const emptyForm = {
   youtubeShorts: '',
 };
 
-// Пустое поле — это «не указано», а не пустая строка: иначе в профиле заказчика
-// появятся пустые контакты вместо прочерков.
 const orNull = (value) => {
   const trimmed = String(value ?? '').trim();
   return trimmed === '' ? null : trimmed;
@@ -32,6 +31,13 @@ const formFromProfile = (profile) => ({
   tiktok: profile.tiktok || '',
   youtubeShorts: profile.youtubeShorts || '',
 });
+
+const SocialLabel = ({ name, children }) => (
+  <span className={styles.labelText}>
+    <SocialIcon name={name} />
+    {children}
+  </span>
+);
 
 const CreatorProfile = () => {
   const [profile, setProfile] = useState(null);
@@ -106,134 +112,107 @@ const CreatorProfile = () => {
 
   if (loading) {
     return (
-      <div className={styles.wrap}>
-        <p className={styles.message}>Загрузка профиля…</p>
+      <div className={ui.page}>
+        <p className={ui.message}>Загрузка профиля…</p>
       </div>
     );
   }
 
   if (pageError && !profile) {
     return (
-      <div className={styles.wrap}>
-        <p className={styles.banner}>{pageError}</p>
+      <div className={ui.page}>
+        <p className={ui.errorBanner}>{pageError}</p>
       </div>
     );
   }
 
   return (
-    <div className={styles.wrap}>
-      <h1 className={styles.title}>Профиль креатора</h1>
-      <p className={styles.subtitle}>
-        Имя учётной записи: {profile?.name || '—'}
-        {profile?.updatedAt ? ` · обновлён ${formatDate(profile.updatedAt)}` : ''}
-      </p>
+    <div className={ui.page}>
+      <header className={ui.pageHead}>
+        <div className={ui.pageHeadMain}>
+          <span className={ui.eyebrow}>Креатор</span>
+          <h1 className={ui.title}>Профиль креатора</h1>
+          <p className={ui.subtitle}>
+            Имя учётной записи: {profile?.name || '—'}
+            {profile?.updatedAt ? ` · обновлён ${formatDate(profile.updatedAt)}` : ''}
+          </p>
+        </div>
+      </header>
 
-      <form className={styles.card} onSubmit={handleSubmit} noValidate>
+      <form className={`${ui.card} ${styles.card}`} onSubmit={handleSubmit} noValidate>
         <div className={styles.formGrid}>
-          <Field label="Отображаемое имя" className={styles.labelWide}>
+          <Field label="Отображаемое имя" className={styles.wide}>
             <input
               type="text"
               name="displayName"
               value={form.displayName}
               onChange={setField}
-              className={styles.input}
+              className={ui.input}
               autoComplete="off"
             />
           </Field>
-          <Field label="О себе" className={styles.labelWide}>
+          <Field label="О себе" className={styles.wide}>
             <textarea
               name="bio"
               value={form.bio}
               onChange={setField}
-              className={styles.textarea}
+              className={ui.textarea}
               rows={5}
             />
           </Field>
-          <Field
-            label={
-              <span className={styles.labelText}>
-                <SocialIcon name="telegram" />
-                Telegram
-              </span>
-            }
-          >
+          <Field label={<SocialLabel name="telegram">Telegram</SocialLabel>}>
             <input
               type="text"
               name="telegram"
               value={form.telegram}
               onChange={setField}
-              className={styles.input}
+              className={ui.input}
               aria-invalid={errors.telegram ? 'true' : undefined}
               autoComplete="off"
             />
             <FieldError>{errors.telegram}</FieldError>
           </Field>
-          <Field
-            label={
-              <span className={styles.labelText}>
-                <SocialIcon name="instagram" />
-                Instagram
-              </span>
-            }
-          >
+          <Field label={<SocialLabel name="instagram">Instagram</SocialLabel>}>
             <input
               type="text"
               name="instagram"
               value={form.instagram}
               onChange={setField}
-              className={styles.input}
+              className={ui.input}
               autoComplete="off"
             />
           </Field>
-          <Field
-            label={
-              <span className={styles.labelText}>
-                <SocialIcon name="tiktok" />
-                TikTok
-              </span>
-            }
-          >
+          <Field label={<SocialLabel name="tiktok">TikTok</SocialLabel>}>
             <input
               type="text"
               name="tiktok"
               value={form.tiktok}
               onChange={setField}
-              className={styles.input}
+              className={ui.input}
               autoComplete="off"
             />
           </Field>
-          <Field
-            label={
-              <span className={styles.labelText}>
-                <SocialIcon name="youtube" />
-                YouTube Shorts
-              </span>
-            }
-          >
+          <Field label={<SocialLabel name="youtube">YouTube Shorts</SocialLabel>}>
             <input
               type="text"
               name="youtubeShorts"
               value={form.youtubeShorts}
               onChange={setField}
-              className={styles.input}
+              className={ui.input}
               autoComplete="off"
             />
           </Field>
         </div>
 
-        <p className={styles.hint}>
-          Соцсети и Telegram видит заказчик, когда вы откликаетесь на его объявление, —
-          по ним он свяжется с вами.
+        <p className={`${ui.hint} ${styles.note}`}>
+          Соцсети и Telegram видит рекламодатель, когда вы откликаетесь на его кампанию, — по ним он
+          свяжется с вами.
         </p>
 
-        {error && <p className={styles.error}>{error}</p>}
+        {error && <p className={`${ui.errorText} ${styles.formError}`}>{error}</p>}
 
         <div className={styles.formActions}>
-          <button
-            type="submit"
-            className={`${styles.submit} ${dirty ? '' : styles.submitIdle}`}
-            disabled={saving || !dirty}
-          >
+          <button type="submit" className={ui.btnPrimary} disabled={saving || !dirty}>
             {saving ? 'Сохранение…' : 'Сохранить'}
           </button>
         </div>

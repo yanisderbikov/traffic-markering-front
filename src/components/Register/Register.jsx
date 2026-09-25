@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
-import Logo from '../shared/Logo/Logo';
-import SocialIcon from '../shared/SocialIcon/SocialIcon';
+import AuthLayout from '../shared/AuthLayout/AuthLayout';
+import CodeInput, { CODE_LENGTH } from '../shared/CodeInput/CodeInput';
 import FieldError from '../shared/FieldError/FieldError';
-import Field from '../shared/Field/Field';
 import {
   clearFieldError,
   hasErrors,
@@ -16,32 +15,35 @@ import {
 } from '../../shared/validation';
 import { useCooldown } from '../../shared/useCooldown';
 import { errorMessage, verifyCode } from '../../shared/auth';
-import styles from './Register.module.css';
+import ui from '../../shared/ui.module.css';
+import form from '../shared/AuthLayout/authForm.module.css';
 
 const ROLE_OPTIONS = [
   {
     value: 'CREATOR',
-    label: 'я креатор',
-    hint: 'снимаю ролики и зарабатываю на просмотрах',
+    label: 'Я креатор',
+    hint: 'Снимаю ролики и зарабатываю на просмотрах.',
   },
   {
     value: 'CUSTOMER',
-    label: 'я заказчик',
-    hint: 'публикую объявления и плачу за просмотры',
+    label: 'Я рекламодатель',
+    hint: 'Запускаю кампании и плачу за подтверждённые просмотры.',
   },
 ];
 
 const STEPS = [
-  { title: 'кто вы', caption: 'выберите роль в сервисе' },
-  { title: 'как вас зовут', caption: 'имя увидит вторая сторона сделки' },
-  { title: 'вход в кабинет', caption: 'почта станет логином, пароль не нужен' },
-  { title: 'код из письма', caption: 'подтвердите почту кодом, он действует 10 минут' },
+  { title: 'Кто вы в Offer?', caption: 'Выберите роль. Её увидит вторая сторона сделки.' },
+  { title: 'Как вас зовут?', caption: 'Имя увидит вторая сторона сделки.' },
+  { title: 'Вход в кабинет', caption: 'Почта станет логином. Пароль не нужен.' },
+  { title: 'Код из письма', caption: '' },
 ];
 
 const STEP_ROLE = 0;
 const STEP_NAME = 1;
 const STEP_EMAIL = 2;
 const STEP_CODE = 3;
+
+const pad = (n) => String(n).padStart(2, '0');
 
 const saveTelegram = (role, telegram) => {
   const body = { telegram };
@@ -52,9 +54,13 @@ const saveTelegram = (role, telegram) => {
 
 const Register = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(0);
-  const [form, setForm] = useState({
-    role: '',
+  const [searchParams] = useSearchParams();
+  const presetRole = ROLE_OPTIONS.some((option) => option.value === searchParams.get('role'))
+    ? searchParams.get('role')
+    : '';
+  const [step, setStep] = useState(presetRole ? STEP_NAME : STEP_ROLE);
+  const [formState, setFormState] = useState({
+    role: presetRole,
     name: '',
     telegram: '',
     email: '',
@@ -67,15 +73,21 @@ const Register = () => {
 
   const setField = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: name === 'code' ? value.replace(/\D/g, '') : value }));
+    setFormState((prev) => ({ ...prev, [name]: value }));
     clearFieldError(setErrors, name);
+    setError('');
+  };
+
+  const setCode = (code) => {
+    setFormState((prev) => ({ ...prev, code }));
+    clearFieldError(setErrors, 'code');
     setError('');
   };
 
   const invalid = (name) => (errors[name] ? 'true' : undefined);
 
   const selectRole = (role) => {
-    setForm((prev) => ({ ...prev, role }));
+    setFormState((prev) => ({ ...prev, role }));
     setError('');
     setStep(STEP_NAME);
   };
@@ -88,8 +100,8 @@ const Register = () => {
   const goNext = () => {
     if (step === STEP_NAME) {
       const nextErrors = {
-        name: validateRequired(form.name, 'Укажите имя'),
-        telegram: validateTelegram(form.telegram),
+        name: validateRequired(formState.name, 'Укажите имя'),
+        telegram: validateTelegram(formState.telegram),
       };
       setErrors(nextErrors);
       if (hasErrors(nextErrors)) return;
@@ -99,7 +111,7 @@ const Register = () => {
   };
 
   const register = async () => {
-    const email = form.email.trim();
+    const email = formState.email.trim();
     const nextErrors = { email: validateEmail(email) };
     setErrors(nextErrors);
     if (hasErrors(nextErrors)) return;
@@ -109,10 +121,10 @@ const Register = () => {
     try {
       await apiClient.api.register({
         email,
-        name: form.name.trim(),
-        role: form.role,
+        name: formState.name.trim(),
+        role: formState.role,
       });
-      setForm((prev) => ({ ...prev, code: '' }));
+      setFormState((prev) => ({ ...prev, code: '' }));
       cooldown.start();
       setStep(STEP_CODE);
     } catch (err) {
@@ -128,21 +140,20 @@ const Register = () => {
   };
 
   const verify = async () => {
-    const nextErrors = { code: validateCode(form.code) };
+    const nextErrors = { code: validateCode(formState.code) };
     setErrors(nextErrors);
     if (hasErrors(nextErrors)) return;
 
     setLoading(true);
     setError('');
     try {
-      await verifyCode(form.email.trim(), form.code.trim());
-
-      const telegram = form.telegram.trim();
+      await verifyCode(formState.email.trim(), formState.code.trim());
+      const telegram = formState.telegram.trim();
       if (telegram) {
         try {
-          await saveTelegram(form.role, telegram);
+          await saveTelegram(formState.role, telegram);
         } catch {
-          toast.error('Аккаунт создан, но Telegram не сохранился — добавьте его в профиле.');
+          toast.error('Аккаунт создан, но Telegram не сохранился. Добавьте его в профиле.');
         }
       }
       navigate('/app', { replace: true });
@@ -165,184 +176,173 @@ const Register = () => {
   };
 
   const current = STEPS[step];
+  const caption =
+    step === STEP_CODE ? `Отправили код на ${formState.email.trim()}. Он действует 10 минут.` : current.caption;
   const submitLabel = (() => {
-    if (step === STEP_CODE) return loading ? 'Проверяем…' : 'Войти';
+    if (step === STEP_CODE) return loading ? 'Проверяем…' : 'Продолжить';
     if (step === STEP_EMAIL) return loading ? 'Отправляем код…' : 'Получить код';
     return 'Дальше';
   })();
+  const submitDisabled =
+    loading || (step === STEP_CODE && formState.code.length < CODE_LENGTH);
 
   return (
-    <div className={styles.page}>
-      <div className={styles.headerSafeArea} aria-hidden="true" />
-      <header className={styles.header}>
-        <div className={styles.headerInner}>
-          <Link to="/" className={styles.logoLink} aria-label="На доску объявлений">
-            <Logo light withText />
+    <AuthLayout
+      title={current.title}
+      caption={caption}
+      footer={
+        <p className={form.switch}>
+          <span>Уже есть аккаунт?</span>
+          <Link to="/login" className={form.switchLink}>
+            Войти →
           </Link>
-        </div>
-      </header>
+        </p>
+      }
+    >
+      <div className={form.progress} aria-label={`Шаг ${step + 1} из ${STEPS.length}`}>
+        {STEPS.map((item, index) => (
+          <span
+            key={item.title}
+            className={`${form.progressBar} ${index <= step ? form.progressBarDone : ''}`}
+          />
+        ))}
+      </div>
+      <p className={form.stepLabel}>
+        Шаг {step + 1} из {STEPS.length}
+      </p>
 
-      <main className={styles.wrap}>
-        <div className={styles.card}>
-          <div className={styles.progress} aria-label={`Шаг ${step + 1} из ${STEPS.length}`}>
-            {STEPS.map((item, index) => (
-              <span
-                key={item.title}
-                className={`${styles.progressBar} ${index <= step ? styles.progressBarDone : ''}`}
-              />
+      <form onSubmit={handleSubmit} className={form.form} noValidate>
+        {step === STEP_ROLE && (
+          <div className={form.roles} role="group" aria-label="Роль в сервисе">
+            {ROLE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className={`${form.role} ${formState.role === option.value ? form.roleActive : ''}`}
+                onClick={() => selectRole(option.value)}
+                aria-pressed={formState.role === option.value}
+              >
+                <span className={form.roleLabel}>{option.label}</span>
+                <span className={form.roleHint}>{option.hint}</span>
+              </button>
             ))}
           </div>
-          <p className={styles.stepLabel}>
-            шаг {step + 1} из {STEPS.length}
-          </p>
-          <h1 className={styles.title}>{current.title}</h1>
-          <p className={styles.caption}>{current.caption}</p>
+        )}
 
-          <form onSubmit={handleSubmit} className={styles.form} noValidate>
-            {step === STEP_ROLE && (
-              <div className={styles.roleList} role="group" aria-label="Роль в сервисе">
-                {ROLE_OPTIONS.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className={
-                      form.role === option.value
-                        ? `${styles.roleCard} ${styles.roleCardActive}`
-                        : styles.roleCard
-                    }
-                    onClick={() => selectRole(option.value)}
-                    aria-pressed={form.role === option.value}
-                  >
-                    <span className={styles.roleLabel}>{option.label}</span>
-                    <span className={styles.roleHint}>{option.hint}</span>
-                  </button>
-                ))}
-              </div>
+        {step === STEP_NAME && (
+          <>
+            <label className={form.field}>
+              <span className={form.label}>Имя</span>
+              <input
+                type="text"
+                name="name"
+                value={formState.name}
+                onChange={setField}
+                className={form.input}
+                aria-invalid={invalid('name')}
+                autoComplete="name"
+                autoFocus
+              />
+              <FieldError>{errors.name}</FieldError>
+            </label>
+            <label className={form.field}>
+              <span className={form.label}>
+                Telegram для связи
+                <span className={form.optional}>можно пропустить</span>
+              </span>
+              <input
+                type="text"
+                name="telegram"
+                value={formState.telegram}
+                onChange={setField}
+                className={form.input}
+                aria-invalid={invalid('telegram')}
+                placeholder="@username"
+              />
+              <FieldError>{errors.telegram}</FieldError>
+            </label>
+          </>
+        )}
+
+        {step === STEP_EMAIL && (
+          <label className={form.field}>
+            <span className={form.label}>Почта</span>
+            <input
+              type="email"
+              name="email"
+              value={formState.email}
+              onChange={setField}
+              className={form.input}
+              aria-invalid={invalid('email')}
+              autoComplete="email"
+              placeholder="you@example.com"
+              disabled={loading}
+              autoFocus
+            />
+            {errors.email ? (
+              <FieldError>{errors.email}</FieldError>
+            ) : (
+              <span className={form.hint}>На неё придёт код для входа.</span>
             )}
+          </label>
+        )}
 
-            {step === STEP_NAME && (
-              <>
-                <Field label="Имя">
-                  <input
-                    type="text"
-                    name="name"
-                    value={form.name}
-                    onChange={setField}
-                    className={styles.input}
-                    aria-invalid={invalid('name')}
-                    autoComplete="name"
-                    autoFocus
-                  />
-                  <FieldError>{errors.name}</FieldError>
-                </Field>
-                <Field
-                  label={
-                    <span className={styles.labelRow}>
-                      <SocialIcon name="telegram" className={styles.labelIcon} />
-                      Telegram для связи
-                      <span className={styles.optional}>можно пропустить</span>
-                    </span>
-                  }
-                >
-                  <input
-                    type="text"
-                    name="telegram"
-                    value={form.telegram}
-                    onChange={setField}
-                    className={styles.input}
-                    aria-invalid={invalid('telegram')}
-                  />
-                  <FieldError>{errors.telegram}</FieldError>
-                </Field>
-              </>
-            )}
+        {step === STEP_CODE && (
+          <div className={form.field}>
+            <span className={form.label}>Код из письма</span>
+            <CodeInput
+              value={formState.code}
+              onChange={setCode}
+              disabled={loading}
+              invalid={Boolean(errors.code)}
+              autoFocus
+            />
+            <FieldError>{errors.code}</FieldError>
+            <button
+              type="button"
+              className={form.resend}
+              onClick={register}
+              disabled={loading || cooldown.active}
+            >
+              {cooldown.active
+                ? `Отправить код ещё раз через 00:${pad(cooldown.secondsLeft)}`
+                : 'Отправить код ещё раз'}
+            </button>
+          </div>
+        )}
 
-            {step === STEP_EMAIL && (
-              <Field label="Почта (она же логин)">
-                <input
-                  type="email"
-                  name="email"
-                  value={form.email}
-                  onChange={setField}
-                  className={styles.input}
-                  aria-invalid={invalid('email')}
-                  autoComplete="email"
-                  disabled={loading}
-                  autoFocus
-                />
-                {errors.email ? (
-                  <FieldError>{errors.email}</FieldError>
-                ) : (
-                  <span className={styles.hint}>на неё придёт код для входа</span>
-                )}
-              </Field>
-            )}
+        {error && <p className={form.error}>{error}</p>}
 
-            {step === STEP_CODE && (
-              <Field label={<>Код из письма на {form.email.trim()}</>}>
-                <input
-                  type="text"
-                  name="code"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  maxLength={6}
-                  value={form.code}
-                  onChange={setField}
-                  className={`${styles.input} ${styles.codeInput}`}
-                  aria-invalid={invalid('code')}
-                  autoComplete="one-time-code"
-                  disabled={loading}
-                  autoFocus
-                />
-                <FieldError>{errors.code}</FieldError>
-                <span className={styles.secondary}>
-                  <button
-                    type="button"
-                    className={styles.linkButton}
-                    onClick={register}
-                    disabled={loading || cooldown.active}
-                  >
-                    {cooldown.active
-                      ? `отправить ещё раз через ${cooldown.secondsLeft} с`
-                      : 'отправить код ещё раз'}
-                  </button>
-                </span>
-              </Field>
-            )}
+        {step > STEP_ROLE && (
+          <div className={form.actions}>
+            <button
+              type="submit"
+              className={`${ui.btnPrimary} ${ui.btnLarge} ${ui.btnBlock}`}
+              disabled={submitDisabled}
+            >
+              {submitLabel}
+            </button>
+            <button
+              type="button"
+              className={`${ui.btnSecondary} ${ui.btnLarge} ${ui.btnBlock}`}
+              onClick={goBack}
+              disabled={loading}
+            >
+              Назад
+            </button>
+          </div>
+        )}
 
-            {error && <p className={styles.error}>{error}</p>}
-
-            {step > STEP_ROLE && (
-              <div className={styles.actions}>
-                <button
-                  type="button"
-                  className={styles.back}
-                  onClick={goBack}
-                  disabled={loading}
-                >
-                  назад
-                </button>
-                <button type="submit" className={styles.submit} disabled={loading}>
-                  {submitLabel}
-                </button>
-              </div>
-            )}
-          </form>
-
-          <p className={styles.footer}>
-            уже есть аккаунт?{' '}
-            <Link to="/login" className={styles.footerLink}>
-              войти
-            </Link>
-          </p>
-          <p className={styles.footer}>
-            <Link to="/" className={styles.footerLink}>
-              вернуться на доску объявлений
-            </Link>
-          </p>
-        </div>
-      </main>
-    </div>
+        {step === STEP_CODE && (
+          <div className={form.hintCard}>
+            <p className={form.hintCardTitle}>Без пароля</p>
+            <p className={form.hintCardText}>
+              Каждый вход подтверждается одноразовым кодом из письма.
+            </p>
+          </div>
+        )}
+      </form>
+    </AuthLayout>
   );
 };
 

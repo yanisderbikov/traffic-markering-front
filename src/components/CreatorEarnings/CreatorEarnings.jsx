@@ -3,13 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import FieldError from '../shared/FieldError/FieldError';
-import Field from '../shared/Field/Field';
 import OperationRows from '../shared/OperationRows/OperationRows';
 import { errorMessage } from '../../shared/auth';
 import { formatRubInput, formatRubles, kopecksToRub, rubToKopecks } from '../../shared/money';
+import { pluralize } from '../../shared/requirements';
+import ui from '../../shared/ui.module.css';
 import styles from './CreatorEarnings.module.css';
 
 const TRON_RE = /^T[1-9A-HJ-NP-Za-km-z]{33}$/;
+
+const FILTERS = [
+  { value: 'all', label: 'Все' },
+  { value: 'earnings', label: 'Начисления', match: (row) => row.type === 'EARNING' },
+  { value: 'payouts', label: 'Выводы', match: (row) => row.type === 'PAYOUT' },
+];
 
 const CreatorEarnings = () => {
   const navigate = useNavigate();
@@ -25,6 +32,7 @@ const CreatorEarnings = () => {
   const [errors, setErrors] = useState({});
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [filter, setFilter] = useState('all');
 
   const loadWallet = useCallback(async () => {
     try {
@@ -96,83 +104,92 @@ const CreatorEarnings = () => {
 
   if (loading) {
     return (
-      <div className={styles.wrap}>
-        <p className={styles.message}>Загрузка заработка…</p>
+      <div className={ui.page}>
+        <p className={ui.message}>Загрузка финансов…</p>
       </div>
     );
   }
 
   if (pageError && !wallet) {
     return (
-      <div className={styles.wrap}>
-        <p className={styles.banner}>{pageError}</p>
+      <div className={ui.page}>
+        <p className={ui.errorBanner}>{pageError}</p>
       </div>
     );
   }
 
   const balance = wallet?.balanceKopecks ?? 0;
+  const canPayout = Boolean(wallet?.payoutAvailable);
+  const activeFilter = FILTERS.find((item) => item.value === filter) || FILTERS[0];
+  const visibleRows = activeFilter.match ? rows.filter(activeFilter.match) : rows;
+  const confirmedPayouts = rows.filter(
+    (row) => row.type === 'PAYOUT' && row.status === 'CONFIRMED'
+  ).length;
 
   return (
-    <div className={styles.wrap}>
-      <h1 className={styles.title}>Заработок</h1>
-      <p className={styles.subtitle}>
-        Начисления за просмотры попадают в кошелёк раз в сутки ночью — как только заработанное
-        по объявлению дойдёт до его порога вывода. Вывод — в USDT на кошелёк TRON (TRC-20).
-      </p>
+    <div className={ui.page}>
+      <header className={ui.pageHead}>
+        <div className={ui.pageHeadMain}>
+          <span className={ui.eyebrow}>Креатор</span>
+          <h1 className={ui.title}>Финансы</h1>
+          <p className={ui.subtitle}>Начисления, выводы и история операций в одном месте.</p>
+        </div>
+        <div className={ui.pageHeadActions}>
+          <button
+            type="button"
+            className={ui.btnPrimary}
+            onClick={openForm}
+            disabled={!canPayout || formOpen}
+          >
+            Вывести средства
+          </button>
+        </div>
+      </header>
 
-      <div className={styles.summary}>
-        <div className={styles.summaryItem}>
-          <span className={styles.summaryLabel}>доступно к выводу</span>
-          <span className={`${styles.summaryValue} ${styles.summaryFree}`}>
-            {formatRubles(balance)}
-          </span>
-        </div>
-        <div className={styles.summaryItem}>
-          <span className={styles.summaryLabel}>в заявках</span>
-          <span className={styles.summaryValue}>{formatRubles(wallet?.reservedKopecks ?? 0)}</span>
-        </div>
-        <div className={styles.summaryItem}>
-          <span className={styles.summaryLabel}>выведено</span>
-          <span className={styles.summaryValue}>{formatRubles(wallet?.paidOutKopecks ?? 0)}</span>
-        </div>
-        <div className={styles.summaryItem}>
-          <span className={styles.summaryLabel}>зачислено всего</span>
-          <span className={styles.summaryValue}>{formatRubles(wallet?.earnedKopecks ?? 0)}</span>
-        </div>
-        <div className={styles.summaryItem}>
-          <span className={styles.summaryLabel}>ждёт зачисления</span>
-          <span className={styles.summaryValue}>{formatRubles(wallet?.pendingKopecks ?? 0)}</span>
-        </div>
-      </div>
-      <p className={styles.text}>
-        Начисленное уезжает в кошелёк ночью, когда сумма по объявлению дошла до его порога вывода,
-        и только за просмотры старше семи дней: за это время площадка списывает ботов, а
-        платформа проверяет ролик.
-      </p>
-
-      <section className={styles.card}>
-        {!formOpen ? (
-          <div className={styles.payoutRow}>
-            <div>
-              <h2 className={styles.cardTitle}>Вывод средств</h2>
-              <p className={styles.text}>
-                {wallet?.payoutAvailable
-                  ? `Можно вывести до ${formatRubles(balance)}.`
-                  : 'Пока нечего выводить: деньги появятся здесь, когда заработанное по объявлению дойдёт до его порога вывода.'}
-              </p>
-            </div>
-            {wallet?.payoutAvailable && (
-              <button type="button" className={styles.primaryBtn} onClick={openForm}>
+      <div className={styles.top}>
+        <section className={styles.balance}>
+          <span className={styles.balanceLabel}>Доступно к выводу</span>
+          <span className={styles.balanceValue}>{formatRubles(balance)}</span>
+          <div className={styles.balanceRow}>
+            <span className={styles.balanceNote}>
+              {canPayout
+                ? 'Вывод в USDT на кошелёк TRON (TRC-20)'
+                : 'Пока нечего выводить: деньги появятся, когда заработанное по офферу дойдёт до его порога'}
+            </span>
+            {canPayout && (
+              <button type="button" className={ui.btnOnAccent} onClick={openForm} disabled={formOpen}>
                 Вывести
               </button>
             )}
           </div>
-        ) : (
+        </section>
+        <div className={ui.stat}>
+          <span className={ui.statLabel}>Ожидает подтверждения</span>
+          <span className={ui.statValue}>{formatRubles(wallet?.pendingKopecks ?? 0)}</span>
+          <span className={ui.statNote}>просмотры моложе 7 дней и ниже порога вывода</span>
+        </div>
+        <div className={ui.stat}>
+          <span className={ui.statLabel}>Выплачено за всё время</span>
+          <span className={ui.statValue}>{formatRubles(wallet?.paidOutKopecks ?? 0)}</span>
+          <span className={`${ui.statNote} ${confirmedPayouts ? ui.statUp : ''}`}>
+            {confirmedPayouts
+              ? `${confirmedPayouts} ${pluralize(confirmedPayouts, ['успешная выплата', 'успешные выплаты', 'успешных выплат'])}`
+              : `в заявках ${formatRubles(wallet?.reservedKopecks ?? 0)}`}
+          </span>
+        </div>
+      </div>
+
+      {formOpen && (
+        <section className={`${ui.card} ${styles.payoutForm}`}>
           <form onSubmit={handleSubmit} noValidate>
-            <h2 className={styles.cardTitle}>Заявка на вывод</h2>
+            <h2 className={ui.cardTitle}>Заявка на вывод</h2>
             <div className={styles.formGrid}>
-              <Field label="Сумма, ₽ *">
+              <div className={styles.field}>
+                <label className={ui.label} htmlFor="payout-amount">
+                  Сумма, ₽
+                </label>
                 <input
+                  id="payout-amount"
                   type="text"
                   inputMode="decimal"
                   value={amountRub}
@@ -181,16 +198,20 @@ const CreatorEarnings = () => {
                     setErrors((prev) => ({ ...prev, amountRub: '' }));
                     setError('');
                   }}
-                  className={styles.input}
+                  className={ui.input}
                   aria-invalid={errors.amountRub ? 'true' : undefined}
                   autoComplete="off"
                   disabled={saving}
                 />
                 <FieldError>{errors.amountRub}</FieldError>
-                <span className={styles.hint}>До {formatRubles(balance)}.</span>
-              </Field>
-              <Field label="Адрес кошелька TRON (USDT TRC-20) *" className={styles.labelWide}>
+                <span className={ui.hint}>До {formatRubles(balance)}.</span>
+              </div>
+              <div className={`${styles.field} ${styles.fieldWide}`}>
+                <label className={ui.label} htmlFor="payout-address">
+                  Адрес кошелька TRON (USDT TRC-20)
+                </label>
                 <input
+                  id="payout-address"
                   type="text"
                   value={address}
                   onChange={(e) => {
@@ -198,26 +219,27 @@ const CreatorEarnings = () => {
                     setErrors((prev) => ({ ...prev, address: '' }));
                     setError('');
                   }}
-                  className={styles.input}
+                  className={ui.input}
                   aria-invalid={errors.address ? 'true' : undefined}
                   autoComplete="off"
                   spellCheck={false}
+                  placeholder="T…"
                   disabled={saving}
                 />
                 <FieldError>{errors.address}</FieldError>
-                <span className={styles.hint}>
+                <span className={ui.hint}>
                   Проверьте адрес дважды: перевод в сети TRON отменить нельзя.
                 </span>
-              </Field>
+              </div>
             </div>
-            {error && <p className={styles.error}>{error}</p>}
+            {error && <p className={ui.errorText}>{error}</p>}
             <div className={styles.formActions}>
-              <button type="submit" className={styles.primaryBtn} disabled={saving}>
+              <button type="submit" className={ui.btnPrimary} disabled={saving}>
                 {saving ? 'Отправляем…' : 'Отправить заявку'}
               </button>
               <button
                 type="button"
-                className={styles.cancelBtn}
+                className={ui.btnSecondary}
                 onClick={() => setFormOpen(false)}
                 disabled={saving}
               >
@@ -225,19 +247,57 @@ const CreatorEarnings = () => {
               </button>
             </div>
           </form>
-        )}
-      </section>
+        </section>
+      )}
 
-      <section className={styles.card}>
-        <h2 className={styles.cardTitle}>Операции</h2>
+      <div className={ui.sectionHead}>
+        <h2 className={ui.sectionTitle}>История операций</h2>
+      </div>
+      <div className={styles.filters}>
+        <div className={ui.chips} role="group" aria-label="Тип операции">
+          {FILTERS.map((item) => (
+            <button
+              key={item.value}
+              type="button"
+              className={filter === item.value ? ui.chipActive : ui.chip}
+              onClick={() => setFilter(item.value)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <section className={ui.card}>
         <OperationRows
-          rows={rows}
+          rows={visibleRows}
           loading={rowsLoading}
           error={rowsError}
           linkFor={(row) => `/app/earnings/${row.id}`}
-          emptyText="Начислений пока нет: они появятся после одобрения отклика и первых просмотров."
+          emptyText={
+            filter === 'all'
+              ? 'Начислений пока нет: они появятся после одобрения работы и первых просмотров.'
+              : 'Операций такого типа пока нет.'
+          }
         />
       </section>
+
+      <div className={styles.bottom}>
+        <section className={ui.cardSuccess}>
+          <p className={styles.infoTitle}>Как начисляются деньги</p>
+          <p>
+            Начисления за просмотры попадают в кошелёк раз в сутки ночью, как только заработанное по
+            офферу дойдёт до его порога вывода. Считаются только просмотры старше семи дней: за это
+            время площадка списывает ботов, а платформа проверяет ролик.
+          </p>
+        </section>
+        <section className={ui.card}>
+          <p className={styles.infoTitle}>Вывод средств</p>
+          <p className={styles.infoText}>
+            Вывод в USDT на кошелёк TRON (TRC-20). Заявку проводит менеджер финансов, после перевода
+            вы подтверждаете получение в истории операций.
+          </p>
+        </section>
+      </div>
     </div>
   );
 };

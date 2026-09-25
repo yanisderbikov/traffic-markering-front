@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import apiClient from '../../apiClient';
 import { errorMessage } from '../../shared/auth';
 import { formatRubles } from '../../shared/money';
+import ui from '../../shared/ui.module.css';
 import styles from './FinanceCustomers.module.css';
-import Field from '../shared/Field/Field';
 
 const matches = (wallet, query) =>
   [wallet.customerName, wallet.customerEmail, wallet.customerCompany]
@@ -53,85 +53,102 @@ const FinanceCustomers = () => {
   );
 
   return (
-    <div className={styles.wrap}>
-      <div className={styles.head}>
-        <h1 className={styles.title}>Кошельки заказчиков</h1>
-        <Field label="Имя, почта или компания" className={styles.searchField} pill>
+    <div className={ui.page}>
+      <header className={ui.pageHead}>
+        <div className={ui.pageHeadMain}>
+          <span className={ui.eyebrow}>Финансы</span>
+          <h1 className={ui.title}>Кошельки рекламодателей</h1>
+          <p className={ui.subtitle}>
+            Свободные остатки, резервы в кампаниях и начисления креаторам по каждому рекламодателю.
+          </p>
+        </div>
+        <div className={ui.pageHeadActions}>
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className={styles.search}
+            className={`${ui.input} ${styles.search}`}
+            placeholder="Имя, почта или компания"
+            aria-label="Поиск по имени, почте или компании"
           />
-        </Field>
+        </div>
+      </header>
+
+      {pageError && <p className={ui.errorBanner}>{pageError}</p>}
+
+      <div className={`${ui.grid4} ${styles.totals}`}>
+        <div className={ui.stat}>
+          <span className={ui.statLabel}>Рекламодателей</span>
+          <span className={ui.statValue}>{wallets.length}</span>
+        </div>
+        <div className={ui.stat}>
+          <span className={ui.statLabel}>Свободно всего</span>
+          <span className={`${ui.statValue} ${ui.success}`}>{formatRubles(totals.balance)}</span>
+        </div>
+        <div className={ui.stat}>
+          <span className={ui.statLabel}>В кампаниях</span>
+          <span className={ui.statValue}>{formatRubles(totals.allocated)}</span>
+        </div>
+        <div className={ui.stat}>
+          <span className={ui.statLabel}>Начислено креаторам</span>
+          <span className={ui.statValue}>{formatRubles(totals.spent)}</span>
+        </div>
       </div>
 
-      {pageError && <p className={styles.banner}>{pageError}</p>}
-
-      <div className={styles.totals}>
-        <div className={styles.totalItem}>
-          <span className={styles.totalLabel}>заказчиков</span>
-          <span className={styles.totalValue}>{wallets.length}</span>
-        </div>
-        <div className={styles.totalItem}>
-          <span className={styles.totalLabel}>свободно всего</span>
-          <span className={`${styles.totalValue} ${styles.totalFree}`}>
-            {formatRubles(totals.balance)}
-          </span>
-        </div>
-        <div className={styles.totalItem}>
-          <span className={styles.totalLabel}>в объявлениях</span>
-          <span className={styles.totalValue}>{formatRubles(totals.allocated)}</span>
-        </div>
-        <div className={styles.totalItem}>
-          <span className={styles.totalLabel}>начислено креаторам</span>
-          <span className={styles.totalValue}>{formatRubles(totals.spent)}</span>
-        </div>
-      </div>
-
-      {loading ? (
-        <p className={styles.message}>Загрузка кошельков…</p>
-      ) : visible.length === 0 ? (
-        <p className={styles.message}>
-          {normalizedQuery ? 'Никого не нашлось по запросу.' : 'Заказчиков с кошельком пока нет.'}
-        </p>
-      ) : (
-        <ul className={styles.list}>
-          {visible.map((wallet) => (
-            <li key={wallet.userId} className={styles.item}>
-              <Link to={`/app/finance/${wallet.userId}`} className={styles.itemLink}>
-                <div className={styles.who}>
-                  <span className={styles.name}>{wallet.customerName || wallet.customerEmail}</span>
-                  <span className={styles.email}>{wallet.customerEmail}</span>
-                  {wallet.customerCompany && (
-                    <span className={styles.company}>{wallet.customerCompany}</span>
-                  )}
-                </div>
-                <div className={styles.money}>
-                  <span className={styles.moneyItem}>
-                    <span className={styles.moneyLabel}>свободно</span>
-                    <span className={`${styles.moneyValue} ${styles.moneyFree}`}>
+      <section className={ui.card}>
+        {loading ? (
+          <p className={ui.message}>Загрузка кошельков…</p>
+        ) : visible.length === 0 ? (
+          <p className={ui.message}>
+            {normalizedQuery ? 'Никого не нашлось по запросу.' : 'Рекламодателей с кошельком пока нет.'}
+          </p>
+        ) : (
+          <div className={ui.tableWrap}>
+            <table className={ui.table}>
+              <thead>
+                <tr>
+                  <th>Рекламодатель</th>
+                  <th className={ui.right}>Свободно</th>
+                  <th className={ui.right}>В кампаниях</th>
+                  <th className={ui.right}>Начислено</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map((wallet) => (
+                  <tr key={wallet.userId}>
+                    <td>
+                      <div className={styles.who}>
+                        <Link to={`/app/finance/${wallet.userId}`} className={styles.name}>
+                          {wallet.customerName || wallet.customerEmail}
+                        </Link>
+                        <span className={styles.email}>{wallet.customerEmail}</span>
+                        {wallet.customerCompany && (
+                          <span className={styles.company}>{wallet.customerCompany}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className={`${ui.right} ${ui.money} ${ui.success}`}>
                       {formatRubles(wallet.balanceKopecks ?? 0)}
-                    </span>
-                  </span>
-                  <span className={styles.moneyItem}>
-                    <span className={styles.moneyLabel}>в объявлениях</span>
-                    <span className={styles.moneyValue}>
+                    </td>
+                    <td className={`${ui.right} ${ui.money}`}>
                       {formatRubles(wallet.allocatedKopecks ?? 0)}
-                    </span>
-                  </span>
-                  <span className={styles.moneyItem}>
-                    <span className={styles.moneyLabel}>начислено</span>
-                    <span className={styles.moneyValue}>
+                    </td>
+                    <td className={`${ui.right} ${ui.money}`}>
                       {formatRubles(wallet.spentKopecks ?? 0)}
-                    </span>
-                  </span>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+                    </td>
+                    <td className={ui.right}>
+                      <Link to={`/app/finance/${wallet.userId}`} className={ui.linkAccent}>
+                        Открыть →
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </div>
   );
 };

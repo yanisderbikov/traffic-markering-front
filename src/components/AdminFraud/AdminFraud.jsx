@@ -6,17 +6,18 @@ import { FraudBadge, FraudFlags, TrustBadge } from '../shared/FraudBadge/FraudBa
 import { errorMessage } from '../../shared/auth';
 import { formatRubles, formatViews } from '../../shared/money';
 import { APPLICATION_STATUS_LABELS, PLATFORM_LABELS, formatDate } from '../../shared/dictionaries';
+import ui from '../../shared/ui.module.css';
 import styles from './AdminFraud.module.css';
 
 const FRAUD_URL = '/api/admin/fraud';
 
 const FILTERS = [
-  { value: 'attention', label: 'требуют внимания' },
-  { value: 'FRAUD', label: 'накрутка' },
-  { value: 'SUSPICIOUS', label: 'на проверке' },
-  { value: 'VERIFIED', label: 'проверенные' },
-  { value: 'CLEAN', label: 'чистые' },
-  { value: 'all', label: 'все' },
+  { value: 'attention', label: 'Требуют внимания' },
+  { value: 'FRAUD', label: 'Накрутка' },
+  { value: 'SUSPICIOUS', label: 'На проверке' },
+  { value: 'VERIFIED', label: 'Проверенные' },
+  { value: 'CLEAN', label: 'Чистые' },
+  { value: 'all', label: 'Все' },
 ];
 
 const DECISIONS = {
@@ -25,7 +26,7 @@ const DECISIONS = {
     label: 'Накрутка',
     confirm: 'Подтвердить накрутку? Начисление обнулится, креатор получит страйк.',
   },
-  AUTO: { label: 'Вернуть автоматике', confirm: 'Снять ручное решение и вернуть отклик скорингу?' },
+  AUTO: { label: 'Вернуть автоматике', confirm: 'Снять ручное решение и вернуть работу скорингу?' },
 };
 
 const metricsLine = (snapshot) => {
@@ -114,43 +115,54 @@ const AdminFraud = () => {
   };
 
   return (
-    <div className={styles.wrap}>
-      <h1 className={styles.title}>Подозрительные ролики</h1>
-      <p className={styles.subtitle}>
-        Скоринг считается после каждого замера просмотров. С порога «на проверке» деньги копятся
-        на отклике, но в кошелёк не уезжают; с порога «накрутка» начисление обнуляется. Решение
-        админа автоматика больше не перебивает. Репутация креаторов —{' '}
-        <Link to="/app/admin/fraud/creators">отдельно</Link>.
-      </p>
-
-      <section className={styles.card}>
-        <div className={styles.listHead}>
-          <h2 className={styles.cardTitle}>Очередь</h2>
-          <div className={styles.controls}>
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className={styles.select}
-              aria-label="Фильтр по вердикту"
-            >
-              {FILTERS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <button type="button" className={styles.ghostBtn} onClick={recheckAll} disabled={rechecking}>
-              {rechecking ? 'Проверяем…' : 'Перепроверить все'}
-            </button>
-          </div>
+    <div className={ui.page}>
+      <header className={ui.pageHead}>
+        <div className={ui.pageHeadMain}>
+          <span className={ui.eyebrow}>Антифрод</span>
+          <h1 className={ui.title}>Подозрительные ролики</h1>
+          <p className={ui.subtitle}>
+            Скоринг считается после каждого замера просмотров. С порога «на проверке» деньги копятся
+            на работе, но в кошелёк не уезжают; с порога «накрутка» начисление обнуляется. Решение
+            админа автоматика больше не перебивает. Репутация креаторов —{' '}
+            <Link to="/app/admin/fraud/creators" className={ui.accent}>
+              отдельно
+            </Link>
+            .
+          </p>
         </div>
+        <div className={ui.pageHeadActions}>
+          <button
+            type="button"
+            className={ui.btnSecondary}
+            onClick={recheckAll}
+            disabled={rechecking}
+          >
+            {rechecking ? 'Проверяем…' : 'Перепроверить все'}
+          </button>
+        </div>
+      </header>
 
-        {pageError && <p className={styles.banner}>{pageError}</p>}
+      <div className={`${ui.chips} ${styles.filters}`} role="group" aria-label="Фильтр по вердикту">
+        {FILTERS.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            className={filter === option.value ? ui.chipActive : ui.chip}
+            onClick={() => setFilter(option.value)}
+            aria-pressed={filter === option.value}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+
+      <section className={ui.card}>
+        {pageError && <p className={ui.errorBanner}>{pageError}</p>}
 
         {loading ? (
-          <p className={styles.message}>Загрузка…</p>
+          <p className={ui.message}>Загрузка…</p>
         ) : items.length === 0 ? (
-          <p className={styles.message}>Пусто: подозрительных роликов нет.</p>
+          <p className={ui.message}>Пусто: подозрительных роликов нет.</p>
         ) : (
           <ul className={styles.list}>
             {items.map((item) => {
@@ -167,7 +179,7 @@ const AdminFraud = () => {
                     </div>
                     <div className={styles.badges}>
                       <FraudBadge status={application.fraudStatus} score={application.fraudScore} showClean />
-                      <span className={styles.meta}>
+                      <span className={ui.chipOutline}>
                         {APPLICATION_STATUS_LABELS[application.status] || application.status}
                       </span>
                     </div>
@@ -177,7 +189,7 @@ const AdminFraud = () => {
                     {application.campaignTitle}
                     {' · '}
                     {PLATFORM_LABELS[application.platform] || application.platform}
-                    {' · отклик от '}
+                    {' · работа от '}
                     {formatDate(application.createdAt)}
                     {application.videoPublishedAt
                       ? ` · ролик опубликован ${formatDate(application.videoPublishedAt)}`
@@ -193,30 +205,30 @@ const AdminFraud = () => {
 
                   <p className={styles.numbers}>
                     <span>
-                      просмотров: <b>{formatViews(application.views ?? 0)}</b>
+                      Просмотров: <b>{formatViews(application.views ?? 0)}</b>
                     </span>
                     <span>
-                      в расчёт: <b>{formatViews(application.payableViews ?? 0)}</b>
+                      В расчёт: <b>{formatViews(application.payableViews ?? 0)}</b>
                     </span>
                     <span>
-                      начислено: <b>{formatRubles(application.accruedKopecks ?? 0)}</b>
+                      Начислено: <b>{formatRubles(application.accruedKopecks ?? 0)}</b>
                     </span>
                     <span>
-                      зачислено: <b>{formatRubles(application.creditedKopecks ?? 0)}</b>
+                      Зачислено: <b>{formatRubles(application.creditedKopecks ?? 0)}</b>
                     </span>
                     {item.uncreditedKopecks > 0 && (
                       <span className={styles.frozen}>
-                        ждёт: {formatRubles(item.uncreditedKopecks)}
+                        Ждёт: {formatRubles(item.uncreditedKopecks)}
                       </span>
                     )}
                   </p>
-                  {metrics && <p className={styles.numbers}>{metrics}</p>}
+                  {metrics && <p className={styles.metrics}>{metrics}</p>}
 
                   <FraudFlags flags={application.fraudFlags} />
 
                   {item.fraudReviewedAt && (
                     <p className={styles.review}>
-                      решение {item.fraudReviewedBy ? `${item.fraudReviewedBy}, ` : ''}
+                      Решение {item.fraudReviewedBy ? `${item.fraudReviewedBy}, ` : ''}
                       {formatDate(item.fraudReviewedAt)}
                       {item.fraudReviewComment ? `: ${item.fraudReviewComment}` : ''}
                     </p>
@@ -226,7 +238,7 @@ const AdminFraud = () => {
                     {application.fraudStatus !== 'VERIFIED' && (
                       <button
                         type="button"
-                        className={styles.actionBtn}
+                        className={`${ui.btnPrimary} ${ui.btnSmall}`}
                         onClick={() => review(item, 'VERIFIED')}
                         disabled={busy}
                       >
@@ -236,7 +248,7 @@ const AdminFraud = () => {
                     {!(application.fraudStatus === 'FRAUD' && item.fraudReviewedAt) && (
                       <button
                         type="button"
-                        className={styles.dangerBtn}
+                        className={`${ui.btnDanger} ${ui.btnSmall}`}
                         onClick={() => review(item, 'FRAUD')}
                         disabled={busy}
                       >
@@ -246,7 +258,7 @@ const AdminFraud = () => {
                     {item.fraudReviewedAt && (
                       <button
                         type="button"
-                        className={styles.ghostBtn}
+                        className={`${ui.btnGhost} ${ui.btnSmall}`}
                         onClick={() => review(item, 'AUTO')}
                         disabled={busy}
                       >
@@ -255,7 +267,7 @@ const AdminFraud = () => {
                     )}
                     <button
                       type="button"
-                      className={styles.ghostBtn}
+                      className={`${ui.btnGhost} ${ui.btnSmall}`}
                       onClick={() => recheck(item)}
                       disabled={busy}
                     >

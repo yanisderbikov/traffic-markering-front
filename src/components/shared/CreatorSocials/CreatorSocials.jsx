@@ -3,7 +3,6 @@ import apiClient from '../../../apiClient';
 import SocialIcon from '../SocialIcon/SocialIcon';
 import styles from './CreatorSocials.module.css';
 
-// Порядок площадок фиксирован: заказчик каждый раз видит их на одних и тех же местах.
 const SOCIAL_FIELDS = [
   { key: 'telegram', label: 'Telegram' },
   { key: 'instagram', label: 'Instagram' },
@@ -11,12 +10,6 @@ const SOCIAL_FIELDS = [
   { key: 'youtubeShorts', label: 'YouTube Shorts' },
 ];
 
-/**
- * Соцсети креатора для заказчика: в отклике приходит только имя и телеграм,
- * а решение «брать или нет» принимается по всем площадкам. Профиль тянем
- * по клику, а не вместе со списком откликов: на объявлении их могут быть десятки,
- * и грузить профиль каждого ради свёрнутого блока незачем.
- */
 const CreatorSocials = ({ userId }) => {
   const [open, setOpen] = useState(false);
   const [profile, setProfile] = useState(null);
@@ -29,7 +22,6 @@ const CreatorSocials = ({ userId }) => {
       return;
     }
     setOpen(true);
-    // Профиль не меняется, пока открыта страница, — второй раз не перезапрашиваем.
     if (profile || loading) return;
     setLoading(true);
     setError('');

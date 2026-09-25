@@ -3,23 +3,32 @@ import { Link } from 'react-router-dom';
 import apiClient from '../../apiClient';
 import BudgetBar from '../shared/BudgetBar/BudgetBar';
 import PlatformList from '../shared/PlatformList/PlatformList';
-import { formatRubles } from '../../shared/money';
+import { formatRubles, formatViews } from '../../shared/money';
 import { CAMPAIGN_STATUS_LABELS, formatDate } from '../../shared/dictionaries';
 import { DEFAULT_VIEW_REGION, viewRegionLabel } from '../../shared/viewRegion';
+import ui from '../../shared/ui.module.css';
 import styles from './CustomerCampaigns.module.css';
 
-// Цвет бейджа зависит от статуса: активное объявление должно бросаться в глаза.
-const STATUS_CLASS = {
-  DRAFT: styles.statusDraft,
-  ACTIVE: styles.statusActive,
-  PAUSED: styles.statusPaused,
-  COMPLETED: styles.statusCompleted,
+const STATUS_CHIP = {
+  ACTIVE: ui.chipSuccess,
+  PAUSED: ui.chipWarning,
+  DRAFT: ui.chipOutline,
+  COMPLETED: ui.chipOutline,
 };
+
+const FILTERS = [
+  { id: 'ALL', label: 'Все' },
+  { id: 'ACTIVE', label: 'Активные' },
+  { id: 'PAUSED', label: 'На паузе' },
+  { id: 'DRAFT', label: 'Черновики' },
+  { id: 'COMPLETED', label: 'Завершённые' },
+];
 
 const CustomerCampaigns = () => {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState('');
+  const [filter, setFilter] = useState('ALL');
 
   const loadCampaigns = useCallback(async () => {
     try {
@@ -28,7 +37,7 @@ const CustomerCampaigns = () => {
       setPageError('');
     } catch (err) {
       setPageError(
-        err?.response?.data?.message || err?.message || 'Не удалось загрузить объявления'
+        err?.response?.data?.message || err?.message || 'Не удалось загрузить кампании'
       );
     } finally {
       setLoading(false);
@@ -39,87 +48,112 @@ const CustomerCampaigns = () => {
     loadCampaigns();
   }, [loadCampaigns]);
 
+  const countOf = (id) =>
+    id === 'ALL' ? campaigns.length : campaigns.filter((row) => row.status === id).length;
+  const shown = filter === 'ALL' ? campaigns : campaigns.filter((row) => row.status === filter);
+
   return (
-    <div className={styles.wrap}>
-      <div className={styles.head}>
-        <h1 className={styles.title}>Мои объявления</h1>
-        <div className={styles.headActions}>
-          <Link to="/app/campaigns/new" className={styles.primaryBtn}>
-            Новое объявление
+    <div className={ui.page}>
+      <header className={ui.pageHead}>
+        <div className={ui.pageHeadMain}>
+          <span className={ui.eyebrow}>Рекламодатель</span>
+          <h1 className={ui.title}>Мои кампании</h1>
+          <p className={ui.subtitle}>
+            Все кампании, их бюджеты и отклики креаторов. Нажмите на кампанию, чтобы открыть
+            детали.
+          </p>
+        </div>
+        <div className={`${ui.pageHeadActions} ${styles.headActions}`}>
+          <Link to="/app/campaigns/new" className={ui.btnPrimary}>
+            + Создать кампанию
           </Link>
         </div>
+      </header>
+
+      {pageError && <p className={ui.errorBanner}>{pageError}</p>}
+
+      <div className={`${ui.chips} ${styles.filters}`} role="tablist" aria-label="Фильтр по статусу">
+        {FILTERS.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            role="tab"
+            aria-selected={filter === item.id}
+            className={filter === item.id ? ui.chipActive : ui.chip}
+            onClick={() => setFilter(item.id)}
+          >
+            {item.label}
+            {!loading && ` ${countOf(item.id)}`}
+          </button>
+        ))}
       </div>
 
-      {pageError && <p className={styles.banner}>{pageError}</p>}
-
       {loading ? (
-        <p className={styles.message}>Загрузка объявлений…</p>
+        <p className={ui.message}>Загрузка кампаний…</p>
       ) : campaigns.length === 0 ? (
-        <div className={styles.empty}>
-          <p className={styles.emptyTitle}>Объявлений пока нет</p>
-          <p className={styles.emptyText}>
-            Создайте первое: опишите задачу, укажите ставку за 1000 просмотров и бюджет —
-            креаторы увидят его на доске.
+        <div className={ui.empty}>
+          <p className={ui.emptyTitle}>Кампаний пока нет</p>
+          <p className={ui.emptyText}>
+            Создайте первую: опишите задачу, укажите ставку за 1 000 просмотров и бюджет.
+            Креаторы увидят её в офферах.
           </p>
-          <Link to="/app/campaigns/new" className={styles.primaryBtn}>
-            Новое объявление
+          <Link to="/app/campaigns/new" className={ui.btnPrimary}>
+            Создать кампанию
           </Link>
+        </div>
+      ) : shown.length === 0 ? (
+        <div className={ui.empty}>
+          <p className={ui.emptyTitle}>В этом статусе кампаний нет</p>
+          <p className={ui.emptyText}>Выберите другой фильтр или создайте новую кампанию.</p>
         </div>
       ) : (
         <ul className={styles.list}>
-          {campaigns.map((campaign) => (
-            <li key={campaign.id} className={styles.item}>
-              <Link to={`/app/campaigns/${campaign.id}`} className={styles.itemLink}>
+          {shown.map((campaign) => (
+            <li key={campaign.id}>
+              <Link to={`/app/campaigns/${campaign.id}`} className={`${ui.card} ${styles.row}`}>
                 <div className={styles.media}>
                   {campaign.photoUrl ? (
-                    <>
-                      <img
-                        className={styles.mediaBackdrop}
-                        src={campaign.photoUrl}
-                        alt=""
-                        aria-hidden="true"
-                      />
-                      <img
-                        className={styles.mediaPhoto}
-                        src={campaign.photoUrl}
-                        alt={campaign.title}
-                      />
-                    </>
+                    <img src={campaign.photoUrl} alt="" />
                   ) : (
-                    <span className={styles.mediaEmpty}>без фото</span>
+                    <span className={styles.mediaEmpty}>
+                      {(campaign.title || '·').trim().charAt(0).toUpperCase()}
+                    </span>
                   )}
                 </div>
-                <div className={styles.itemHead}>
-                  <span className={styles.itemTitle}>{campaign.title}</span>
-                  <span className={`${styles.status} ${STATUS_CLASS[campaign.status] || ''}`}>
-                    {campaign.statusDescription ||
-                      CAMPAIGN_STATUS_LABELS[campaign.status] ||
-                      campaign.status}
-                  </span>
+
+                <div className={styles.body}>
+                  <div className={styles.head}>
+                    <h2 className={styles.title}>{campaign.title}</h2>
+                    <div className={ui.chips}>
+                      <span className={STATUS_CHIP[campaign.status] || ui.chipOutline}>
+                        {campaign.statusDescription ||
+                          CAMPAIGN_STATUS_LABELS[campaign.status] ||
+                          campaign.status}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className={styles.rateRow}>
+                    <span className={styles.rate}>
+                      {formatRubles(campaign.ratePerThousandKopecks)}
+                      <span className={styles.rateUnit}> / 1 000 просмотров</span>
+                    </span>
+                    <PlatformList platforms={campaign.platforms} compact />
+                  </div>
+
+                  <BudgetBar
+                    budgetKopecks={campaign.budgetKopecks}
+                    spentKopecks={campaign.spentKopecks}
+                    compact
+                  />
+
+                  <p className={styles.meta}>
+                    <span>Откликов: {campaign.applicationsCount ?? 0}</span>
+                    <span>Просмотров: {formatViews(campaign.totalViews ?? 0)}</span>
+                    <span>{viewRegionLabel(campaign.viewRegion || DEFAULT_VIEW_REGION)}</span>
+                    <span>Создано {formatDate(campaign.createdAt)}</span>
+                  </p>
                 </div>
-
-                <PlatformList platforms={campaign.platforms} compact />
-
-                <p className={styles.rate}>
-                  {formatRubles(campaign.ratePerThousandKopecks)}
-                  <span className={styles.rateUnit}> / 1000 просмотров</span>
-                </p>
-
-                <BudgetBar
-                  budgetKopecks={campaign.budgetKopecks}
-                  spentKopecks={campaign.spentKopecks}
-                  compact
-                />
-
-                <p className={styles.meta}>
-                  вывод от {formatRubles(campaign.minPayoutKopecks)}
-                  {' · '}
-                  откликов: {campaign.applicationsCount ?? 0}
-                  {' · '}
-                  создано {formatDate(campaign.createdAt)}
-                  {' · '}
-                  просмотры: {viewRegionLabel(campaign.viewRegion || DEFAULT_VIEW_REGION)}
-                </p>
               </Link>
             </li>
           ))}

@@ -1,248 +1,344 @@
-/* Домашняя страница кабинета: приветствие, очередь «требует внимания»
-   и полосы состояния по разделам. Навигация — в сайдбаре, плиток-ссылок нет. */
-
-.wrap {
-  max-width: var(--page-max-width);
-  margin: 0 auto;
-  padding: 1rem 12px 3rem;
+.attention {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding: 14px 20px;
+  border-radius: var(--card-radius);
+  background: var(--color-accent-tint);
+  border: 1px solid rgba(244, 75, 15, 0.35);
+  font-size: 0.9rem;
+  color: var(--color-ink);
+  text-decoration: none;
+  transition: border-color 0.15s ease;
 }
 
-@media (min-width: 769px) {
-  .wrap {
-    padding-left: 50px;
-    padding-right: 50px;
-  }
+.attention:hover {
+  border-color: var(--color-accent);
 }
 
-.head {
+.attentionCount {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  min-width: 2ch;
+}
+
+.attentionArrow {
+  margin-left: auto;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.creatorTop {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 20px;
+  margin-bottom: 8px;
+}
+
+.balance {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 28px;
+  border-radius: 18px;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.balanceLabel {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--color-on-accent-soft);
+}
+
+.balanceValue {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 4vw, 3rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.balanceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 24px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.balanceNote {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.creatorStats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-content: start;
+}
+
+.connected {
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 18px;
+  padding: 4px 4px 0;
+  font-size: 0.86rem;
 }
 
-.title {
-  font-family: var(--font-display);
-  /* Крупный плакатный заголовок страницы — главный типографический акцент. */
-  font-size: clamp(1.9rem, 5vw, 2.6rem);
-  font-weight: 700;
-  line-height: 1.02;
-  text-transform: uppercase;
-  letter-spacing: var(--title-tracking);
-  color: var(--color-ink);
-  margin: 0;
-}
-
-.primaryBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: var(--action-tracking);
-  text-decoration: none;
-  color: #fff;
-  background: var(--color-ink);
-  border: none;
-  border-radius: var(--pill-radius);
-  padding: 10px 22px;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.primaryBtn:hover {
-  background: var(--color-accent);
-}
-
-/* Фокус с клавиатуры — общее кольцо кабинета, а не синий контур браузера. */
-.primaryBtn:focus-visible,
-.attentionRow:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
-
-.message {
-  color: var(--color-muted);
-  font-size: 0.9rem;
-  margin: 8px 0;
-}
-
-/* --- Требует внимания: очередь на действие пользователя --- */
-
-.attention {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--card-radius);
-  box-shadow: var(--card-shadow);
-  padding: 18px 20px;
-  margin-bottom: 16px;
-}
-
-.attentionTitle {
-  font-family: var(--font-display);
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--label-tracking);
-  color: var(--color-muted);
-  margin: 0;
-}
-
-/* Вся строка — тап-зона, поэтому не меньше 44px по высоте. */
-.attentionRow {
+.works {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
-  min-height: 44px;
-  padding: 10px 0;
-  color: inherit;
-  text-decoration: none;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
 }
 
-.attentionRow + .attentionRow {
+.accruals {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.accrual {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.accruals li + li .accrual {
   border-top: 1px solid var(--color-border);
 }
 
-.attentionRow:hover .attentionText {
-  text-decoration: underline;
-}
-
-.attentionCount {
-  font-family: var(--font-display);
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: var(--color-accent);
-  min-width: 2ch;
+.accrualIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--color-surface-alt);
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-muted);
 }
 
-.attentionText {
-  font-size: 0.92rem;
+.accrualBody {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.accrualTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accrualMeta {
+  font-size: 0.78rem;
+  color: var(--color-faint);
+}
+
+.accrualAmount {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-success);
+  white-space: nowrap;
+}
+
+.customerMid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.chart {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  height: 260px;
+  padding-top: 8px;
+}
+
+.bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: 1 1 0;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.barValue {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.barFill {
+  width: 100%;
+  max-width: 64px;
+  border-radius: 8px;
+  background: #5a2a17;
+  transition: background 0.15s ease;
+}
+
+.barFillTop {
+  background: var(--color-accent);
+}
+
+.bar:hover .barFill {
+  background: var(--color-accent-hover);
+}
+
+.barLabel {
+  width: 100%;
+  font-size: 0.7rem;
+  color: var(--color-faint);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.budgetValue {
+  margin: 4px 0 6px;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
   color: var(--color-ink);
 }
 
-/* --- Полосы состояния: одна карточка на раздел --- */
+.budgetNote {
+  margin: 0 0 14px;
+  font-size: 0.82rem;
+  color: var(--color-muted);
+}
 
-.strips {
-  display: grid;
-  /* min(420px, 100%) — на узких экранах колонка не выталкивает страницу в горизонтальный скролл. */
-  grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
-  gap: 16px;
+.rowLink {
+  font-weight: 700;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.rowLink:hover {
+  color: var(--color-accent);
 }
 
 .strip {
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  gap: 14px;
+  padding: 22px 24px;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--card-radius);
-  box-shadow: var(--card-shadow);
-  padding: 18px 20px;
   color: inherit;
   text-decoration: none;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  transition: border-color 0.15s ease;
 }
 
 .strip:hover {
-  transform: translate(-3px, -3px);
-  border-color: var(--color-ink);
-  box-shadow: var(--card-shadow-hover);
-}
-
-.strip:focus-visible {
-  outline: none;
-  border-color: var(--color-ink);
-  box-shadow: var(--focus-ring);
+  border-color: var(--color-faint);
 }
 
 .stripTitle {
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: var(--title-tracking);
   color: var(--color-ink);
-  margin-bottom: 12px;
 }
 
-/* Ячейки «лейбл над числом» — 1:1 как в WalletSummary.
-   Порог 140px: на 320px ячейки идут в одну колонку, на 390px — 2+1, на десктопе
-   три в ряд, и самое длинное слово лейбла («рассмотрении», ~139px) не вылезает
-   из своей ячейки. */
-.items {
+.stripCells {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
   gap: 12px;
-}
-
-/* Тело карточки прижато к низу: у соседей в ряду сетки строка чисел на одной
-   высоте, даже если в одной карточке лейблы двухстрочные, а в другой нет. */
-.items,
-.empty,
-.error {
   margin-top: auto;
 }
 
-.item {
+.stripCell {
   display: flex;
   flex-direction: column;
-  /* Прижимаем к низу: двухстрочный лейбл не сбивает строку чисел у соседей. */
-  justify-content: flex-end;
   gap: 4px;
   min-width: 0;
 }
 
-.label {
-  font-family: var(--font-display);
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--label-tracking);
+.stripLabel {
+  font-size: 0.74rem;
   color: var(--color-muted);
-  /* Страховка: слишком длинный лейбл ломается внутри своей ячейки, а не лезет к соседу. */
-  overflow-wrap: anywhere;
 }
 
-.value {
+.stripValue {
   font-family: var(--font-display);
-  font-size: 1.35rem;
+  font-size: 1.3rem;
   font-weight: 700;
   color: var(--color-ink);
-  /* Сумма и «₽» — одно целое, переноса между ними быть не должно. */
   white-space: nowrap;
 }
 
-.good {
-  color: var(--color-success);
-}
-
-/* Очередь: ноль — спокойный серый, больше нуля — акцент. */
-.queue {
+.stripEmpty {
+  margin: auto 0 0;
+  font-size: 0.86rem;
   color: var(--color-muted);
 }
 
-.queueActive {
-  color: var(--color-accent);
+@media (max-width: 900px) {
+  .creatorTop,
+  .customerMid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .chart {
+    height: 200px;
+  }
 }
 
-/* «…» пока грузится. */
-.pending {
-  color: var(--color-muted);
-}
+@media (max-width: 520px) {
+  .balance {
+    padding: 22px;
+  }
 
-.empty {
-  font-size: 0.88rem;
-  color: var(--color-ink-soft);
-  margin: 0;
-}
+  .balanceRow a {
+    width: 100%;
+  }
 
-.error {
-  font-size: 0.85rem;
-  color: var(--color-danger);
-  margin: 0;
+  .creatorStats {
+    grid-template-columns: 1fr;
+  }
 }

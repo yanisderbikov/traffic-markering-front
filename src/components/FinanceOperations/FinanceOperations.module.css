@@ -1,75 +1,38 @@
-.wrap {
-  max-width: var(--page-max-width);
-  margin: 0 auto;
-  padding: 1rem 12px 3rem;
-}
-
-@media (min-width: 769px) {
-  .wrap {
-    padding-left: 50px;
-    padding-right: 50px;
-  }
-}
-
-.title {
-  font-family: var(--font-display);
-  font-size: clamp(1.9rem, 5vw, 2.6rem);
-  font-weight: 700;
-  line-height: 1.02;
-  text-transform: uppercase;
-  letter-spacing: var(--title-tracking);
-  color: var(--color-ink);
-  margin: 0 0 8px;
-}
-
-.subtitle {
-  font-size: 0.88rem;
-  color: var(--color-ink-soft);
-  margin: 0 0 16px;
-  max-width: 720px;
-}
-
 .filters {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
-.search,
-.select {
-  font-family: inherit;
-  font-size: 0.9rem;
-  color: var(--color-ink);
-  padding: 8px 14px;
-  border: 1px solid var(--color-field-border);
+.search {
+  flex: 1 1 260px;
+  max-width: 400px;
   border-radius: var(--pill-radius);
-  background: var(--color-surface);
 }
 
-.searchField {
-  flex: 1 1 280px;
-  max-width: 420px;
-}
-
-.search:focus,
-.select:focus {
-  outline: none;
-  border-color: var(--color-ink);
-  box-shadow: var(--focus-ring);
+.select {
+  width: auto;
+  flex: 0 1 220px;
+  border-radius: var(--pill-radius);
 }
 
 .count {
-  font-size: 0.78rem;
-  color: var(--color-muted);
   margin-left: auto;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  white-space: nowrap;
 }
 
-.card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--card-radius);
-  box-shadow: var(--card-shadow);
-  padding: 14px 20px;
+@media (max-width: 560px) {
+  .search,
+  .select {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+
+  .count {
+    margin-left: 0;
+  }
 }

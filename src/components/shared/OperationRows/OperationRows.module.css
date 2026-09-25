@@ -1,17 +1,17 @@
 .banner {
+  margin: 0 0 12px;
+  padding: 12px 16px;
+  border-radius: var(--field-radius);
   background: var(--color-danger-soft);
   border-left: 3px solid var(--color-danger);
+  font-size: 0.86rem;
   color: var(--color-danger);
-  border-radius: var(--field-radius);
-  padding: 10px 14px;
-  font-size: 0.85rem;
-  margin: 0 0 12px;
 }
 
 .message {
-  color: var(--color-muted);
-  font-size: 0.9rem;
   margin: 8px 0;
+  font-size: 0.9rem;
+  color: var(--color-muted);
 }
 
 .table {
@@ -24,27 +24,31 @@
   grid-template-columns: 96px minmax(140px, 1.1fr) minmax(220px, 2fr) 120px 150px;
   align-items: center;
   gap: 14px;
-  padding: 11px 8px;
-  border-top: 1px solid var(--color-border);
+  padding: 16px 0;
+  border-bottom: 1px solid var(--color-border);
   color: inherit;
   text-decoration: none;
-  border-radius: 10px;
   transition: background 0.15s ease;
 }
 
-a.row:hover {
-  background: var(--color-surface-alt);
+.row:last-child {
+  border-bottom: none;
+}
+
+a.row:hover .title {
+  color: var(--color-accent);
 }
 
 .header {
-  border-top: none;
-  padding-top: 4px;
-  padding-bottom: 8px;
-  font-size: 0.66rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--label-tracking);
+  padding: 0 0 12px;
+  border-bottom: 1px solid var(--color-border-strong);
+  font-size: 0.78rem;
+  font-weight: 500;
   color: var(--color-muted);
+}
+
+.header > span {
+  display: block;
 }
 
 .right {
@@ -52,7 +56,7 @@ a.row:hover {
 }
 
 .date {
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   color: var(--color-muted);
   white-space: nowrap;
 }
@@ -68,11 +72,12 @@ a.row:hover {
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--color-ink);
+  transition: color 0.15s ease;
 }
 
 .subtitle {
-  font-size: 0.76rem;
-  color: var(--color-ink-soft);
+  font-size: 0.78rem;
+  color: var(--color-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -99,42 +104,42 @@ a.row:hover {
 .point {
   display: inline-block;
   max-width: 100%;
+  padding: 4px 10px;
+  border-radius: var(--pill-radius);
+  background: var(--color-surface-alt);
   font-size: 0.76rem;
   font-weight: 600;
-  color: var(--color-ink);
-  background: var(--color-surface-alt);
-  border-radius: var(--pill-radius);
-  padding: 3px 10px;
+  color: var(--color-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .pointExternal {
-  color: var(--color-muted);
   background: transparent;
-  border: 1px dashed var(--color-field-border);
+  border: 1px dashed var(--color-border-strong);
+  color: var(--color-faint);
 }
 
 .pointCustomer {
-  background: var(--color-surface-alt);
+  color: var(--color-ink);
 }
 
 .pointCampaign {
-  color: var(--color-accent-hover);
   background: var(--color-accent-soft);
+  color: var(--color-accent);
 }
 
 .pointCreator {
-  color: var(--color-success);
   background: var(--color-success-soft);
+  color: var(--color-success);
 }
 
 .pointTron {
   font-family: source-code-pro, Menlo, Monaco, Consolas, monospace;
   font-size: 0.72rem;
-  color: var(--color-ink);
-  background: var(--color-track);
+  background: var(--color-field);
+  color: var(--color-ink-soft);
 }
 
 .amount {
@@ -151,7 +156,7 @@ a.row:hover {
 }
 
 .amountClosed {
-  color: var(--color-muted);
+  color: var(--color-faint);
   text-decoration: line-through;
 }
 
@@ -161,40 +166,47 @@ a.row:hover {
 }
 
 .status {
-  font-family: var(--font-display);
-  font-size: 0.62rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: var(--label-tracking);
-  color: #fff;
-  background: var(--color-muted);
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 12px;
   border-radius: var(--pill-radius);
-  padding: 3px 9px;
+  background: var(--color-surface-alt);
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-muted);
   white-space: nowrap;
 }
 
-.statusDone {
-  background: var(--color-ink-soft);
+.status::first-letter {
+  text-transform: uppercase;
+}
+
+.statusDone,
+.statusConfirmed {
+  background: var(--color-success-soft);
+  color: var(--color-success);
 }
 
 .statusPending {
-  background: var(--color-accent);
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
 }
 
 .statusSent {
-  background: var(--color-ink);
-}
-
-.statusConfirmed {
-  background: var(--color-success);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
 }
 
 .statusRejected {
-  background: var(--color-danger);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
 }
 
 .statusCancelled {
-  background: var(--color-muted);
+  background: var(--color-surface-alt);
+  color: var(--color-muted);
 }
 
 @media (max-width: 900px) {
@@ -208,8 +220,8 @@ a.row:hover {
       'what amount'
       'flow flow'
       'date status';
-    gap: 6px 12px;
-    padding: 12px 6px;
+    gap: 8px 12px;
+    padding: 14px 0;
   }
 
   .what {

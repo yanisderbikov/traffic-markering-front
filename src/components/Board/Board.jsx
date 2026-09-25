@@ -1,51 +1,50 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import apiClient from '../../apiClient';
-import CampaignCard from '../shared/CampaignCard/CampaignCard';
-import Logo from '../shared/Logo/Logo';
+import CampaignCard, { campaignAvailability } from '../shared/CampaignCard/CampaignCard';
+import PublicLayout from '../shared/PublicLayout/PublicLayout';
+import Icon from '../shared/Icon/Icon';
+import { formatRubles } from '../../shared/money';
+import { PLATFORM_LABELS } from '../../shared/dictionaries';
+import { VIDEO_PLATFORMS } from '../../shared/video';
+import { pluralize } from '../../shared/requirements';
+import ui from '../../shared/ui.module.css';
 import styles from './Board.module.css';
 
-// Иконка обновления — та же, что у RefreshButton в anyforms: круговая стрелка,
-// которая крутится, пока идёт запрос.
-const RefreshButton = ({ onClick, refreshing, label }) => (
-  <button
-    type="button"
-    className={styles.refreshBtn}
-    onClick={onClick}
-    disabled={refreshing}
-    title={label}
-    aria-label={label}
-  >
-    <svg
-      className={refreshing ? styles.spinning : undefined}
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M13.9 8a5.9 5.9 0 1 1-1.73-4.17"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-      <path
-        d="M13.9 1.6v2.8h-2.8"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  </button>
-);
+const SORTS = [
+  { value: 'new', label: 'Сначала новые' },
+  { value: 'rate', label: 'Выше ставка' },
+  { value: 'budget', label: 'Больше остаток' },
+];
+
+const createdTime = (campaign) => {
+  const value = campaign.createdAt;
+  if (!value) return 0;
+  return typeof value === 'number' ? value * 1000 : new Date(value).getTime() || 0;
+};
+
+const remaining = (campaign) =>
+  campaign.remainingKopecks ??
+  Math.max(0, (Number(campaign.budgetKopecks) || 0) - (Number(campaign.spentKopecks) || 0));
+
+const sortCampaigns = (rows, sort) => {
+  const list = [...rows];
+  if (sort === 'rate') {
+    list.sort((a, b) => (b.ratePerThousandKopecks || 0) - (a.ratePerThousandKopecks || 0));
+  } else if (sort === 'budget') {
+    list.sort((a, b) => remaining(b) - remaining(a));
+  } else {
+    list.sort((a, b) => createdTime(b) - createdTime(a));
+  }
+  return list;
+};
 
 const Board = ({ embedded = false }) => {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+  const [platform, setPlatform] = useState('');
+  const [sort, setSort] = useState('new');
 
   const loadCampaigns = useCallback(async () => {
     try {
@@ -57,7 +56,7 @@ const Board = ({ embedded = false }) => {
         err?.response?.data?.message ||
           err?.response?.data?.error ||
           err?.message ||
-          'Не удалось загрузить доску объявлений'
+          'Не удалось загрузить офферы'
       );
     } finally {
       setLoading(false);
@@ -77,69 +76,127 @@ const Board = ({ embedded = false }) => {
     }
   };
 
-  return (
-    <div className={styles.wrap}>
-      {!embedded && (
-        <div className={styles.brand}>
-          <Logo withText />
+  const visible = useMemo(() => {
+    const filtered = platform
+      ? campaigns.filter((row) => Array.isArray(row.platforms) && row.platforms.includes(platform))
+      : campaigns;
+    return sortCampaigns(filtered, sort);
+  }, [campaigns, platform, sort]);
+
+  const openCount = campaigns.filter((row) => campaignAvailability(row).open).length;
+  const totalRemaining = campaigns.reduce((sum, row) => sum + remaining(row), 0);
+
+  const body = (
+    <>
+      <header className={ui.pageHead}>
+        <div className={ui.pageHeadMain}>
+          {embedded && <span className={ui.eyebrow}>Креатор</span>}
+          <h1 className={ui.title}>Найди свой следующий оффер</h1>
+          <p className={ui.subtitle}>Создавай контент для брендов, которые тебе близки.</p>
         </div>
-      )}
-      <header className={styles.head}>
-        <div className={styles.headMain}>
-          <h1 className={styles.title}>доска объявлений</h1>
-          <p className={styles.subtitle}>
-            заказчики платят за просмотры: ставка указана за 1000 просмотров, бюджет виден
-            на шкале каждой карточки.
-          </p>
-        </div>
-        <div className={styles.headActions}>
-          {embedded ? (
-            <RefreshButton
+        {embedded && (
+          <div className={ui.pageHeadActions}>
+            <button
+              type="button"
+              className={ui.btnSecondary}
               onClick={handleRefresh}
-              refreshing={refreshing}
-              label="Обновить доску объявлений"
-            />
-          ) : (
-            <Link to="/login" className={styles.cabinetLink}>
-              войти
-            </Link>
-          )}
-        </div>
+              disabled={refreshing}
+              aria-label="Обновить офферы"
+            >
+              <Icon name="refresh" size={18} className={refreshing ? styles.spinning : ''} />
+              Обновить
+            </button>
+          </div>
+        )}
       </header>
 
-      {!embedded && (
-        <div className={styles.banner}>
-          <p className={styles.bannerText}>
-            войдите как креатор, чтобы брать заказы: снимаете ролик, прикрепляете ссылку
-            и получаете за просмотры.
-          </p>
-          <div className={styles.bannerActions}>
-            <Link to="/login" className={styles.primaryLink}>
-              войти
-            </Link>
-            <Link to="/register" className={styles.secondaryLink}>
-              зарегистрироваться
-            </Link>
-          </div>
+      <div className={styles.stats}>
+        <div className={styles.statBudget}>
+          <span className={styles.statLabel}>Общий остаток бюджета</span>
+          <span className={styles.statValue}>{loading ? '…' : formatRubles(totalRemaining)}</span>
         </div>
-      )}
+        <div className={styles.statCount}>
+          <span className={styles.statCountValue}>{loading ? '…' : openCount}</span>
+          <span className={styles.statCountLabel}>
+            <span>активных</span>
+            <span>{pluralize(openCount, ['оффер', 'оффера', 'офферов'])}</span>
+          </span>
+        </div>
+      </div>
 
-      {error && <p className={styles.errorBanner}>{error}</p>}
+      <div className={styles.toolbar}>
+        <div className={ui.chips} role="group" aria-label="Площадка">
+          <button
+            type="button"
+            className={platform ? ui.chip : ui.chipActive}
+            onClick={() => setPlatform('')}
+          >
+            Все офферы
+          </button>
+          {VIDEO_PLATFORMS.map((item) => (
+            <button
+              key={item}
+              type="button"
+              className={platform === item ? ui.chipActive : ui.chip}
+              onClick={() => setPlatform(platform === item ? '' : item)}
+            >
+              {PLATFORM_LABELS[item]}
+            </button>
+          ))}
+        </div>
+        <label className={styles.sort}>
+          <span className={styles.sortLabel}>Сортировка</span>
+          <select
+            className={styles.sortSelect}
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+          >
+            {SORTS.map((item) => (
+              <option key={item.value} value={item.value}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      {error && <p className={ui.errorBanner}>{error}</p>}
 
       {loading ? (
-        <p className={styles.message}>Загрузка объявлений…</p>
-      ) : campaigns.length === 0 ? (
-        <p className={styles.message}>
-          {error ? 'Объявления не загрузились — попробуйте обновить.' : 'Активных объявлений пока нет. Загляните позже.'}
-        </p>
+        <p className={ui.message}>Загрузка офферов…</p>
+      ) : visible.length === 0 ? (
+        <div className={ui.empty}>
+          <p className={ui.emptyTitle}>
+            {campaigns.length === 0 ? 'Активных офферов пока нет' : 'Под фильтр ничего не подошло'}
+          </p>
+          <p className={ui.emptyText}>
+            {campaigns.length === 0
+              ? 'Загляните позже: новые кампании появляются здесь сразу после запуска.'
+              : 'Попробуйте другую площадку или снимите фильтр.'}
+          </p>
+        </div>
       ) : (
         <div className={styles.grid}>
-          {campaigns.map((campaign) => (
-            <CampaignCard key={campaign.id || campaign.publicId} campaign={campaign} />
+          {visible.map((campaign, index) => (
+            <CampaignCard
+              key={campaign.id || campaign.publicId}
+              campaign={campaign}
+              index={index}
+            />
           ))}
         </div>
       )}
-    </div>
+    </>
+  );
+
+  if (embedded) {
+    return <div className={ui.page}>{body}</div>;
+  }
+
+  return (
+    <PublicLayout>
+      <div className={styles.publicWrap}>{body}</div>
+    </PublicLayout>
   );
 };
 

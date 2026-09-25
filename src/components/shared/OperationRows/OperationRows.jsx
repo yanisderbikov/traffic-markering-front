@@ -58,14 +58,14 @@ const OperationRows = ({ rows, loading, error, linkFor, emptyText }) => {
   return (
     <div className={styles.table} role="table">
       <div className={`${styles.row} ${styles.header}`} role="row">
-        <span role="columnheader">дата</span>
-        <span role="columnheader">операция</span>
-        <span role="columnheader">откуда → куда</span>
+        <span role="columnheader">Дата</span>
+        <span role="columnheader">Операция</span>
+        <span role="columnheader">Откуда → куда</span>
         <span role="columnheader" className={styles.right}>
-          сумма
+          Сумма
         </span>
         <span role="columnheader" className={styles.right}>
-          статус
+          Статус
         </span>
       </div>
       {rows.map((row) => {

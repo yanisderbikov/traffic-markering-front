@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import apiClient from '../../apiClient';
-import Logo from '../shared/Logo/Logo';
+import AuthLayout from '../shared/AuthLayout/AuthLayout';
+import CodeInput, { CODE_LENGTH } from '../shared/CodeInput/CodeInput';
 import FieldError from '../shared/FieldError/FieldError';
-import Field from '../shared/Field/Field';
 import { clearFieldError, hasErrors, validateCode, validateEmail } from '../../shared/validation';
 import { useCooldown } from '../../shared/useCooldown';
 import { errorMessage, safeReturnPath, verifyCode } from '../../shared/auth';
-import styles from './Login.module.css';
+import ui from '../../shared/ui.module.css';
+import form from '../shared/AuthLayout/authForm.module.css';
+
+const pad = (n) => String(n).padStart(2, '0');
 
 const Login = () => {
   const navigate = useNavigate();
@@ -77,118 +80,106 @@ const Login = () => {
     setErrors({});
   };
 
+  const handleCode = (next) => {
+    setCode(next);
+    clearFieldError(setErrors, 'code');
+    setError('');
+  };
+
   return (
-    <div className={styles.page}>
-      <div className={styles.headerSafeArea} aria-hidden="true" />
-      <header className={styles.header}>
-        <div className={styles.headerInner}>
-          <Link to="/" className={styles.logoLink} aria-label="На доску объявлений">
-            <Logo light withText />
+    <AuthLayout
+      title="Вход в Offer"
+      caption={
+        codeSent
+          ? `Отправили код на ${email.trim()}. Он действует 10 минут.`
+          : 'Пришлём код для входа на почту. Пароль не нужен.'
+      }
+      footer={
+        <p className={form.switch}>
+          <span>Впервые в Offer?</span>
+          <Link to="/register" className={form.switchLink}>
+            Создать аккаунт →
           </Link>
-        </div>
-      </header>
-
-      <main className={styles.wrap}>
-        <div className={styles.card}>
-          <h1 className={styles.title}>вход</h1>
-          <p className={styles.caption}>
-            {codeSent
-              ? `Код отправлен на ${email.trim()}. Он действует 10 минут.`
-              : 'Пришлём код для входа на почту — пароль не нужен.'}
-          </p>
-          <form onSubmit={handleSubmit} className={styles.form} noValidate>
-            {!codeSent && (
-              <Field label="Почта">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    clearFieldError(setErrors, 'email');
-                    setError('');
-                  }}
-                  className={styles.input}
-                  aria-invalid={errors.email ? 'true' : undefined}
-                  autoComplete="email"
-                  disabled={loading}
-                  autoFocus
-                />
-                <FieldError>{errors.email}</FieldError>
-              </Field>
-            )}
-
-            {codeSent && (
-              <Field label="Код из письма">
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  maxLength={6}
-                  value={code}
-                  onChange={(e) => {
-                    setCode(e.target.value.replace(/\D/g, ''));
-                    clearFieldError(setErrors, 'code');
-                    setError('');
-                  }}
-                  className={`${styles.input} ${styles.codeInput}`}
-                  aria-invalid={errors.code ? 'true' : undefined}
-                  autoComplete="one-time-code"
-                  disabled={loading}
-                  autoFocus
-                />
-                <FieldError>{errors.code}</FieldError>
-              </Field>
-            )}
-
-            {error && <p className={styles.error}>{error}</p>}
-
-            <button type="submit" className={styles.submit} disabled={loading}>
-              {codeSent
-                ? loading
-                  ? 'Проверяем…'
-                  : 'Войти'
-                : loading
-                  ? 'Отправляем…'
-                  : 'Получить код'}
+        </p>
+      }
+    >
+      <form onSubmit={handleSubmit} className={form.form} noValidate>
+        {!codeSent ? (
+          <label className={form.field}>
+            <span className={form.label}>Почта</span>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                clearFieldError(setErrors, 'email');
+                setError('');
+              }}
+              className={form.input}
+              aria-invalid={errors.email ? 'true' : undefined}
+              autoComplete="email"
+              placeholder="you@example.com"
+              disabled={loading}
+              autoFocus
+            />
+            <FieldError>{errors.email}</FieldError>
+          </label>
+        ) : (
+          <div className={form.field}>
+            <span className={form.label}>Код из письма</span>
+            <CodeInput
+              value={code}
+              onChange={handleCode}
+              disabled={loading}
+              invalid={Boolean(errors.code)}
+              autoFocus
+            />
+            <FieldError>{errors.code}</FieldError>
+            <button
+              type="button"
+              className={form.resend}
+              onClick={requestCode}
+              disabled={loading || cooldown.active}
+            >
+              {cooldown.active
+                ? `Отправить код ещё раз через 00:${pad(cooldown.secondsLeft)}`
+                : 'Отправить код ещё раз'}
             </button>
+          </div>
+        )}
 
-            {codeSent && (
-              <div className={styles.secondary}>
-                <button
-                  type="button"
-                  className={styles.linkButton}
-                  onClick={requestCode}
-                  disabled={loading || cooldown.active}
-                >
-                  {cooldown.active
-                    ? `отправить ещё раз через ${cooldown.secondsLeft} с`
-                    : 'отправить код ещё раз'}
-                </button>
-                <button
-                  type="button"
-                  className={styles.linkButton}
-                  onClick={changeEmail}
-                  disabled={loading}
-                >
-                  другая почта
-                </button>
-              </div>
-            )}
-          </form>
-          <p className={styles.footer}>
-            нет аккаунта?{' '}
-            <Link to="/register" className={styles.footerLink}>
-              зарегистрироваться
-            </Link>
-          </p>
-          <p className={styles.footer}>
-            <Link to="/" className={styles.footerLink}>
-              вернуться на доску объявлений
-            </Link>
-          </p>
+        {error && <p className={form.error}>{error}</p>}
+
+        <div className={form.actions}>
+          <button
+            type="submit"
+            className={`${ui.btnPrimary} ${ui.btnLarge} ${ui.btnBlock}`}
+            disabled={loading || (codeSent && code.length < CODE_LENGTH)}
+          >
+            {codeSent
+              ? loading
+                ? 'Проверяем…'
+                : 'Продолжить'
+              : loading
+                ? 'Отправляем…'
+                : 'Получить код'}
+          </button>
+          {codeSent && (
+            <>
+              <span className={form.or}>или</span>
+              <button
+                type="button"
+                className={`${ui.btnSecondary} ${ui.btnLarge} ${ui.btnBlock}`}
+                onClick={changeEmail}
+                disabled={loading}
+              >
+                Изменить адрес почты
+              </button>
+            </>
+          )}
         </div>
-      </main>
-    </div>
+      </form>
+    </AuthLayout>
   );
 };
 

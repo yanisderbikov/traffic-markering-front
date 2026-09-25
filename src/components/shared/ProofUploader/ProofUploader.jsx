@@ -63,7 +63,7 @@ const ProofUploader = ({ proofs, onChange, disabled = false, label = 'Скрин
 
   return (
     <div className={styles.field}>
-      {label}
+      <span>{label}</span>
       <div className={styles.row}>
         {proofs.map((proof) => (
           <div key={proof.key} className={styles.preview}>

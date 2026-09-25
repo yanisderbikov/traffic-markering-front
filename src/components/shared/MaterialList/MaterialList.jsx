@@ -18,11 +18,11 @@ const MaterialList = ({ materials, onRemove, className = '' }) => {
       {materials.map((material, index) => {
         const isFile = material.kind === 'FILE';
         const meta = isFile ? formatFileSize(material.sizeBytes) : linkHost(material.url);
-        const action = isFile && !material.opensInBrowser ? 'скачать' : 'открыть';
+        const action = isFile && !material.opensInBrowser ? 'Скачать' : 'Открыть';
         return (
           <li key={`${material.fileKey || material.url || ''}-${index}`} className={styles.item}>
             <span className={`${styles.badge} ${isFile ? '' : styles.badgeLink}`}>
-              {isFile ? 'файл' : 'ссылка'}
+              {isFile ? 'Файл' : 'Ссылка'}
             </span>
             <span className={styles.body}>
               {material.url ? (

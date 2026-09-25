@@ -5,6 +5,7 @@ import apiClient from '../../apiClient';
 import { TrustBadge } from '../shared/FraudBadge/FraudBadge';
 import { errorMessage } from '../../shared/auth';
 import { TRUST_LEVELS, TRUST_LEVEL_LABELS, formatDate } from '../../shared/dictionaries';
+import ui from '../../shared/ui.module.css';
 import styles from './AdminFraud.module.css';
 
 const CREATORS_URL = '/api/admin/fraud/creators';
@@ -63,36 +64,41 @@ const AdminCreators = () => {
   );
 
   return (
-    <div className={styles.wrap}>
-      <h1 className={styles.title}>Репутация креаторов</h1>
-      <p className={styles.subtitle}>
-        Новичку оплачивается ограниченное число просмотров на ролик, после трёх чистых оплаченных
-        роликов он становится проверенным. Подтверждённая накрутка ограничивает: деньги уходят
-        только после ручной проверки каждого ролика; вторая — блокирует. Уровень, выставленный
-        руками, автоматика не трогает. Очередь роликов — <Link to="/app/admin/fraud">здесь</Link>.
-      </p>
-
-      <section className={styles.card}>
-        <div className={styles.listHead}>
-          <h2 className={styles.cardTitle}>Креаторы</h2>
-          <div className={styles.controls}>
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className={styles.search}
-              placeholder="почта или имя"
-              aria-label="Поиск по почте или имени"
-            />
-          </div>
+    <div className={ui.page}>
+      <header className={ui.pageHead}>
+        <div className={ui.pageHeadMain}>
+          <span className={ui.eyebrow}>Антифрод</span>
+          <h1 className={ui.title}>Репутация креаторов</h1>
+          <p className={ui.subtitle}>
+            Новичку оплачивается ограниченное число просмотров на ролик, после трёх чистых оплаченных
+            роликов он становится проверенным. Подтверждённая накрутка ограничивает: деньги уходят
+            только после ручной проверки каждого ролика; вторая — блокирует. Уровень, выставленный
+            руками, автоматика не трогает. Очередь роликов —{' '}
+            <Link to="/app/admin/fraud" className={ui.accent}>
+              здесь
+            </Link>
+            .
+          </p>
         </div>
+        <div className={ui.pageHeadActions}>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className={`${ui.input} ${styles.search}`}
+            placeholder="Почта или имя"
+            aria-label="Поиск по почте или имени"
+          />
+        </div>
+      </header>
 
-        {pageError && <p className={styles.banner}>{pageError}</p>}
+      <section className={ui.card}>
+        {pageError && <p className={ui.errorBanner}>{pageError}</p>}
 
         {loading ? (
-          <p className={styles.message}>Загрузка…</p>
+          <p className={ui.message}>Загрузка…</p>
         ) : visible.length === 0 ? (
-          <p className={styles.message}>
+          <p className={ui.message}>
             {normalizedQuery ? 'Никого не нашлось по запросу.' : 'Креаторов пока нет.'}
           </p>
         ) : (
@@ -104,38 +110,44 @@ const AdminCreators = () => {
                     <span className={styles.name}>{creator.name}</span>
                     <span className={styles.email}>{creator.email}</span>
                   </div>
-                  <div className={styles.trustCell}>
+                  <div className={styles.badges}>
                     <TrustBadge level={creator.trustLevel} />
                     <select
                       value={creator.manual ? creator.trustLevel : AUTO}
                       onChange={(e) => changeLevel(creator, e.target.value)}
-                      className={styles.select}
+                      className={`${ui.input} ${styles.select}`}
                       disabled={busyId === creator.userId}
                       aria-label={`Репутация ${creator.email}`}
                     >
-                      <option value={AUTO}>автоматика</option>
+                      <option value={AUTO}>Автоматика</option>
                       {TRUST_LEVELS.map((level) => (
                         <option key={level} value={level}>
-                          вручную: {TRUST_LEVEL_LABELS[level]}
+                          Вручную: {TRUST_LEVEL_LABELS[level]}
                         </option>
                       ))}
                     </select>
                   </div>
                 </div>
 
-                <p className={styles.stats}>
-                  <span>откликов: {creator.totalApplications ?? 0}</span>
-                  <span>чистых оплаченных: {creator.cleanPaid ?? 0}</span>
-                  <span>на проверке: {creator.suspicious ?? 0}</span>
-                  <span className={creator.strikes ? styles.statStrike : undefined}>
-                    накруток: {creator.strikes ?? 0}
+                <p className={styles.numbers}>
+                  <span>
+                    Работ: <b>{creator.totalApplications ?? 0}</b>
                   </span>
-                  {creator.registeredAt && <span>с нами с {formatDate(creator.registeredAt)}</span>}
+                  <span>
+                    Чистых оплаченных: <b>{creator.cleanPaid ?? 0}</b>
+                  </span>
+                  <span>
+                    На проверке: <b>{creator.suspicious ?? 0}</b>
+                  </span>
+                  <span className={creator.strikes ? styles.strike : undefined}>
+                    Накруток: <b>{creator.strikes ?? 0}</b>
+                  </span>
+                  {creator.registeredAt && <span>С нами с {formatDate(creator.registeredAt)}</span>}
                 </p>
 
                 {(creator.note || creator.updatedAt) && (
                   <p className={styles.note}>
-                    {creator.manual ? 'выставлено вручную' : 'автоматика'}
+                    {creator.manual ? 'Выставлено вручную' : 'Автоматика'}
                     {creator.updatedBy ? ` · ${creator.updatedBy}` : ''}
                     {creator.updatedAt ? ` · ${formatDate(creator.updatedAt)}` : ''}
                     {creator.note ? ` · ${creator.note}` : ''}

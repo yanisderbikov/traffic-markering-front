@@ -3,27 +3,29 @@ import { Link, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import TransferCard from '../shared/TransferCard/TransferCard';
+import Icon from '../shared/Icon/Icon';
 import { errorMessage } from '../../shared/auth';
 import { formatRubles } from '../../shared/money';
+import ui from '../../shared/ui.module.css';
 import styles from './OperationPage.module.css';
 
 const SCOPES = {
   earnings: {
     load: (id) => apiClient.api.myOperation(id),
     back: '/app/earnings',
-    backLabel: '← к заработку',
+    backLabel: 'К заработку',
     creatorActions: true,
   },
   wallet: {
     load: (id) => apiClient.api.myWalletOperation(id),
     back: '/app/wallet',
-    backLabel: '← к кошельку',
+    backLabel: 'К кошельку',
     customerActions: true,
   },
   finance: {
     load: (id) => apiClient.api.financeOperation(id),
     back: '/app/finance/operations',
-    backLabel: '← ко всем операциям',
+    backLabel: 'Ко всем операциям',
     showOwner: true,
     financeActions: true,
   },
@@ -83,7 +85,7 @@ const OperationPage = ({ scope = 'earnings' }) => {
 
   const reject = async () => {
     const reason = window.prompt(
-      'Причина отклонения — её увидит заказчик. Деньги вернутся туда, откуда ушли.'
+      'Причина отклонения — её увидит рекламодатель. Деньги вернутся туда, откуда ушли.'
     );
     if (reason == null) return;
     if (!reason.trim()) {
@@ -102,21 +104,27 @@ const OperationPage = ({ scope = 'earnings' }) => {
     }
   };
 
+  const backLink = (
+    <Link to={config.back} className={ui.backLink}>
+      <Icon name="arrowLeft" size={16} />
+      {config.backLabel}
+    </Link>
+  );
+
   if (loading) {
     return (
-      <div className={styles.wrap}>
-        <p className={styles.message}>Загрузка операции…</p>
+      <div className={`${ui.page} ${styles.narrow}`}>
+        {backLink}
+        <p className={ui.message}>Загрузка операции…</p>
       </div>
     );
   }
 
   if (pageError && !detail) {
     return (
-      <div className={styles.wrap}>
-        <p className={styles.banner}>{pageError}</p>
-        <Link to={config.back} className={styles.backLink}>
-          {config.backLabel}
-        </Link>
+      <div className={`${ui.page} ${styles.narrow}`}>
+        {backLink}
+        <p className={ui.errorBanner}>{pageError}</p>
       </div>
     );
   }
@@ -127,11 +135,14 @@ const OperationPage = ({ scope = 'earnings' }) => {
   const isCustomerTransfer = transaction.type === 'TOP_UP' || transaction.type === 'WITHDRAWAL';
 
   return (
-    <div className={styles.wrap}>
-      <Link to={config.back} className={styles.backLink}>
-        {config.backLabel}
-      </Link>
-      <h1 className={styles.title}>{TITLES[transaction.type] || 'Операция'}</h1>
+    <div className={`${ui.page} ${styles.narrow}`}>
+      {backLink}
+      <header className={ui.pageHead}>
+        <div className={ui.pageHeadMain}>
+          <span className={ui.eyebrow}>Операция</span>
+          <h1 className={ui.title}>{TITLES[transaction.type] || 'Операция'}</h1>
+        </div>
+      </header>
 
       <TransferCard detail={detail} showOwner={config.showOwner}>
         {config.creatorActions && isPayout && transaction.status === 'SENT' && (
@@ -141,7 +152,7 @@ const OperationPage = ({ scope = 'earnings' }) => {
             </p>
             <button
               type="button"
-              className={styles.primaryBtn}
+              className={ui.btnPrimary}
               disabled={busy}
               onClick={() =>
                 act(
@@ -163,7 +174,7 @@ const OperationPage = ({ scope = 'earnings' }) => {
             </p>
             <button
               type="button"
-              className={styles.dangerBtn}
+              className={ui.btnDanger}
               disabled={busy}
               onClick={() =>
                 act(
@@ -182,7 +193,7 @@ const OperationPage = ({ scope = 'earnings' }) => {
             <p className={styles.actionText}>{CONFIRM_TEXT[transaction.type](amount)}</p>
             <button
               type="button"
-              className={styles.primaryBtn}
+              className={ui.btnPrimary}
               disabled={busy}
               onClick={() =>
                 act(
@@ -199,10 +210,10 @@ const OperationPage = ({ scope = 'earnings' }) => {
         {config.financeActions && isCustomerTransfer && transaction.status === 'SENT' && (
           <div className={styles.actions}>
             <p className={styles.actionText}>
-              Ждём подтверждения заказчика. Если перевод не сошёлся — отклоните операцию, деньги
-              вернутся туда, откуда ушли.
+              Ждём подтверждения рекламодателя. Если перевод не сошёлся — отклоните операцию,
+              деньги вернутся туда, откуда ушли.
             </p>
-            <button type="button" className={styles.dangerBtn} onClick={reject} disabled={busy}>
+            <button type="button" className={ui.btnDanger} onClick={reject} disabled={busy}>
               {busy ? 'Отклоняем…' : 'Отклонить'}
             </button>
           </div>
@@ -212,7 +223,7 @@ const OperationPage = ({ scope = 'earnings' }) => {
             <p className={styles.actionText}>
               Отправка USDT, скриншоты и отклонение — на странице заявки.
             </p>
-            <Link to={`/app/finance/payouts/${transaction.id}`} className={styles.primaryLink}>
+            <Link to={`/app/finance/payouts/${transaction.id}`} className={ui.btnPrimary}>
               Открыть заявку →
             </Link>
           </div>

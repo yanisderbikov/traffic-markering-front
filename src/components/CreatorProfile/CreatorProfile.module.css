@@ -1,49 +1,15 @@
-/* Профиль креатора: контакты и описание, которые видит заказчик. */
-
-.wrap {
-  max-width: var(--page-max-width);
-  margin: 0 auto;
-  padding: 1rem 12px 3rem;
-}
-
-@media (min-width: 769px) {
-  .wrap {
-    padding-left: 50px;
-    padding-right: 50px;
-  }
-}
-
-.title {
-  font-family: var(--font-display);
-  /* Крупный плакатный заголовок страницы — главный типографический акцент. */
-  font-size: clamp(1.9rem, 5vw, 2.6rem);
-  font-weight: 700;
-  line-height: 1.02;
-  text-transform: uppercase;
-  letter-spacing: var(--title-tracking);
-  color: var(--color-ink);
-  margin: 0 0 6px;
-}
-
-.subtitle {
-  font-size: 0.82rem;
-  color: var(--color-muted);
-  margin: 0 0 18px;
-}
-
 .card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--card-radius);
-  box-shadow: var(--card-shadow);
-  padding: 20px;
-  max-width: 720px;
+  max-width: 760px;
 }
 
 .formGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 12px 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 20px;
+}
+
+.wide {
+  grid-column: 1 / -1;
 }
 
 .labelText {
@@ -52,107 +18,28 @@
   gap: 6px;
 }
 
-.labelWide {
-  grid-column: 1 / -1;
+.note {
+  margin-top: 18px;
 }
 
-.input {
-  font-family: inherit;
-  font-size: 0.92rem;
-  color: var(--color-ink);
-  padding: 9px 12px;
-  border: 1px solid var(--color-field-border);
-  border-radius: var(--field-radius);
-  background: var(--color-surface);
-  min-width: 0;
-}
-
-.input:focus {
-  outline: none;
-  border-color: var(--color-ink);
-  box-shadow: var(--focus-ring);
-}
-
-.textarea {
-  font-family: inherit;
-  font-size: 0.92rem;
-  color: var(--color-ink);
-  padding: 10px 12px;
-  border: 1px solid var(--color-field-border);
-  border-radius: var(--field-radius);
-  background: var(--color-surface);
-  resize: vertical;
-  min-height: 110px;
-}
-
-.textarea:focus {
-  outline: none;
-  border-color: var(--color-ink);
-  box-shadow: var(--focus-ring);
-}
-
-.hint {
-  font-size: 0.78rem;
-  color: var(--color-muted);
-  margin: 14px 0 0;
-}
-
-.error {
-  color: var(--color-danger);
-  font-size: 0.85rem;
-  margin: 12px 0 0;
+.formError {
+  margin-top: 14px;
 }
 
 .formActions {
   display: flex;
   gap: 10px;
-  margin-top: 16px;
+  margin-top: 20px;
 }
 
-.submit {
-  font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: var(--action-tracking);
-  color: #fff;
-  background: var(--color-ink);
-  border: 1px solid var(--color-ink);
-  border-radius: var(--pill-radius);
-  padding: 9px 21px;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+@media (max-width: 720px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
-.submit:hover:not(:disabled) {
-  background: var(--color-accent);
-}
-
-.submit:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.submitIdle:disabled {
-  background: transparent;
-  border-color: var(--color-field-border);
-  color: var(--color-muted);
-  opacity: 1;
-  cursor: not-allowed;
-}
-
-.banner {
-  background: var(--color-danger-soft);
-  border-left: 3px solid var(--color-danger);
-  color: var(--color-danger);
-  border-radius: var(--field-radius);
-  padding: 10px 14px;
-  font-size: 0.85rem;
-  margin: 0 0 14px;
-}
-
-.message {
-  color: var(--color-muted);
-  font-size: 0.9rem;
-  margin: 8px 0;
+@media (max-width: 560px) {
+  .formActions > * {
+    width: 100%;
+  }
 }

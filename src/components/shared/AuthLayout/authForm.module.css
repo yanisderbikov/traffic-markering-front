@@ -1,0 +1,184 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+.optional {
+  margin-left: 8px;
+  font-weight: 500;
+  color: var(--color-faint);
+}
+
+.input {
+  width: 100%;
+  min-height: 52px;
+  padding: 14px 18px;
+  font-size: 1rem;
+  border-radius: 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  color: var(--color-ink);
+}
+
+.hint {
+  font-size: 0.82rem;
+  color: var(--color-faint);
+}
+
+.resend {
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-align: left;
+  cursor: pointer;
+}
+
+.resend:hover:not(:disabled) {
+  color: var(--color-ink);
+}
+
+.resend:disabled {
+  color: var(--color-faint);
+  cursor: default;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.or {
+  margin: 4px 0;
+  font-size: 0.78rem;
+  text-align: center;
+  color: var(--color-faint);
+}
+
+.error {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--color-danger);
+}
+
+.switch {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.switchLink {
+  font-weight: 700;
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.switchLink:hover {
+  color: var(--color-accent-hover);
+}
+
+.roles {
+  display: grid;
+  gap: 12px;
+}
+
+.role {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 20px 22px;
+  border-radius: 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.role:hover {
+  border-color: var(--color-faint);
+}
+
+.roleActive,
+.roleActive:hover {
+  border-color: var(--color-accent);
+  background: var(--color-accent-tint);
+}
+
+.roleLabel {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.roleHint {
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--color-muted);
+}
+
+.progress {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 28px;
+}
+
+.progressBar {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-surface-alt);
+}
+
+.progressBarDone {
+  background: var(--color-success);
+}
+
+.stepLabel {
+  margin: -20px 0 24px;
+  font-size: 0.82rem;
+  color: var(--color-muted);
+}
+
+.hintCard {
+  margin-top: 8px;
+  padding: 22px 24px;
+  border-radius: 14px;
+  background: #503024;
+}
+
+.hintCardTitle {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.hintCardText {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--color-ink-soft);
+}

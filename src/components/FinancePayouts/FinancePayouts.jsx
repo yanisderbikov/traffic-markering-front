@@ -3,13 +3,14 @@ import apiClient from '../../apiClient';
 import OperationRows from '../shared/OperationRows/OperationRows';
 import { errorMessage } from '../../shared/auth';
 import { formatRubles } from '../../shared/money';
+import ui from '../../shared/ui.module.css';
 import styles from './FinancePayouts.module.css';
 
 const FILTERS = [
-  { key: 'OPEN', label: 'в работе', match: (row) => row.status === 'PENDING' || row.status === 'SENT' },
-  { key: 'PENDING', label: 'ждут отправки', match: (row) => row.status === 'PENDING' },
-  { key: 'SENT', label: 'ждут подтверждения', match: (row) => row.status === 'SENT' },
-  { key: 'ALL', label: 'все', match: () => true },
+  { key: 'OPEN', label: 'В работе', match: (row) => row.status === 'PENDING' || row.status === 'SENT' },
+  { key: 'PENDING', label: 'Ждут отправки', match: (row) => row.status === 'PENDING' },
+  { key: 'SENT', label: 'Ждут подтверждения', match: (row) => row.status === 'SENT' },
+  { key: 'ALL', label: 'Все', match: () => true },
 ];
 
 const FinancePayouts = () => {
@@ -46,33 +47,38 @@ const FinancePayouts = () => {
   const pendingCount = rows.filter((row) => row.status === 'PENDING').length;
 
   return (
-    <div className={styles.wrap}>
-      <h1 className={styles.title}>Выплаты креаторам</h1>
-      <p className={styles.subtitle}>
-        {pendingCount
-          ? `Ждут отправки: ${pendingCount} на ${formatRubles(pendingTotal)}.`
-          : 'Все заявки отправлены — новых пока нет.'}
-      </p>
+    <div className={ui.page}>
+      <header className={ui.pageHead}>
+        <div className={ui.pageHeadMain}>
+          <span className={ui.eyebrow}>Финансы</span>
+          <h1 className={ui.title}>Выплаты креаторам</h1>
+          <p className={ui.subtitle}>
+            {pendingCount
+              ? `Ждут отправки: ${pendingCount} на ${formatRubles(pendingTotal)}.`
+              : 'Все заявки отправлены — новых пока нет.'}
+          </p>
+        </div>
+      </header>
 
-      <div className={styles.tabs} role="group" aria-label="Фильтр заявок">
+      <div className={`${ui.chips} ${styles.filters}`} role="group" aria-label="Фильтр заявок">
         {FILTERS.map((item) => {
           const count = rows.filter(item.match).length;
           return (
             <button
               key={item.key}
               type="button"
-              className={`${styles.tab} ${filter === item.key ? styles.tabActive : ''}`}
+              className={filter === item.key ? ui.chipActive : ui.chip}
               onClick={() => setFilter(item.key)}
               aria-pressed={filter === item.key}
             >
               {item.label}
-              <span className={styles.tabCount}>{count}</span>
+              <span className={styles.count}>{count}</span>
             </button>
           );
         })}
       </div>
 
-      <section className={styles.card}>
+      <section className={ui.card}>
         <OperationRows
           rows={visible}
           loading={loading}

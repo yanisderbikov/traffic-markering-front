@@ -2,10 +2,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
-import WalletSummary from '../shared/WalletSummary/WalletSummary';
 import OperationRows from '../shared/OperationRows/OperationRows';
+import Icon from '../shared/Icon/Icon';
 import { errorMessage } from '../../shared/auth';
+import { formatRubles } from '../../shared/money';
 import { formatDate } from '../../shared/dictionaries';
+import ui from '../../shared/ui.module.css';
 import styles from './CustomerWallet.module.css';
 
 const CustomerWallet = () => {
@@ -60,60 +62,96 @@ const CustomerWallet = () => {
 
   if (loading) {
     return (
-      <div className={styles.wrap}>
-        <p className={styles.message}>Загрузка кошелька…</p>
+      <div className={ui.page}>
+        <p className={ui.message}>Загрузка кошелька…</p>
       </div>
     );
   }
 
   if (pageError && !wallet) {
     return (
-      <div className={styles.wrap}>
-        <p className={styles.banner}>{pageError}</p>
+      <div className={ui.page}>
+        <p className={ui.errorBanner}>{pageError}</p>
       </div>
     );
   }
 
   return (
-    <div className={styles.wrap}>
-      <div className={styles.head}>
-        <h1 className={styles.title}>Кошелёк</h1>
-        <Link to="/app/campaigns/new" className={styles.primaryBtn}>
-          Новое объявление
-        </Link>
-      </div>
-      {wallet?.updatedAt && (
-        <p className={styles.subtitle}>обновлён {formatDate(wallet.updatedAt)}</p>
-      )}
-
-      <WalletSummary wallet={wallet} />
-
-      <section className={styles.card}>
-        <h2 className={styles.cardTitle}>Как это работает</h2>
-        <p className={styles.text}>
-          Свободные деньги вы распределяете между объявлениями: бюджет объявления
-          резервируется из кошелька при создании, а если бюджет уменьшить — разница
-          возвращается обратно. Ниже суммы уже начисленного креаторам бюджет опустить нельзя.
-        </p>
-        <p className={styles.text}>
-          Пополнение и вывод проводит менеджер финансов в USDT (TRC-20): к каждой операции он
-          прикладывает скриншот и номер транзакции, а вам остаётся открыть её в истории, сверить
-          и подтвердить.
-        </p>
-        {wallet?.topUpTronAddress && (
-          <p className={styles.text}>
-            Пополнить: переведите USDT (TRC-20) на адрес платформы{' '}
-            <code className={styles.address}>{wallet.topUpTronAddress}</code>{' '}
-            <button type="button" className={styles.copyBtn} onClick={copyAddress}>
-              копировать
-            </button>{' '}
-            и сообщите менеджеру финансов номер транзакции.
+    <div className={ui.page}>
+      <header className={ui.pageHead}>
+        <div className={ui.pageHeadMain}>
+          <span className={ui.eyebrow}>Рекламодатель</span>
+          <h1 className={ui.title}>Финансы</h1>
+          <p className={ui.subtitle}>
+            Баланс, резерв под кампании и операции
+            {wallet?.updatedAt ? ` · обновлено ${formatDate(wallet.updatedAt)}` : ''}
           </p>
-        )}
+        </div>
+        <div className={`${ui.pageHeadActions} ${styles.headActions}`}>
+          <Link to="/app/campaigns/new" className={ui.btnPrimary}>
+            + Создать кампанию
+          </Link>
+        </div>
+      </header>
+
+      {pageError && <p className={ui.errorBanner}>{pageError}</p>}
+
+      <div className={styles.top}>
+        <section className={styles.balance}>
+          <span className={styles.balanceLabel}>Свободно в кошельке</span>
+          <span className={styles.balanceValue}>{formatRubles(wallet?.balanceKopecks ?? 0)}</span>
+          <span className={styles.balanceNote}>
+            Бюджет кампании резервируется из кошелька при создании
+          </span>
+        </section>
+
+        <div className={styles.stats}>
+          <div className={ui.stat}>
+            <span className={ui.statLabel}>В кампаниях</span>
+            <span className={ui.statValue}>{formatRubles(wallet?.allocatedKopecks ?? 0)}</span>
+            <span className={ui.statNote}>зарезервировано под бюджеты</span>
+          </div>
+          <div className={ui.stat}>
+            <span className={ui.statLabel}>Начислено креаторам</span>
+            <span className={ui.statValue}>{formatRubles(wallet?.spentKopecks ?? 0)}</span>
+            <span className={ui.statNote}>за подтверждённые просмотры</span>
+          </div>
+        </div>
+      </div>
+
+      <section className={`${ui.card} ${styles.topUp}`}>
+        <div className={styles.topUpMain}>
+          <h2 className={ui.cardTitle}>Как пополнить</h2>
+          <p className={styles.text}>
+            Переведите USDT (TRC-20) на адрес платформы и сообщите менеджеру финансов номер
+            транзакции. Пополнение и вывод проводит менеджер: к операции он прикладывает
+            скриншот и номер транзакции, вам остаётся сверить перевод и подтвердить его в
+            истории.
+          </p>
+          {wallet?.topUpTronAddress && (
+            <div className={styles.addressRow}>
+              <code className={styles.address}>{wallet.topUpTronAddress}</code>
+              <button
+                type="button"
+                className={`${ui.btnSecondary} ${ui.btnSmall}`}
+                onClick={copyAddress}
+              >
+                <Icon name="copy" size={14} />
+                Скопировать
+              </button>
+            </div>
+          )}
+        </div>
+        <p className={styles.topUpAside}>
+          Если бюджет кампании уменьшить, разница вернётся в кошелёк. Ниже суммы, уже
+          начисленной креаторам, бюджет опустить нельзя.
+        </p>
       </section>
 
-      <section className={styles.card}>
-        <h2 className={styles.cardTitle}>Операции</h2>
+      <div className={ui.sectionHead}>
+        <h2 className={ui.sectionTitle}>История операций</h2>
+      </div>
+      <section className={ui.card}>
         {awaiting > 0 && (
           <p className={styles.awaiting}>
             Ждут вашего подтверждения: {awaiting}. Откройте операцию, сверьте перевод и

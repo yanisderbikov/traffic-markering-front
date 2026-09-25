@@ -6,16 +6,17 @@ import Field from '../shared/Field/Field';
 import { errorMessage } from '../../shared/auth';
 import { clearFieldError, hasErrors, validateEmail } from '../../shared/validation';
 import { ASSIGNABLE_ROLES, ROLE_LABELS, formatDate } from '../../shared/dictionaries';
+import ui from '../../shared/ui.module.css';
 import styles from './AdminUsers.module.css';
 
 const USERS_URL = '/api/superadmin/users';
 
-const ROLE_CLASS = {
-  CUSTOMER: styles.roleCustomer,
-  CREATOR: styles.roleCreator,
-  FINANCE_MANAGER: styles.roleFinance,
-  ADMIN: styles.roleAdmin,
-  SUPER_ADMIN: styles.roleSuperAdmin,
+const ROLE_CHIP = {
+  CUSTOMER: ui.chipOutline,
+  CREATOR: ui.chipSuccess,
+  FINANCE_MANAGER: ui.chipActive,
+  ADMIN: ui.chipWarning,
+  SUPER_ADMIN: ui.chipDanger,
 };
 
 const emptyForm = { email: '', name: '', role: 'FINANCE_MANAGER' };
@@ -104,15 +105,20 @@ const AdminUsers = () => {
   );
 
   return (
-    <div className={styles.wrap}>
-      <h1 className={styles.title}>Пользователи и роли</h1>
-      <p className={styles.subtitle}>
-        Учётка по почте заводится сразу, войти человек сможет кодом из письма. Супер-админ
-        задаётся переменной окружения на бэке и здесь не меняется.
-      </p>
+    <div className={ui.page}>
+      <header className={ui.pageHead}>
+        <div className={ui.pageHeadMain}>
+          <span className={ui.eyebrow}>Администрирование</span>
+          <h1 className={ui.title}>Пользователи и роли</h1>
+          <p className={ui.subtitle}>
+            Учётка по почте заводится сразу, войти человек сможет кодом из письма. Супер-админ
+            задаётся переменной окружения на бэке и здесь не меняется.
+          </p>
+        </div>
+      </header>
 
-      <form className={styles.card} onSubmit={handleSubmit} noValidate>
-        <h2 className={styles.cardTitle}>Добавить почту и роль</h2>
+      <form className={ui.card} onSubmit={handleSubmit} noValidate>
+        <h2 className={ui.cardTitle}>Добавить почту и роль</h2>
         <div className={styles.formGrid}>
           <Field label="Почта *">
             <input
@@ -120,7 +126,7 @@ const AdminUsers = () => {
               name="email"
               value={form.email}
               onChange={setField}
-              className={styles.input}
+              className={ui.input}
               aria-invalid={errors.email ? 'true' : undefined}
               autoComplete="off"
               disabled={saving}
@@ -133,19 +139,21 @@ const AdminUsers = () => {
               name="name"
               value={form.name}
               onChange={setField}
-              className={styles.input}
+              className={ui.input}
               maxLength={255}
               autoComplete="off"
               disabled={saving}
             />
-            <span className={styles.hint}>Пусто — возьмём часть почты до @, у существующей учётки имя не тронем.</span>
+            <span className={ui.hint}>
+              Пусто — возьмём часть почты до @, у существующей учётки имя не тронем.
+            </span>
           </Field>
           <Field label="Роль *">
             <select
               name="role"
               value={form.role}
               onChange={setField}
-              className={styles.input}
+              className={ui.input}
               disabled={saving}
             >
               {ASSIGNABLE_ROLES.map((role) => (
@@ -157,76 +165,93 @@ const AdminUsers = () => {
           </Field>
         </div>
 
-        {error && <p className={styles.error}>{error}</p>}
+        {error && <p className={`${ui.errorText} ${styles.formError}`}>{error}</p>}
 
         <div className={styles.formActions}>
-          <button type="submit" className={styles.submit} disabled={saving}>
+          <button type="submit" className={ui.btnPrimary} disabled={saving}>
             {saving ? 'Сохраняем…' : 'Назначить роль'}
           </button>
         </div>
       </form>
 
-      <section className={styles.card}>
+      <section className={`${ui.card} ${styles.listCard}`}>
         <div className={styles.listHead}>
-          <h2 className={styles.cardTitle}>Все пользователи</h2>
-          <Field label="Почта или имя" className={styles.searchField} pill>
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className={styles.search}
-            />
-          </Field>
+          <h2 className={ui.cardTitle}>Все пользователи</h2>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className={`${ui.input} ${styles.search}`}
+            placeholder="Почта или имя"
+            aria-label="Поиск по почте или имени"
+          />
         </div>
 
-        {pageError && <p className={styles.banner}>{pageError}</p>}
+        {pageError && <p className={ui.errorBanner}>{pageError}</p>}
 
         {loading ? (
-          <p className={styles.message}>Загрузка пользователей…</p>
+          <p className={ui.message}>Загрузка пользователей…</p>
         ) : visible.length === 0 ? (
-          <p className={styles.message}>
+          <p className={ui.message}>
             {normalizedQuery ? 'Никого не нашлось по запросу.' : 'Пользователей пока нет.'}
           </p>
         ) : (
-          <ul className={styles.list}>
-            {visible.map((user) => {
-              const locked = user.role === 'SUPER_ADMIN';
-              return (
-                <li key={user.id} className={styles.item}>
-                  <div className={styles.who}>
-                    <span className={styles.name}>{user.name}</span>
-                    <span className={styles.email}>{user.email}</span>
-                    <span className={styles.meta}>
-                      {user.verifiedAt
-                        ? `почта подтверждена ${formatDate(user.verifiedAt)}`
-                        : 'ещё не входил'}
-                      {user.createdAt ? ` · создан ${formatDate(user.createdAt)}` : ''}
-                    </span>
-                  </div>
-                  <div className={styles.roleCell}>
-                    <span className={`${styles.role} ${ROLE_CLASS[user.role] || ''}`}>
-                      {ROLE_LABELS[user.role] || user.role}
-                    </span>
-                    {!locked && (
-                      <select
-                        value={user.role}
-                        onChange={(e) => changeRole(user, e.target.value)}
-                        className={styles.roleSelect}
-                        disabled={busyId === user.id}
-                        aria-label={`Роль ${user.email}`}
-                      >
-                        {ASSIGNABLE_ROLES.map((role) => (
-                          <option key={role} value={role}>
-                            {ROLE_LABELS[role] || role}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+          <div className={ui.tableWrap}>
+            <table className={ui.table}>
+              <thead>
+                <tr>
+                  <th>Пользователь</th>
+                  <th>Роль</th>
+                  <th className={ui.right}>Сменить роль</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map((user) => {
+                  const locked = user.role === 'SUPER_ADMIN';
+                  return (
+                    <tr key={user.id}>
+                      <td>
+                        <div className={styles.who}>
+                          <span className={styles.name}>{user.name}</span>
+                          <span className={styles.email}>{user.email}</span>
+                          <span className={styles.meta}>
+                            {user.verifiedAt
+                              ? `Почта подтверждена ${formatDate(user.verifiedAt)}`
+                              : 'Ещё не входил'}
+                            {user.createdAt ? ` · создан ${formatDate(user.createdAt)}` : ''}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <span className={ROLE_CHIP[user.role] || ui.chip}>
+                          {ROLE_LABELS[user.role] || user.role}
+                        </span>
+                      </td>
+                      <td className={ui.right}>
+                        {locked ? (
+                          <span className={ui.faint}>Не меняется</span>
+                        ) : (
+                          <select
+                            value={user.role}
+                            onChange={(e) => changeRole(user, e.target.value)}
+                            className={`${ui.input} ${styles.roleSelect}`}
+                            disabled={busyId === user.id}
+                            aria-label={`Роль ${user.email}`}
+                          >
+                            {ASSIGNABLE_ROLES.map((role) => (
+                              <option key={role} value={role}>
+                                {ROLE_LABELS[role] || role}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
     </div>

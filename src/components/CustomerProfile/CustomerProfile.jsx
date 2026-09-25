@@ -10,6 +10,7 @@ import {
   validateTelegram,
   validateWebsite,
 } from '../../shared/validation';
+import ui from '../../shared/ui.module.css';
 import styles from './CustomerProfile.module.css';
 
 const emptyForm = {
@@ -19,8 +20,6 @@ const emptyForm = {
   website: '',
 };
 
-// Пустое поле — это «не указано», а не пустая строка: иначе на карточке объявления
-// вместо названия компании будет пустое место.
 const orNull = (value) => {
   const trimmed = String(value ?? '').trim();
   return trimmed === '' ? null : trimmed;
@@ -109,46 +108,51 @@ const CustomerProfile = () => {
 
   if (loading) {
     return (
-      <div className={styles.wrap}>
-        <p className={styles.message}>Загрузка профиля…</p>
+      <div className={ui.page}>
+        <p className={ui.message}>Загрузка профиля…</p>
       </div>
     );
   }
 
   if (pageError && !profile) {
     return (
-      <div className={styles.wrap}>
-        <p className={styles.banner}>{pageError}</p>
+      <div className={ui.page}>
+        <p className={ui.errorBanner}>{pageError}</p>
       </div>
     );
   }
 
   return (
-    <div className={styles.wrap}>
-      <h1 className={styles.title}>Профиль заказчика</h1>
-      <p className={styles.subtitle}>
-        Имя учётной записи: {profile?.name || '—'}
-        {profile?.updatedAt ? ` · обновлён ${formatDate(profile.updatedAt)}` : ''}
-      </p>
+    <div className={ui.page}>
+      <header className={ui.pageHead}>
+        <div className={ui.pageHeadMain}>
+          <span className={ui.eyebrow}>Рекламодатель</span>
+          <h1 className={ui.title}>Профиль рекламодателя</h1>
+          <p className={ui.subtitle}>
+            Имя учётной записи: {profile?.name || '—'}
+            {profile?.updatedAt ? ` · обновлён ${formatDate(profile.updatedAt)}` : ''}
+          </p>
+        </div>
+      </header>
 
-      <form className={styles.card} onSubmit={handleSubmit} noValidate>
+      <form className={`${ui.card} ${styles.card}`} onSubmit={handleSubmit} noValidate>
         <div className={styles.formGrid}>
-          <Field label="Компания" className={styles.labelWide}>
+          <Field label="Компания" className={styles.wide}>
             <input
               type="text"
               name="company"
               value={form.company}
               onChange={setField}
-              className={styles.input}
+              className={ui.input}
               autoComplete="off"
             />
           </Field>
-          <Field label="О компании" className={styles.labelWide}>
+          <Field label="О компании" className={styles.wide}>
             <textarea
               name="about"
               value={form.about}
               onChange={setField}
-              className={styles.textarea}
+              className={ui.textarea}
               rows={5}
             />
           </Field>
@@ -158,7 +162,7 @@ const CustomerProfile = () => {
               name="telegram"
               value={form.telegram}
               onChange={setField}
-              className={styles.input}
+              className={ui.input}
               aria-invalid={invalid('telegram')}
               autoComplete="off"
             />
@@ -170,7 +174,7 @@ const CustomerProfile = () => {
               name="website"
               value={form.website}
               onChange={setField}
-              className={styles.input}
+              className={ui.input}
               aria-invalid={invalid('website')}
               autoComplete="off"
             />
@@ -178,19 +182,15 @@ const CustomerProfile = () => {
           </Field>
         </div>
 
-        <p className={styles.hint}>
-          Название компании показывается на карточке каждого вашего объявления —
-          креаторы по нему понимают, с кем работают.
+        <p className={`${ui.hint} ${styles.note}`}>
+          Название компании показывается на карточке каждой вашей кампании — креаторы по нему
+          понимают, с кем работают.
         </p>
 
-        {error && <p className={styles.error}>{error}</p>}
+        {error && <p className={`${ui.errorText} ${styles.formError}`}>{error}</p>}
 
         <div className={styles.formActions}>
-          <button
-            type="submit"
-            className={`${styles.submit} ${dirty ? '' : styles.submitIdle}`}
-            disabled={saving || !dirty}
-          >
+          <button type="submit" className={ui.btnPrimary} disabled={saving || !dirty}>
             {saving ? 'Сохранение…' : 'Сохранить'}
           </button>
         </div>

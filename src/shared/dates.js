@@ -53,3 +53,14 @@ export const periodState = (startsAt, endsAt, now = new Date()) => {
   if (to && to < now) return 'ended';
   return 'current';
 };
+
+const SHORT_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
+  day: 'numeric',
+  month: 'short',
+  timeZone: MOSCOW_TZ,
+});
+
+export const formatShortDate = (value) => {
+  const date = toDate(value);
+  return date ? SHORT_FORMATTER.format(date).replace('.', '') : '';
+};

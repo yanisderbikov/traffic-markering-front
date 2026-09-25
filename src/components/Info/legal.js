@@ -1,7 +1,7 @@
 export const OPERATOR = 'ИП / ООО «___»';
-export const CONTACT_EMAIL = 'support@social-traffic.example';
-export const SITE_URL = 'https://social-traffic.up.railway.app';
-export const UPDATED_AT = '8 сентября 2026';
+export const CONTACT_EMAIL = 'support@getoffer.now';
+export const SITE_URL = 'https://getoffer.now';
+export const UPDATED_AT = '24 сентября 2026';
 
 export const PLATFORMS = [
   {

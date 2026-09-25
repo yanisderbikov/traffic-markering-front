@@ -6,8 +6,10 @@ import TransferCard from '../shared/TransferCard/TransferCard';
 import ProofUploader from '../shared/ProofUploader/ProofUploader';
 import FieldError from '../shared/FieldError/FieldError';
 import Field from '../shared/Field/Field';
+import Icon from '../shared/Icon/Icon';
 import { errorMessage } from '../../shared/auth';
 import { formatRubles } from '../../shared/money';
+import ui from '../../shared/ui.module.css';
 import styles from './FinancePayout.module.css';
 
 const FinancePayout = () => {
@@ -91,21 +93,27 @@ const FinancePayout = () => {
     }
   };
 
+  const backLink = (
+    <Link to="/app/finance/payouts" className={ui.backLink}>
+      <Icon name="arrowLeft" size={16} />
+      Ко всем заявкам
+    </Link>
+  );
+
   if (loading) {
     return (
-      <div className={styles.wrap}>
-        <p className={styles.message}>Загрузка заявки…</p>
+      <div className={`${ui.page} ${styles.narrow}`}>
+        {backLink}
+        <p className={ui.message}>Загрузка заявки…</p>
       </div>
     );
   }
 
   if (pageError && !detail) {
     return (
-      <div className={styles.wrap}>
-        <p className={styles.banner}>{pageError}</p>
-        <Link to="/app/finance/payouts" className={styles.backLink}>
-          ← ко всем заявкам
-        </Link>
+      <div className={`${ui.page} ${styles.narrow}`}>
+        {backLink}
+        <p className={ui.errorBanner}>{pageError}</p>
       </div>
     );
   }
@@ -114,16 +122,19 @@ const FinancePayout = () => {
   const status = transaction.status;
 
   return (
-    <div className={styles.wrap}>
-      <Link to="/app/finance/payouts" className={styles.backLink}>
-        ← ко всем заявкам
-      </Link>
-      <h1 className={styles.title}>Заявка на выплату</h1>
+    <div className={`${ui.page} ${styles.narrow}`}>
+      {backLink}
+      <header className={ui.pageHead}>
+        <div className={ui.pageHeadMain}>
+          <span className={ui.eyebrow}>Финансы</span>
+          <h1 className={ui.title}>Заявка на выплату</h1>
+        </div>
+      </header>
 
       <TransferCard detail={detail} showOwner>
         {status === 'PENDING' && (
           <div className={styles.sendForm}>
-            <h2 className={styles.formTitle}>Отправка USDT</h2>
+            <h2 className={ui.cardTitle}>Отправка USDT</h2>
             <p className={styles.formText}>
               Переведите {amount} в USDT (TRC-20) на адрес выше, укажите номер транзакции и
               приложите скриншот — заявка перейдёт в ожидание подтверждения от креатора.
@@ -137,7 +148,7 @@ const FinancePayout = () => {
                   setErrors((prev) => ({ ...prev, txId: '' }));
                   setError('');
                 }}
-                className={styles.input}
+                className={ui.input}
                 aria-invalid={errors.txId ? 'true' : undefined}
                 maxLength={255}
                 autoComplete="off"
@@ -146,16 +157,18 @@ const FinancePayout = () => {
               />
               <FieldError>{errors.txId}</FieldError>
             </Field>
-            <ProofUploader
-              proofs={proofs}
-              onChange={(next) => {
-                setProofs(next);
-                setErrors((prev) => ({ ...prev, proofs: '' }));
-              }}
-              disabled={busy}
-              label="Скриншоты отправки *"
-            />
-            <FieldError>{errors.proofs}</FieldError>
+            <div>
+              <ProofUploader
+                proofs={proofs}
+                onChange={(next) => {
+                  setProofs(next);
+                  setErrors((prev) => ({ ...prev, proofs: '' }));
+                }}
+                disabled={busy}
+                label="Скриншоты отправки *"
+              />
+              <FieldError>{errors.proofs}</FieldError>
+            </div>
             <Field label="Ссылка на транзакцию, комментарий">
               <textarea
                 value={comment}
@@ -163,32 +176,34 @@ const FinancePayout = () => {
                   setComment(e.target.value);
                   setError('');
                 }}
-                className={styles.textarea}
+                className={ui.textarea}
                 rows={3}
                 maxLength={2000}
                 disabled={busy}
               />
             </Field>
-            {error && <p className={styles.error}>{error}</p>}
+            {error && <p className={ui.errorText}>{error}</p>}
             <div className={styles.actions}>
-              <button type="button" className={styles.primaryBtn} onClick={markSent} disabled={busy}>
+              <button type="button" className={ui.btnPrimary} onClick={markSent} disabled={busy}>
                 {busy ? 'Сохраняем…' : 'Отправлено'}
               </button>
-              <button type="button" className={styles.dangerBtn} onClick={reject} disabled={busy}>
+              <button type="button" className={ui.btnDanger} onClick={reject} disabled={busy}>
                 Отклонить
               </button>
             </div>
           </div>
         )}
         {status === 'SENT' && (
-          <div className={styles.actions}>
+          <div className={styles.sendForm}>
             <p className={styles.formText}>
               Ждём, когда креатор подтвердит получение. Если перевод не прошёл — отклоните заявку,
               деньги вернутся креатору в доступные.
             </p>
-            <button type="button" className={styles.dangerBtn} onClick={reject} disabled={busy}>
-              Отклонить
-            </button>
+            <div className={styles.actions}>
+              <button type="button" className={ui.btnDanger} onClick={reject} disabled={busy}>
+                Отклонить
+              </button>
+            </div>
           </div>
         )}
       </TransferCard>

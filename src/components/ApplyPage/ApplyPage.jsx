@@ -3,14 +3,21 @@ import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-route
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import FieldError from '../shared/FieldError/FieldError';
-import Field from '../shared/Field/Field';
-import PlatformList from '../shared/PlatformList/PlatformList';
+import SocialIcon from '../shared/SocialIcon/SocialIcon';
+import Icon from '../shared/Icon/Icon';
 import { formatRubles } from '../../shared/money';
 import { CAMPAIGN_STATUS_LABELS, PLATFORM_LABELS } from '../../shared/dictionaries';
 import { formatDay, periodState } from '../../shared/dates';
 import { campaignRequirements } from '../../shared/requirements';
-import { isWorldRegion, platformGeographyWarning, viewRegionHint } from '../../shared/viewRegion';
+import {
+  DEFAULT_VIEW_REGION,
+  isWorldRegion,
+  platformGeographyWarning,
+  viewRegionHint,
+  viewRegionLabel,
+} from '../../shared/viewRegion';
 import { detectPlatform } from '../../shared/video';
+import ui from '../../shared/ui.module.css';
 import styles from './ApplyPage.module.css';
 
 const emptyForm = {
@@ -46,7 +53,7 @@ const ApplyPage = () => {
         err?.response?.data?.message ||
           err?.response?.data?.error ||
           err?.message ||
-          'Не удалось загрузить объявление'
+          'Не удалось загрузить оффер'
       );
     } finally {
       setLoading(false);
@@ -147,141 +154,183 @@ const ApplyPage = () => {
   const period = campaign ? periodState(campaign.startsAt, campaign.endsAt) : 'current';
   const inactive = campaign ? campaign.status !== 'ACTIVE' || period !== 'current' : false;
   const requirements = campaignRequirements(campaign);
+  const customer = campaign?.customerCompany || campaign?.customerName || 'Заказчик';
+  const campaignPath = `/campaigns/${publicId}`;
 
   const renderInactiveNotice = () => {
     if (campaign.status !== 'ACTIVE') {
       return (
         <>
-          объявление сейчас {CAMPAIGN_STATUS_LABELS[campaign.status] || campaign.status} — новые
+          Оффер сейчас {CAMPAIGN_STATUS_LABELS[campaign.status] || campaign.status} — новые
           отклики заказчик не принимает.
         </>
       );
     }
     if (period === 'upcoming') {
-      return <>приём откликов откроется {formatDay(campaign.startsAt)}.</>;
+      return <>Приём откликов откроется {formatDay(campaign.startsAt)}.</>;
     }
-    return <>приём откликов закончился {formatDay(campaign.endsAt)}.</>;
+    return <>Приём откликов закончился {formatDay(campaign.endsAt)}.</>;
   };
 
   return (
-    <div className={styles.wrap}>
-      <Link to={`/campaigns/${publicId}`} className={styles.backLink}>
-        ← к объявлению
+    <div className={ui.page}>
+      <Link to={campaignPath} className={ui.backLink}>
+        <Icon name="arrowLeft" size={16} /> К офферу
       </Link>
 
       {loading ? (
-        <p className={styles.message}>Загрузка объявления…</p>
+        <p className={ui.message}>Загрузка оффера…</p>
       ) : pageError ? (
-        <p className={styles.errorBanner}>{pageError}</p>
+        <p className={ui.errorBanner}>{pageError}</p>
       ) : !campaign ? (
-        <p className={styles.message}>Объявление не найдено.</p>
+        <p className={ui.message}>Оффер не найден.</p>
       ) : (
-        <div className={styles.card}>
-          <p className={styles.kicker}>отклик на объявление</p>
-          <h1 className={styles.title}>{campaign.title}</h1>
-          <p className={styles.meta}>
-            {campaign.customerCompany || campaign.customerName}
-            {' · '}
-            <span className={styles.rate}>
-              {formatRubles(campaign.ratePerThousandKopecks)}
-            </span>{' '}
-            / 1000 просмотров
-          </p>
-          {acceptedPlatforms.length > 0 && (
-            <div className={styles.platformsRow}>
-              <span className={styles.platformsLabel}>принимаются ролики с</span>
-              <PlatformList platforms={acceptedPlatforms} />
+        <>
+          <header className={ui.pageHead}>
+            <div className={ui.pageHeadMain}>
+              <span className={ui.eyebrow}>Креатор</span>
+              <h1 className={ui.title}>Отклик на оффер</h1>
+              <p className={ui.subtitle}>
+                {campaign.title} · {customer}
+              </p>
             </div>
-          )}
+          </header>
 
-          {requirements.length > 0 && (
-            <ul className={styles.requirements} aria-label="Требования к ролику">
-              {requirements.map((row) => (
-                <li key={row.key} className={styles.requirement} title={row.hint || undefined}>
-                  <span className={styles.requirementKey}>{row.label}</span> {row.value}
-                </li>
-              ))}
-            </ul>
-          )}
+          {inactive && <p className={styles.notice}>{renderInactiveNotice()}</p>}
 
-          <p className={`${styles.regionNote} ${worldRegion ? '' : styles.regionNoteAccent}`}>
-            {regionHint}
-          </p>
-
-          {inactive && <p className={styles.hintBanner}>{renderInactiveNotice()}</p>}
-
-          <form className={styles.form} onSubmit={handleSubmit} noValidate>
-            <Field label="Ссылка на ролик *">
-              <input
-                type="url"
-                name="videoUrl"
-                value={form.videoUrl}
-                onChange={setField}
-                className={styles.input}
-                aria-invalid={videoUrlError ? 'true' : undefined}
-                maxLength={1024}
-                disabled={sending || inactive}
-                autoFocus
-              />
-              <FieldError>{videoUrlError}</FieldError>
-              <span className={styles.hint}>
-                по этой ссылке считаются просмотры, за которые начисляются деньги. площадка
-                определяется автоматически и должна быть из списка заказчика.
-              </span>
-              {form.videoUrl.trim() && !platform && !videoUrlError && (
-                <span className={styles.platformWarn}>площадка по ссылке не распознана.</span>
-              )}
-              {platform && !platformAccepted && !videoUrlError && (
-                <span className={styles.platformWarn}>
-                  заказчик не принимает ролики с {PLATFORM_LABELS[platform]} — подходят:{' '}
-                  {acceptedLabels}.
+          <div className={styles.columns}>
+            <form className={`${ui.card} ${styles.form}`} onSubmit={handleSubmit} noValidate>
+              <div className={styles.field}>
+                <label htmlFor="apply-video-url" className={ui.label}>
+                  Ссылка на ролик *
+                </label>
+                <input
+                  id="apply-video-url"
+                  type="url"
+                  name="videoUrl"
+                  value={form.videoUrl}
+                  onChange={setField}
+                  className={ui.input}
+                  placeholder="https://"
+                  aria-invalid={videoUrlError ? 'true' : undefined}
+                  maxLength={1024}
+                  disabled={sending || inactive}
+                  autoFocus
+                />
+                <FieldError>{videoUrlError}</FieldError>
+                <span className={ui.hint}>
+                  По этой ссылке считаются просмотры, за которые начисляются деньги. Площадка
+                  определяется автоматически и должна быть из списка заказчика.
                 </span>
-              )}
-              {platform && platformAccepted && hasAccount && (
-                <span className={styles.platformOk}>площадка: {PLATFORM_LABELS[platform]}</span>
-              )}
-              {platform && platformAccepted && geographyWarning && (
-                <span className={styles.platformWarn}>{geographyWarning}</span>
-              )}
-              {platform && platformAccepted && hasAccount && youtubeWithoutAnalytics && (
-                <span className={styles.platformWarn}>
-                  YouTube подключён без доступа к аналитике — география просмотров не учтётся и
-                  ролик по этому региону не оплатится.{' '}
-                  <Link to="/app/profile" className={styles.inlineLink}>
-                    переподключить YouTube
-                  </Link>
+                {form.videoUrl.trim() && !platform && !videoUrlError && (
+                  <span className={ui.hintWarn}>Площадка по ссылке не распознана.</span>
+                )}
+                {platform && !platformAccepted && !videoUrlError && (
+                  <span className={ui.hintWarn}>
+                    Заказчик не принимает ролики с {PLATFORM_LABELS[platform]} — подходят:{' '}
+                    {acceptedLabels}.
+                  </span>
+                )}
+                {platform && platformAccepted && hasAccount && (
+                  <span className={ui.hintOk}>Площадка: {PLATFORM_LABELS[platform]}</span>
+                )}
+                {platform && platformAccepted && geographyWarning && (
+                  <span className={ui.hintWarn}>{geographyWarning}</span>
+                )}
+                {platform && platformAccepted && hasAccount && youtubeWithoutAnalytics && (
+                  <span className={ui.hintWarn}>
+                    YouTube подключён без доступа к аналитике — география просмотров не учтётся
+                    и ролик по этому региону не оплатится.{' '}
+                    <Link to="/app/profile" className={styles.inlineLink}>
+                      Переподключить YouTube
+                    </Link>
+                  </span>
+                )}
+                {platform && platformAccepted && !hasAccount && (
+                  <span className={ui.hintWarn}>
+                    {PLATFORM_LABELS[platform]} не привязан в профиле, отклик не примется.{' '}
+                    <Link to="/app/profile" className={styles.inlineLink}>
+                      Привязать аккаунт
+                    </Link>
+                  </span>
+                )}
+              </div>
+
+              <div className={styles.field}>
+                <label htmlFor="apply-comment" className={ui.label}>
+                  Комментарий заказчику
+                </label>
+                <textarea
+                  id="apply-comment"
+                  name="comment"
+                  value={form.comment}
+                  onChange={setField}
+                  className={ui.textarea}
+                  rows={4}
+                  disabled={sending || inactive}
+                />
+                <span className={ui.hint}>
+                  Необязательно. Расскажите, чем ваш ролик подходит под бриф.
                 </span>
-              )}
-              {platform && platformAccepted && !hasAccount && (
-                <span className={styles.platformWarn}>
-                  {PLATFORM_LABELS[platform]} не привязан в профиле, отклик не примется.{' '}
-                  <Link to="/app/profile" className={styles.inlineLink}>
-                    привязать аккаунт
-                  </Link>
-                </span>
-              )}
-            </Field>
-            <Field label="Комментарий заказчику">
-              <textarea
-                name="comment"
-                value={form.comment}
-                onChange={setField}
-                className={`${styles.input} ${styles.textarea}`}
-                rows={4}
-                disabled={sending || inactive}
-              />
-            </Field>
-            {formError && <p className={styles.error}>{formError}</p>}
-            <div className={styles.actions}>
-              <button type="submit" className={styles.submit} disabled={sending || inactive}>
-                {sending ? 'Отправка…' : 'Отправить отклик'}
-              </button>
-              <Link to={`/campaigns/${publicId}`} className={styles.cancel}>
-                отмена
-              </Link>
-            </div>
-          </form>
-        </div>
+              </div>
+
+              {formError && <p className={ui.errorText}>{formError}</p>}
+
+              <div className={styles.actions}>
+                <button
+                  type="submit"
+                  className={ui.btnPrimary}
+                  disabled={sending || inactive}
+                >
+                  {sending ? 'Отправка…' : 'Отправить отклик'}
+                </button>
+                <Link to={campaignPath} className={ui.btnSecondary}>
+                  Отмена
+                </Link>
+              </div>
+            </form>
+
+            <aside className={styles.aside}>
+              <section className={ui.card}>
+                <span className={ui.eyebrow}>Ставка за результат</span>
+                <p className={styles.rate}>{formatRubles(campaign.ratePerThousandKopecks)}</p>
+                <p className={styles.rateUnit}>за 1 000 подтверждённых просмотров</p>
+
+                {acceptedPlatforms.length > 0 && (
+                  <>
+                    <div className={ui.divider} />
+                    <span className={styles.blockLabel}>Принимаются ролики с</span>
+                    <div className={ui.chips}>
+                      {acceptedPlatforms.map((item) => (
+                        <span key={item} className={ui.chip}>
+                          <SocialIcon name={item} className={styles.chipIcon} />
+                          {PLATFORM_LABELS[item] || item}
+                        </span>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                <div className={ui.divider} />
+                {requirements.map((row) => (
+                  <div key={row.key} className={ui.kv} title={row.hint || undefined}>
+                    <span className={ui.kvKey}>{row.label}</span>
+                    <span className={ui.kvValue}>{row.value}</span>
+                  </div>
+                ))}
+                <div className={ui.kv}>
+                  <span className={ui.kvKey}>Просмотры</span>
+                  <span className={ui.kvValue}>
+                    {viewRegionLabel(campaign.viewRegion || DEFAULT_VIEW_REGION)}
+                  </span>
+                </div>
+                <p className={worldRegion ? styles.regionNote : styles.regionNoteAccent}>
+                  {regionHint}
+                </p>
+              </section>
+            </aside>
+          </div>
+        </>
       )}
     </div>
   );

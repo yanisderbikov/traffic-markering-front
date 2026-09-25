@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { formatRubles, signedRubles } from '../../../shared/money';
 import { WALLET_TRANSACTION_LABELS, formatDate } from '../../../shared/dictionaries';
 import { MoneyFlow, StatusBadge } from '../OperationRows/OperationRows';
+import Icon from '../Icon/Icon';
 import styles from './TransferCard.module.css';
 
 const URL_SPLIT_RE = /(https?:\/\/\S+)/g;
@@ -29,15 +30,15 @@ const copy = async (value, done) => {
 };
 
 const SENT_LABEL = {
-  TOP_UP: 'зачислена',
-  WITHDRAWAL: 'отправлена',
-  PAYOUT: 'отправлена',
+  TOP_UP: 'Зачислена',
+  WITHDRAWAL: 'Отправлена',
+  PAYOUT: 'Отправлена',
 };
 
 const OWNER_LABEL = {
-  PAYOUT: 'креатор',
-  TOP_UP: 'заказчик',
-  WITHDRAWAL: 'заказчик',
+  PAYOUT: 'Креатор',
+  TOP_UP: 'Рекламодатель',
+  WITHDRAWAL: 'Рекламодатель',
 };
 
 const TransferCard = ({ detail, showOwner = false, children }) => {
@@ -47,12 +48,12 @@ const TransferCard = ({ detail, showOwner = false, children }) => {
 
   const isPayout = transaction.type === 'PAYOUT';
   const timeline = [
-    { label: 'создана', at: transaction.createdAt },
-    transfer?.sentAt && { label: SENT_LABEL[transaction.type] || 'отправлена', at: transfer.sentAt },
-    transfer?.confirmedAt && { label: 'подтверждена', at: transfer.confirmedAt },
+    { label: 'Создана', at: transaction.createdAt },
+    transfer?.sentAt && { label: SENT_LABEL[transaction.type] || 'Отправлена', at: transfer.sentAt },
+    transfer?.confirmedAt && { label: 'Подтверждена', at: transfer.confirmedAt },
     transfer?.closedAt &&
       !transfer?.confirmedAt && {
-        label: transaction.status === 'CANCELLED' ? 'отменена' : 'отклонена',
+        label: transaction.status === 'CANCELLED' ? 'Отменена' : 'Отклонена',
         at: transfer.closedAt,
       },
   ].filter(Boolean);
@@ -76,19 +77,19 @@ const TransferCard = ({ detail, showOwner = false, children }) => {
       </div>
 
       <dl className={styles.facts}>
-        <dt>откуда → куда</dt>
+        <dt>Откуда → куда</dt>
         <dd>
           <MoneyFlow source={transaction.source} destination={transaction.destination} />
         </dd>
         {transaction.ownerName && (
           <>
-            <dt>кошелёк</dt>
+            <dt>Кошелёк</dt>
             <dd>{transaction.ownerName}</dd>
           </>
         )}
         {showOwner && transfer && (
           <>
-            <dt>{OWNER_LABEL[transaction.type] || 'владелец'}</dt>
+            <dt>{OWNER_LABEL[transaction.type] || 'Владелец'}</dt>
             <dd>
               {transfer.ownerName}
               {transfer.ownerEmail ? ` · ${transfer.ownerEmail}` : ''}
@@ -97,13 +98,13 @@ const TransferCard = ({ detail, showOwner = false, children }) => {
         )}
         {transaction.campaignTitle && (
           <>
-            <dt>объявление</dt>
+            <dt>Кампания</dt>
             <dd>{transaction.campaignTitle}</dd>
           </>
         )}
         {transfer?.tronAddress && (
           <>
-            <dt>кошелёк TRON</dt>
+            <dt>Кошелёк TRON</dt>
             <dd className={styles.addressRow}>
               <code className={styles.address}>{transfer.tronAddress}</code>
               <button
@@ -111,14 +112,15 @@ const TransferCard = ({ detail, showOwner = false, children }) => {
                 className={styles.copyBtn}
                 onClick={() => copy(transfer.tronAddress, 'Адрес скопирован')}
               >
-                копировать
+                <Icon name="copy" size={14} />
+                Копировать
               </button>
             </dd>
           </>
         )}
         {transfer?.txId && (
           <>
-            <dt>номер транзакции</dt>
+            <dt>Номер транзакции</dt>
             <dd className={styles.addressRow}>
               <code className={styles.address}>{transfer.txId}</code>
               <button
@@ -126,27 +128,28 @@ const TransferCard = ({ detail, showOwner = false, children }) => {
                 className={styles.copyBtn}
                 onClick={() => copy(transfer.txId, 'Номер транзакции скопирован')}
               >
-                копировать
+                <Icon name="copy" size={14} />
+                Копировать
               </button>
             </dd>
           </>
         )}
         {!isPayout && transaction.comment && (
           <>
-            <dt>{transfer ? 'основание' : 'комментарий'}</dt>
+            <dt>{transfer ? 'Основание' : 'Комментарий'}</dt>
             <dd>{transaction.comment}</dd>
           </>
         )}
         {transaction.actorName && (
           <>
-            <dt>{isPayout ? 'заявку подал' : 'провёл'}</dt>
+            <dt>{isPayout ? 'Заявку подал' : 'Провёл'}</dt>
             <dd>{transaction.actorName}</dd>
           </>
         )}
-        <dt>остаток после</dt>
+        <dt>Остаток после</dt>
         <dd>{formatRubles(transaction.balanceAfterKopecks ?? 0)}</dd>
-        <dt>история</dt>
-        <dd>
+        <dt>История</dt>
+        <dd className={styles.timeline}>
           {timeline.map((step) => (
             <span key={step.label} className={styles.step}>
               {step.label} {formatDate(step.at)}
@@ -157,15 +160,15 @@ const TransferCard = ({ detail, showOwner = false, children }) => {
 
       {transfer?.rejectReason && (
         <div className={styles.reject}>
-          <span className={styles.blockTitle}>причина отказа</span>
-          <p className={styles.text}>{transfer.rejectReason}</p>
+          <span className={styles.blockTitle}>Причина отказа</span>
+          <p className={styles.rejectText}>{transfer.rejectReason}</p>
         </div>
       )}
 
       {transfer && (transfer.financeComment || transfer.proofs?.length > 0) && (
         <div className={styles.proofBlock}>
           <span className={styles.blockTitle}>
-            документы перевода{transfer.processedByName ? ` · ${transfer.processedByName}` : ''}
+            Документы перевода{transfer.processedByName ? ` · ${transfer.processedByName}` : ''}
           </span>
           {transfer.financeComment && (
             <p className={styles.text}>{linkify(transfer.financeComment)}</p>

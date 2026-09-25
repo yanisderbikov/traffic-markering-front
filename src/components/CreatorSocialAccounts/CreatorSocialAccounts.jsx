@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import SocialIcon from '../shared/SocialIcon/SocialIcon';
+import ui from '../../shared/ui.module.css';
 import styles from './CreatorSocialAccounts.module.css';
 
 const PLATFORMS = [
@@ -12,9 +13,9 @@ const PLATFORMS = [
 ];
 
 const STATUS_LABELS = {
-  ACTIVE: 'подключён',
-  EXPIRED: 'токен истёк, подключите заново',
-  REVOKED: 'доступ отозван, подключите заново',
+  ACTIVE: 'Подключён',
+  EXPIRED: 'Токен истёк, подключите заново',
+  REVOKED: 'Доступ отозван, подключите заново',
 };
 
 const RESULT_PARAMS = ['social', 'status', 'message'];
@@ -28,11 +29,11 @@ const formatFollowers = (value) =>
 const renderGeographyStatus = (account) => {
   if (account.platform !== 'YOUTUBE_SHORTS') return null;
   if (account.reportsViewGeography) {
-    return <span className={styles.geo}>география просмотров: да</span>;
+    return <span className={styles.geo}>География просмотров: да</span>;
   }
   return (
     <span className={styles.geoWarn}>
-      география просмотров: нет — переподключите, чтобы учитывались объявления с регионом
+      География просмотров: нет — переподключите, чтобы учитывались кампании с регионом
     </span>
   );
 };
@@ -115,29 +116,34 @@ const CreatorSocialAccounts = () => {
   };
 
   return (
-    <div className={styles.wrap}>
-      <h1 className={styles.title}>Соцсети</h1>
-      <p className={styles.subtitle}>
-        Подключайте сколько угодно аккаунтов на каждой площадке — просмотры роликов
-        мы считаем по официальному API площадки, а не с ваших слов.
-      </p>
+    <div className={ui.page}>
+      <header className={ui.pageHead}>
+        <div className={ui.pageHeadMain}>
+          <span className={ui.eyebrow}>Креатор</span>
+          <h1 className={ui.title}>Соцсети</h1>
+          <p className={ui.subtitle}>
+            Подключайте сколько угодно аккаунтов на каждой площадке — просмотры роликов мы считаем
+            по официальному API площадки, а не с ваших слов.
+          </p>
+        </div>
+      </header>
 
-      {error && <p className={styles.banner}>{error}</p>}
-      {loading && <p className={styles.message}>Загрузка аккаунтов…</p>}
+      {error && <p className={ui.errorBanner}>{error}</p>}
+      {loading && <p className={ui.message}>Загрузка аккаунтов…</p>}
 
       {!loading && (
-        <div className={styles.platforms}>
+        <div className={ui.grid3}>
           {PLATFORMS.map((platform) => {
             const connected = accounts.filter((account) => account.platform === platform.platform);
             return (
-              <div key={platform.slug} className={styles.platform}>
+              <section key={platform.slug} className={`${ui.card} ${styles.platform}`}>
                 <div className={styles.platformHead}>
                   <span className={styles.platformName}>
                     <SocialIcon name={platform.slug} className={styles.platformIcon} />
                     {platform.label}
                   </span>
-                  <span className={styles.platformCount}>
-                    {connected.length === 0 ? 'нет аккаунтов' : `${connected.length} шт.`}
+                  <span className={connected.length ? ui.chipSuccess : ui.chip}>
+                    {connected.length === 0 ? 'Нет аккаунтов' : `${connected.length} шт.`}
                   </span>
                 </div>
 
@@ -169,10 +175,10 @@ const CreatorSocialAccounts = () => {
                           </span>
                           <button
                             type="button"
-                            className={styles.unlink}
+                            className={`${ui.btnGhost} ${ui.btnSmall}`}
                             onClick={() => disconnect(account)}
                           >
-                            отвязать
+                            Отвязать
                           </button>
                         </li>
                       );
@@ -182,7 +188,7 @@ const CreatorSocialAccounts = () => {
 
                 <button
                   type="button"
-                  className={styles.connect}
+                  className={`${connected.length ? ui.btnSecondary : ui.btnPrimary} ${ui.btnBlock} ${styles.connect}`}
                   onClick={() => connect(platform.slug)}
                   disabled={pendingSlug === platform.slug}
                 >
@@ -191,7 +197,7 @@ const CreatorSocialAccounts = () => {
                     ? 'Открываем площадку…'
                     : `Подключить ${platform.label}`}
                 </button>
-              </div>
+              </section>
             );
           })}
         </div>

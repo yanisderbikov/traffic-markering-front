@@ -4,12 +4,11 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import BudgetBar from '../shared/BudgetBar/BudgetBar';
-import WalletSummary from '../shared/WalletSummary/WalletSummary';
 import CreatorSocials from '../shared/CreatorSocials/CreatorSocials';
 import FieldError from '../shared/FieldError/FieldError';
-import Field from '../shared/Field/Field';
 import MaterialList from '../shared/MaterialList/MaterialList';
 import SocialIcon from '../shared/SocialIcon/SocialIcon';
+import Icon from '../shared/Icon/Icon';
 import { FraudBadge, FraudFlags, TrustBadge } from '../shared/FraudBadge/FraudBadge';
 import { clearFieldError, hasErrors, validateRequired } from '../../shared/validation';
 import { VIDEO_PLATFORMS } from '../../shared/video';
@@ -29,13 +28,15 @@ import {
   parseIntInput,
   rubToKopecks,
 } from '../../shared/money';
-import { dateInputValue, endOfDayIso, startOfDayIso } from '../../shared/dates';
+import { dateInputValue, endOfDayIso, formatDay, startOfDayIso } from '../../shared/dates';
+import { pluralize } from '../../shared/requirements';
 import {
   APPLICATION_STATUS_LABELS,
   CAMPAIGN_STATUS_LABELS,
   PLATFORM_LABELS,
   formatDate,
 } from '../../shared/dictionaries';
+import ui from '../../shared/ui.module.css';
 import styles from './CampaignEditor.module.css';
 
 const emptyForm = {
@@ -61,24 +62,28 @@ const PHOTO_MAX_BYTES = 10 * 1024 * 1024;
 const MATERIAL_MAX_BYTES = 100 * 1024 * 1024;
 const MATERIALS_MAX = 10;
 
-// Статусы объявления в порядке жизненного цикла — так их и показываем в селекте.
 const CAMPAIGN_STATUS_OPTIONS = ['DRAFT', 'ACTIVE', 'PAUSED', 'COMPLETED'];
 
-// Заказчику разрешены только эти переходы отклика (см. правила бэка).
 const APPLICATION_ACTIONS = [
   { status: 'APPROVED', label: 'Одобрить' },
   { status: 'REJECTED', label: 'Отклонить' },
   { status: 'COMPLETED', label: 'Завершить' },
 ];
 
-const APPLICATION_STATUS_CLASS = {
-  PENDING: styles.statusPending,
-  APPROVED: styles.statusApproved,
-  REJECTED: styles.statusRejected,
-  COMPLETED: styles.statusCompleted,
+const APPLICATION_CHIP = {
+  PENDING: ui.chipWarning,
+  APPROVED: ui.chipSuccess,
+  REJECTED: ui.chipDanger,
+  COMPLETED: ui.chipOutline,
 };
 
-// Копейки с бэка → строка для инпута в рублях.
+const CAMPAIGN_CHIP = {
+  ACTIVE: ui.chipSuccess,
+  PAUSED: ui.chipWarning,
+  DRAFT: ui.chipOutline,
+  COMPLETED: ui.chipOutline,
+};
+
 const kopecksToInput = (kopecks) =>
   kopecks == null ? '' : formatRubInput(String(kopecksToRub(kopecks)));
 
@@ -145,10 +150,19 @@ const formFromCampaign = (campaign) => ({
   materials: Array.isArray(campaign.materials) ? campaign.materials.map(materialFromDto) : [],
 });
 
+const formatCompactViews = (views) => {
+  const n = Number(views) || 0;
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2).replace('.', ',')} млн`;
+  if (n >= 10_000) return `${Math.round(n / 1000)} тыс.`;
+  return formatViews(n);
+};
+
+const isPublished = (application) =>
+  application.status === 'APPROVED' || application.status === 'COMPLETED';
+
 const CampaignEditor = () => {
   const { campaignId } = useParams();
   const navigate = useNavigate();
-  // 'new' в адресе — режим создания, всё остальное считаем идентификатором объявления.
   const isNew = campaignId === 'new';
 
   const [campaign, setCampaign] = useState(null);
@@ -163,6 +177,7 @@ const CampaignEditor = () => {
   const [applicationsLoading, setApplicationsLoading] = useState(!isNew);
   const [applicationsError, setApplicationsError] = useState('');
   const [busyApplicationId, setBusyApplicationId] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
   const [photoPreview, setPhotoPreview] = useState('');
   const [uploadProgress, setUploadProgress] = useState(null);
   const [materialProgress, setMaterialProgress] = useState(null);
@@ -171,6 +186,7 @@ const CampaignEditor = () => {
   const [deleting, setDeleting] = useState(false);
   const [wallet, setWallet] = useState(null);
   const ownsWallet = apiClient.getJwtMetadata()?.role === 'CUSTOMER';
+  const customerName = apiClient.getJwtMetadata()?.name || '';
 
   const loadWallet = useCallback(async () => {
     try {
@@ -181,8 +197,6 @@ const CampaignEditor = () => {
     }
   }, []);
 
-  // fillForm=true только при первой загрузке: после смены статуса отклика объявление
-  // перечитывается ради пересчитанного бюджета, и затирать правки формы нельзя.
   const loadCampaign = useCallback(
     async ({ fillForm = false } = {}) => {
       try {
@@ -197,7 +211,7 @@ const CampaignEditor = () => {
         setPageError('');
       } catch (err) {
         setPageError(
-          err?.response?.data?.message || err?.message || 'Не удалось загрузить объявление'
+          err?.response?.data?.message || err?.message || 'Не удалось загрузить кампанию'
         );
       } finally {
         setLoading(false);
@@ -293,7 +307,7 @@ const CampaignEditor = () => {
       return;
     }
     if (file.size > MATERIAL_MAX_BYTES) {
-      toast.error('Файл не больше 100 МБ — большие материалы приложите ссылкой.');
+      toast.error('Файл не больше 100 МБ. Большие материалы приложите ссылкой.');
       return;
     }
     const contentType = file.type || 'application/octet-stream';
@@ -323,7 +337,7 @@ const CampaignEditor = () => {
         sizeBytes: file.size,
         opensInBrowser: false,
       });
-      toast.success('Файл загружен — не забудьте сохранить объявление');
+      toast.success('Файл загружен. Не забудьте сохранить кампанию');
     } catch (err) {
       toast.error(err?.response?.data?.message || err?.message || 'Не удалось загрузить файл');
     } finally {
@@ -379,10 +393,6 @@ const CampaignEditor = () => {
         : [...current, platform]
     );
 
-  const selectAllPlatforms = () => updatePlatforms(() => VIDEO_PLATFORMS);
-
-  const clearPlatforms = () => updatePlatforms(() => []);
-
   const setViewRegion = (region) => {
     setForm((prev) => ({ ...prev, viewRegion: region }));
     clearFieldError(setErrors, 'viewRegion');
@@ -392,29 +402,18 @@ const CampaignEditor = () => {
   const blindPlatforms = platformsWithoutGeography(form.platforms);
   const regionBlindWarning = form.viewRegion !== 'WORLD' && blindPlatforms.length > 0;
 
-  const allPlatformsSelected = VIDEO_PLATFORMS.every((platform) =>
-    form.platforms.includes(platform)
-  );
-
   const invalid = (name) => (errors[name] ? 'true' : undefined);
-
-  // На создании спойлер свёрнут; при редактировании раскрываем, если там что-то заполнено.
-  const extraOpen =
-    !isNew &&
-    ['minVideoSeconds', 'minPaidViews', 'maxVideosPerCreator', 'startsOn', 'endsOn'].some(
-      (key) => Boolean(savedForm[key])
-    );
 
   const handlePhotoChange = async (e) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
     if (!PHOTO_TYPES.includes(file.type)) {
-      toast.error('Фотография — JPEG, PNG, WebP или GIF.');
+      toast.error('Обложка — JPEG, PNG, WebP или GIF.');
       return;
     }
     if (file.size > PHOTO_MAX_BYTES) {
-      toast.error('Фотография не больше 10 МБ.');
+      toast.error('Обложка не больше 10 МБ.');
       return;
     }
 
@@ -437,10 +436,10 @@ const CampaignEditor = () => {
       setForm((prev) => ({ ...prev, photoKey: key }));
       clearFieldError(setErrors, 'photoKey');
       setPhotoPreview(URL.createObjectURL(file));
-      toast.success('Фотография загружена — не забудьте сохранить объявление');
+      toast.success('Обложка загружена. Не забудьте сохранить кампанию');
     } catch (err) {
       toast.error(
-        err?.response?.data?.message || err?.message || 'Не удалось загрузить фотографию'
+        err?.response?.data?.message || err?.message || 'Не удалось загрузить обложку'
       );
     } finally {
       setUploadProgress(null);
@@ -464,11 +463,10 @@ const CampaignEditor = () => {
     return '';
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const submit = async (statusOverride) => {
+    const status = statusOverride || form.status;
     const title = form.title.trim();
     const description = form.description.trim();
-    // Пользователь вводит рубли, бэк принимает копейки — конвертируем здесь.
     const ratePerThousandKopecks = rubToKopecks(form.rateRub);
     const budgetKopecks = rubToKopecks(form.budgetRub);
     const minPayoutKopecks = rubToKopecks(form.minPayoutRub);
@@ -480,9 +478,9 @@ const CampaignEditor = () => {
     const positiveOrEmpty = (value, message) => (value != null && value <= 0 ? message : '');
 
     const nextErrors = {
-      title: validateRequired(title, 'Укажите заголовок'),
+      title: validateRequired(title, 'Укажите название'),
       description: validateRequired(description, 'Опишите задачу для креатора'),
-      photoKey: form.photoKey ? '' : 'Загрузите фотографию',
+      photoKey: form.photoKey ? '' : 'Загрузите обложку',
       rateRub:
         ratePerThousandKopecks == null || ratePerThousandKopecks <= 0
           ? 'Ставка должна быть больше нуля'
@@ -501,7 +499,10 @@ const CampaignEditor = () => {
         startsAt && endsAt && endsAt < startsAt ? 'Окончание приёма раньше его начала' : '',
     };
     setErrors(nextErrors);
-    if (hasErrors(nextErrors)) return;
+    if (hasErrors(nextErrors)) {
+      setError('Проверьте выделенные поля');
+      return;
+    }
 
     const requirements = {
       minVideoSeconds,
@@ -526,9 +527,9 @@ const CampaignEditor = () => {
           platforms: form.platforms,
           viewRegion: form.viewRegion,
           ...requirements,
-          status: form.status,
+          status,
         });
-        toast.success('Объявление создано');
+        toast.success(status === 'ACTIVE' ? 'Кампания запущена' : 'Черновик сохранён');
         loadWallet();
         navigate(`/app/campaigns/${res.data.id}`, { replace: true });
         return;
@@ -546,13 +547,8 @@ const CampaignEditor = () => {
         ...requirements,
       });
       let saved = res.data;
-      // Статус в теле PUT не отправляем: бэк меняет его, только если поле пришло,
-      // и тогда смена статуса шла бы то одной ручкой, то другой. Держим её на PATCH —
-      // там же, где её делает список объявлений.
-      if (form.status && form.status !== saved.status) {
-        const patched = await apiClient.api.updateCampaignStatus(campaignId, {
-          status: form.status,
-        });
+      if (status && status !== saved.status) {
+        const patched = await apiClient.api.updateCampaignStatus(campaignId, { status });
         saved = patched.data;
       }
       setCampaign(saved);
@@ -561,26 +557,31 @@ const CampaignEditor = () => {
       setSavedForm(savedFields);
       setPhotoPreview(saved.photoUrl || '');
       loadWallet();
-      toast.success('Объявление сохранено');
+      toast.success('Кампания сохранена');
     } catch (err) {
       setError(
-        err?.response?.data?.message || err?.message || 'Не удалось сохранить объявление'
+        err?.response?.data?.message || err?.message || 'Не удалось сохранить кампанию'
       );
     } finally {
       setSaving(false);
     }
   };
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    submit();
+  };
+
   const handleDelete = async () => {
-    if (!window.confirm(`Удалить объявление «${campaign?.title || form.title}»?`)) return;
+    if (!window.confirm(`Удалить кампанию «${campaign?.title || form.title}»?`)) return;
     setDeleting(true);
     try {
       await apiClient.api.deleteCampaign(campaignId);
-      toast.success('Объявление удалено');
+      toast.success('Кампания удалена');
       navigate('/app/campaigns', { replace: true });
     } catch (err) {
       toast.error(
-        err?.response?.data?.message || err?.message || 'Не удалось удалить объявление'
+        err?.response?.data?.message || err?.message || 'Не удалось удалить кампанию'
       );
       setDeleting(false);
     }
@@ -591,7 +592,6 @@ const CampaignEditor = () => {
     try {
       await apiClient.api.updateApplicationStatus(application.id, { status });
       toast.success(`Отклик: ${APPLICATION_STATUS_LABELS[status] || status}`);
-      // Начисления пересчитываются на бэке по всему объявлению — обновляем и бюджет.
       await Promise.all([loadApplications(), loadCampaign()]);
     } catch (err) {
       toast.error(
@@ -604,576 +604,792 @@ const CampaignEditor = () => {
 
   if (loading) {
     return (
-      <div className={styles.wrap}>
-        <p className={styles.message}>Загрузка объявления…</p>
+      <div className={ui.page}>
+        <p className={ui.message}>Загрузка кампании…</p>
       </div>
     );
   }
 
   if (pageError && !campaign) {
     return (
-      <div className={styles.wrap}>
-        <p className={styles.banner}>{pageError}</p>
-        <Link to="/app/campaigns" className={styles.backLink}>
-          ← ко всем объявлениям
+      <div className={ui.page}>
+        <Link to="/app/campaigns" className={ui.backLink}>
+          <Icon name="arrowLeft" size={16} /> Мои кампании
         </Link>
+        <p className={ui.errorBanner}>{pageError}</p>
       </div>
     );
   }
 
+  const busy = saving || uploadProgress !== null || materialProgress !== null;
+  const rateKopecks = rubToKopecks(form.rateRub) || 0;
+  const budgetKopecks = rubToKopecks(form.budgetRub) || 0;
+  const reachViews = rateKopecks > 0 ? Math.floor((budgetKopecks / rateKopecks) * 1000) : 0;
+  const previewTitle = form.title.trim() || 'Название кампании';
+  const previewPlatforms = form.platforms.map((p) => PLATFORM_LABELS[p] || p).join(', ');
+
+  const totalViews = campaign?.totalViews ?? 0;
+  const published = applications.filter(isPublished);
+  const creators = new Set(published.map((row) => row.creatorId)).size;
+  const cpv = totalViews > 0 ? spentKopecks / totalViews : 0;
+  const budgetPercent =
+    savedBudgetKopecks > 0 ? Math.min(100, Math.round((spentKopecks / savedBudgetKopecks) * 100)) : 0;
+  const funnel = [
+    { label: 'Отклики', value: applications.length },
+    { label: 'Одобрено', value: published.length },
+    { label: 'Набрали просмотры', value: published.filter((row) => (row.views ?? 0) > 0).length },
+    { label: 'Завершено', value: applications.filter((row) => row.status === 'COMPLETED').length },
+  ];
+  const funnelMax = applications.length || 1;
+
   return (
-    <div className={styles.wrap}>
-      <Link to="/app/campaigns" className={styles.backLink}>
-        ← ко всем объявлениям
+    <div className={ui.page}>
+      <Link to="/app/campaigns" className={ui.backLink}>
+        <Icon name="arrowLeft" size={16} /> Мои кампании
       </Link>
-      <h1 className={styles.title}>{isNew ? 'Новое объявление' : 'Редактирование объявления'}</h1>
 
-      {isNew && wallet && (
-        <section className={styles.walletBlock}>
-          <WalletSummary wallet={wallet} />
-        </section>
-      )}
-
-      {campaign && (
-        <section className={styles.card}>
-          <div className={styles.summaryHead}>
-            <p className={styles.rate}>
-              {formatRubles(campaign.ratePerThousandKopecks)}
-              <span className={styles.rateUnit}> / 1000 просмотров</span>
-            </p>
-            <p className={styles.summaryMeta}>
-              откликов: {campaign.applicationsCount ?? 0}
-              {' · '}
-              просмотров: {formatViews(campaign.totalViews ?? 0)}
-              {' · '}
-              регион: {viewRegionLabel(campaign.viewRegion || DEFAULT_VIEW_REGION)}
-            </p>
-          </div>
-          <BudgetBar
-            budgetKopecks={campaign.budgetKopecks}
-            spentKopecks={campaign.spentKopecks}
-          />
-        </section>
-      )}
-
-      <form className={styles.card} onSubmit={handleSubmit} noValidate>
-        <h2 className={styles.cardTitle}>Условия</h2>
-        <div className={styles.formGrid}>
-          <div className={`${styles.label} ${styles.labelWide}`}>
-            Фотография *
-            <div className={styles.photoRow}>
-              {photoPreview && (
-                <div className={styles.photoPreview}>
-                  <img
-                    className={styles.photoBackdrop}
-                    src={photoPreview}
-                    alt=""
-                    aria-hidden="true"
-                  />
-                  <img className={styles.photoImage} src={photoPreview} alt="Фото объявления" />
-                </div>
+      <header className={ui.pageHead}>
+        <div className={ui.pageHeadMain}>
+          <span className={ui.eyebrow}>Рекламодатель</span>
+          <h1 className={ui.title}>{isNew ? 'Новая кампания' : campaign.title}</h1>
+          {isNew ? (
+            <p className={ui.subtitle}>Задайте условия — креаторы предложат свои идеи.</p>
+          ) : (
+            <p className={styles.crumbs}>
+              <span className={CAMPAIGN_CHIP[campaign.status] || ui.chipOutline}>
+                {campaign.statusDescription || CAMPAIGN_STATUS_LABELS[campaign.status] || campaign.status}
+              </span>
+              <span>создана {formatDate(campaign.createdAt)}</span>
+              {campaign.publicId && campaign.status === 'ACTIVE' && (
+                <Link to={`/campaigns/${campaign.publicId}`} className={ui.linkAccent}>
+                  Как видят креаторы →
+                </Link>
               )}
-              <label
-                className={`${styles.photoAdd} ${
-                  uploadProgress !== null ? styles.photoAddBusy : ''
-                }`}
-                title={photoPreview ? 'Заменить фото' : 'Добавить фото'}
-              >
-                {uploadProgress !== null ? `${uploadProgress}%` : '+'}
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
-                  onChange={handlePhotoChange}
-                  className={styles.photoInput}
-                  disabled={uploadProgress !== null}
-                />
+            </p>
+          )}
+        </div>
+        {!isNew && (
+          <div className={ui.pageHeadActions}>
+            <button
+              type="button"
+              className={ui.btnDanger}
+              onClick={handleDelete}
+              disabled={saving || deleting}
+            >
+              {deleting ? 'Удаление…' : 'Удалить'}
+            </button>
+            <a href="#campaign-form" className={ui.btnSecondary}>
+              Настройки кампании
+            </a>
+          </div>
+        )}
+      </header>
+
+      {!isNew && (
+        <>
+          <div className={ui.grid4}>
+            <div className={ui.stat}>
+              <span className={ui.statLabel}>Подтверждённые просмотры</span>
+              <span className={ui.statValue}>{formatCompactViews(totalViews)}</span>
+              <span className={ui.statNote}>{formatViews(totalViews)} всего</span>
+            </div>
+            <div className={ui.stat}>
+              <span className={ui.statLabel}>Потрачено</span>
+              <span className={ui.statValue}>{formatRubles(spentKopecks)}</span>
+              <span className={ui.statNote}>{budgetPercent}% бюджета</span>
+            </div>
+            <div className={ui.stat}>
+              <span className={ui.statLabel}>Роликов в работе</span>
+              <span className={ui.statValue}>{applicationsLoading ? '…' : published.length}</span>
+              <span className={`${ui.statNote} ${creators ? ui.statUp : ''}`}>
+                {applicationsLoading ? '' : `${creators} ${pluralize(creators, ['креатор', 'креатора', 'креаторов'])}`}
+              </span>
+            </div>
+            <div className={ui.stat}>
+              <span className={ui.statLabel}>Средняя цена просмотра</span>
+              <span className={ui.statValue}>{cpv > 0 ? formatRubles(Math.round(cpv)) : '—'}</span>
+              <span className={ui.statNote}>
+                ставка {formatRubles(campaign.ratePerThousandKopecks)} / 1 000
+              </span>
+            </div>
+          </div>
+
+          <div className={styles.analytics}>
+            <section className={ui.card}>
+              <h2 className={ui.cardTitle}>Бюджет кампании</h2>
+              <p className={styles.bigMoney}>{formatRubles(campaign.remainingKopecks ?? 0)}</p>
+              <p className={styles.bigMoneyNote}>Осталось на просмотры</p>
+              <BudgetBar budgetKopecks={campaign.budgetKopecks} spentKopecks={campaign.spentKopecks} />
+              <p className={styles.bigMoneyNote}>
+                Регион просмотров: {viewRegionLabel(campaign.viewRegion || DEFAULT_VIEW_REGION)}
+                {campaign.endsAt ? ` · приём до ${formatDay(campaign.endsAt)}` : ''}
+              </p>
+            </section>
+            <section className={ui.card}>
+              <h2 className={ui.cardTitle}>Воронка кампании</h2>
+              <ul className={styles.funnel}>
+                {funnel.map((row) => (
+                  <li key={row.label} className={styles.funnelRow}>
+                    <div className={styles.funnelHead}>
+                      <span className={styles.funnelLabel}>{row.label}</span>
+                      <span className={styles.funnelValue}>{applicationsLoading ? '…' : row.value}</span>
+                      <span className={styles.funnelPercent}>
+                        {applicationsLoading ? '' : `${Math.round((row.value / funnelMax) * 100)}%`}
+                      </span>
+                    </div>
+                    <div className={ui.track} aria-hidden="true">
+                      <div
+                        className={ui.fill}
+                        style={{ width: `${applicationsLoading ? 0 : (row.value / funnelMax) * 100}%` }}
+                      />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          </div>
+
+          <div className={ui.sectionHead}>
+            <h2 className={ui.sectionTitle}>Отклики креаторов</h2>
+            <button
+              type="button"
+              className={`${ui.btnSecondary} ${ui.btnSmall}`}
+              onClick={loadApplications}
+              disabled={applicationsLoading}
+            >
+              <Icon name="refresh" size={16} /> Обновить
+            </button>
+          </div>
+          <section className={`${ui.card} ${styles.applications}`}>
+            {applicationsError && <p className={ui.errorBanner}>{applicationsError}</p>}
+            {applicationsLoading ? (
+              <p className={ui.message}>Загрузка откликов…</p>
+            ) : applications.length === 0 ? (
+              <p className={ui.message}>
+                Откликов пока нет. Активная кампания видна креаторам в офферах.
+              </p>
+            ) : (
+              <ul className={styles.appList}>
+                {applications.map((application) => {
+                  const open = expandedId === application.id;
+                  return (
+                    <li key={application.id} className={styles.appItem}>
+                      <div className={styles.appRow}>
+                        <div className={styles.appCreator}>
+                          <span className={ui.avatar} aria-hidden="true">
+                            {(application.creatorName || '·').trim().charAt(0)}
+                          </span>
+                          <div className={styles.appCreatorText}>
+                            <span className={styles.appName}>
+                              {application.creatorName} <TrustBadge level={application.creatorTrustLevel} />
+                            </span>
+                            <span className={styles.appMeta}>
+                              {application.platformDescription ||
+                                PLATFORM_LABELS[application.platform] ||
+                                application.platform}
+                              {' · '}
+                              {formatDate(application.createdAt)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className={styles.appCell}>
+                          <span className={styles.appCellLabel}>Просмотры</span>
+                          <span className={styles.appCellValue}>{formatViews(application.views ?? 0)}</span>
+                        </div>
+                        <div className={styles.appCell}>
+                          <span className={styles.appCellLabel}>Начислено</span>
+                          <span className={`${styles.appCellValue} ${ui.money}`}>
+                            {formatRubles(application.accruedKopecks ?? 0)}
+                          </span>
+                        </div>
+                        <div className={styles.appStatus}>
+                          <FraudBadge status={application.fraudStatus} />
+                          <span className={APPLICATION_CHIP[application.status] || ui.chipOutline}>
+                            {application.statusDescription ||
+                              APPLICATION_STATUS_LABELS[application.status] ||
+                              application.status}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          className={`${styles.appToggle} ${open ? styles.appToggleOpen : ''}`}
+                          onClick={() => setExpandedId(open ? null : application.id)}
+                          aria-expanded={open}
+                          aria-label={open ? 'Свернуть отклик' : 'Развернуть отклик'}
+                        >
+                          <Icon name="chevronDown" size={18} />
+                        </button>
+                      </div>
+
+                      {open && (
+                        <div className={styles.appDetails}>
+                          <a
+                            className={styles.videoLink}
+                            href={application.videoUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            <Icon name="external" size={16} /> {application.videoUrl}
+                          </a>
+                          {application.creatorTelegram && (
+                            <p className={styles.appMeta}>Telegram: {application.creatorTelegram}</p>
+                          )}
+                          {application.comment && (
+                            <p className={styles.comment}>{application.comment}</p>
+                          )}
+                          {application.campaignViewRegion && application.campaignViewRegion !== 'WORLD' && (
+                            <p className={styles.appMeta}>
+                              {application.viewsGeographyKnown === false ? (
+                                <span className={ui.hintWarn}>
+                                  География недоступна: просмотры в расчёт не идут
+                                </span>
+                              ) : (
+                                <>
+                                  В расчёт: <b>{formatViews(application.payableViews ?? 0)}</b> просмотров
+                                </>
+                              )}
+                            </p>
+                          )}
+                          <CreatorSocials userId={application.creatorId} />
+                          {application.fraudStatus === 'SUSPICIOUS' && (
+                            <p className={ui.hintWarn}>
+                              Антифрод заметил признаки накрутки: деньги креатору заморожены до решения
+                              платформы. Вы можете отклонить отклик сами.
+                            </p>
+                          )}
+                          {application.fraudStatus === 'FRAUD' && (
+                            <p className={ui.hintWarn}>
+                              Накрутка: начисление по ролику обнулено, бюджет не тратится.
+                            </p>
+                          )}
+                          <FraudFlags flags={application.fraudFlags} />
+                          <div className={styles.appActions}>
+                            {APPLICATION_ACTIONS.filter(
+                              (action) => action.status !== application.status
+                            ).map((action) => (
+                              <button
+                                key={action.status}
+                                type="button"
+                                className={`${
+                                  action.status === 'REJECTED'
+                                    ? ui.btnDanger
+                                    : action.status === 'APPROVED'
+                                      ? ui.btnPrimary
+                                      : ui.btnSecondary
+                                } ${ui.btnSmall}`}
+                                onClick={() => handleApplicationStatus(application, action.status)}
+                                disabled={busyApplicationId === application.id}
+                              >
+                                {action.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+
+          <div className={ui.sectionHead} id="campaign-form">
+            <h2 className={ui.sectionTitle}>Настройки кампании</h2>
+          </div>
+        </>
+      )}
+
+      <form className={styles.editor} onSubmit={handleSubmit} noValidate>
+        <div className={styles.formColumn}>
+          <section className={ui.card}>
+            <h2 className={styles.formTitle}>Расскажите о задаче</h2>
+
+            <div className={styles.field}>
+              <label className={ui.label} htmlFor="campaign-title">
+                Название кампании
               </label>
-              <div className={styles.photoControls}>
-                {uploadProgress !== null && (
-                  <div className={styles.progressTrack}>
-                    <div
-                      className={styles.progressFill}
-                      style={{ width: `${uploadProgress}%` }}
+              <input
+                id="campaign-title"
+                type="text"
+                name="title"
+                value={form.title}
+                onChange={setField}
+                className={ui.input}
+                aria-invalid={invalid('title')}
+                maxLength={255}
+                autoComplete="off"
+                placeholder="Например, «Город в твоём ритме»"
+              />
+              <FieldError>{errors.title}</FieldError>
+            </div>
+
+            <div className={styles.field}>
+              <label className={ui.label} htmlFor="campaign-description">
+                Описание и требования
+              </label>
+              <textarea
+                id="campaign-description"
+                name="description"
+                value={form.description}
+                onChange={setField}
+                className={ui.textarea}
+                aria-invalid={invalid('description')}
+                rows={6}
+                placeholder="Опишите результат и обязательные детали. Оставьте креатору пространство для идеи."
+              />
+              <FieldError>{errors.description}</FieldError>
+            </div>
+
+            <div className={styles.field}>
+              <span className={ui.label}>Обложка</span>
+              <div className={styles.photoRow}>
+                <div className={styles.photoPreview}>
+                  {photoPreview ? (
+                    <img src={photoPreview} alt="Обложка кампании" />
+                  ) : (
+                    <span className={styles.photoEmpty}>Нет обложки</span>
+                  )}
+                </div>
+                <div className={styles.photoControls}>
+                  <label
+                    className={`${ui.btnSecondary} ${styles.fileBtn} ${
+                      uploadProgress !== null ? styles.fileBtnBusy : ''
+                    }`}
+                  >
+                    <Icon name="plus" size={16} />
+                    {uploadProgress !== null
+                      ? `Загрузка ${uploadProgress}%`
+                      : photoPreview
+                        ? 'Заменить обложку'
+                        : 'Загрузить обложку'}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      onChange={handlePhotoChange}
+                      className={styles.fileInput}
+                      disabled={uploadProgress !== null}
                     />
-                  </div>
-                )}
-                <span className={styles.hint}>
-                  {photoPreview
-                    ? 'Плюс заменит фото на новое.'
-                    : 'Нажмите на плюс и выберите фото.'}{' '}
-                  JPEG, PNG, WebP или GIF до 10 МБ. На доске превью 100 px высотой,
-                  пустые края зальются размытым фоном.
-                </span>
-                <FieldError>{errors.photoKey}</FieldError>
+                  </label>
+                  <span className={ui.hint}>JPEG, PNG, WebP или GIF до 10 МБ.</span>
+                  <FieldError>{errors.photoKey}</FieldError>
+                </div>
               </div>
             </div>
-          </div>
-          <Field label="Заголовок *" className={styles.labelWide}>
-            <input
-              type="text"
-              name="title"
-              value={form.title}
-              onChange={setField}
-              className={styles.input}
-              aria-invalid={invalid('title')}
-              maxLength={255}
-              autoComplete="off"
-            />
-            <FieldError>{errors.title}</FieldError>
-          </Field>
-          <Field label="Описание задачи *" className={styles.labelWide}>
-            <textarea
-              name="description"
-              value={form.description}
-              onChange={setField}
-              className={styles.textarea}
-              aria-invalid={invalid('description')}
-              rows={6}
-            />
-            <FieldError>{errors.description}</FieldError>
-          </Field>
-          <div className={`${styles.label} ${styles.labelWide}`}>
-            Площадки *
-            <div className={styles.platforms} role="group" aria-label="Площадки">
-              {VIDEO_PLATFORMS.map((platform) => {
-                const selected = form.platforms.includes(platform);
-                return (
-                  <button
-                    key={platform}
-                    type="button"
-                    className={`${styles.platform} ${selected ? styles.platformSelected : ''}`}
-                    onClick={() => togglePlatform(platform)}
-                    aria-pressed={selected}
-                  >
-                    <SocialIcon name={platform} className={styles.platformIcon} />
-                    {PLATFORM_LABELS[platform]}
-                  </button>
-                );
-              })}
-            </div>
-            <div className={styles.platformsBulk}>
-              <button
-                type="button"
-                className={styles.linkBtn}
-                onClick={selectAllPlatforms}
-                disabled={allPlatformsSelected}
-              >
-                выбрать все
-              </button>
-              <button
-                type="button"
-                className={styles.linkBtn}
-                onClick={clearPlatforms}
-                disabled={form.platforms.length === 0}
-              >
-                убрать все
-              </button>
-            </div>
-            <FieldError>{errors.platforms}</FieldError>
-            <span className={styles.hint}>
-              Креатор сможет подать ролик только с выбранных площадок — ссылку с другой
-              площадки отклик не примет.
-            </span>
-          </div>
-          <div className={`${styles.label} ${styles.labelWide}`}>
-            Регион просмотров *
-            <div className={styles.platforms} role="radiogroup" aria-label="Регион просмотров">
-              {VIEW_REGIONS.map((region) => {
-                const selected = form.viewRegion === region;
-                return (
-                  <button
-                    key={region}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    className={`${styles.platform} ${selected ? styles.platformSelected : ''}`}
-                    onClick={() => setViewRegion(region)}
-                  >
-                    {viewRegionLabel(region)}
-                  </button>
-                );
-              })}
-            </div>
-            <FieldError>{errors.viewRegion}</FieldError>
-            <span className={styles.hint}>
-              Оплачиваются только просмотры из выбранного региона; «весь мир» — все просмотры.
-              {regionBlindWarning && (
-                <>
-                  {' '}
-                  <span className={styles.hintWarn}>
-                    {platformLabels(blindPlatforms)} географию просмотров{' '}
-                    {blindPlatforms.length > 1 ? 'не отдают' : 'не отдаёт'} — ролики оттуда по
-                    такому региону не оплатятся; географию отдаёт только YouTube (креатор
-                    должен подключить канал с доступом к аналитике).
-                  </span>
-                </>
-              )}
-            </span>
-          </div>
-          <Field label="Ставка за 1000 просмотров, ₽ *">
-            <input
-              type="text"
-              inputMode="decimal"
-              name="rateRub"
-              value={form.rateRub}
-              onChange={setMoneyField}
-              className={styles.input}
-              aria-invalid={invalid('rateRub')}
-              autoComplete="off"
-            />
-            <FieldError>{errors.rateRub}</FieldError>
-          </Field>
-          <Field label="Бюджет, ₽ *">
-            <input
-              type="text"
-              inputMode="decimal"
-              name="budgetRub"
-              value={form.budgetRub}
-              onChange={setMoneyField}
-              className={styles.input}
-              aria-invalid={invalid('budgetRub')}
-              autoComplete="off"
-            />
-            <FieldError>{errors.budgetRub}</FieldError>
-            <span className={styles.hint}>
-              Бюджет резервируется из кошелька.
-              {availableKopecks != null && (
-                <>
-                  {' '}
-                  Доступно {formatRubles(availableKopecks)}
-                  {!isNew && savedBudgetKopecks > 0
-                    ? ` (из них ${formatRubles(savedBudgetKopecks)} уже в этом объявлении)`
-                    : ''}
-                  .
-                </>
-              )}{' '}
-              <Link to="/app/wallet" className={styles.hintLink}>
-                Кошелёк
-              </Link>
-            </span>
-          </Field>
-          <Field label="Вывод от, ₽ *">
-            <input
-              type="text"
-              inputMode="decimal"
-              name="minPayoutRub"
-              value={form.minPayoutRub}
-              onChange={setMoneyField}
-              className={styles.input}
-              aria-invalid={invalid('minPayoutRub')}
-              autoComplete="off"
-            />
-            <FieldError>{errors.minPayoutRub}</FieldError>
-            <span className={styles.hint}>
-              Креатор сможет вывести заработанное по объявлению, когда накопит эту сумму. До
-              порога начисления копятся на откликах и в кошелёк не попадают.
-            </span>
-          </Field>
-          <Field label="Статус">
-            <select
-              name="status"
-              value={form.status}
-              onChange={setField}
-              className={styles.input}
-            >
-              {CAMPAIGN_STATUS_OPTIONS.map((status) => (
-                <option key={status} value={status}>
-                  {CAMPAIGN_STATUS_LABELS[status]}
-                </option>
-              ))}
-            </select>
-            <span className={styles.hint}>На доске объявлений видны только активные.</span>
-          </Field>
-        </div>
 
-        <details className={styles.extra} open={extraOpen}>
-          <summary className={styles.extraSummary}>
-            <span className={styles.cardTitle}>Дополнительно</span>
-            <span className={styles.extraNote}>сроки, пороги, лимит роликов</span>
-          </summary>
-          <div className={styles.formGrid}>
-            <label className={styles.label}>
-              Длина ролика от, сек
-              <input
-                type="text"
-                inputMode="numeric"
-                name="minVideoSeconds"
-                value={form.minVideoSeconds}
-                onChange={setIntField}
-                className={styles.input}
-                aria-invalid={invalid('minVideoSeconds')}
-                autoComplete="off"
-              />
-              <FieldError>{errors.minVideoSeconds}</FieldError>
-              <span className={styles.hint}>Проверяете вручную.</span>
-            </label>
-            <label className={styles.label}>
-              Оплата от, просмотров
-              <input
-                type="text"
-                inputMode="numeric"
-                name="minPaidViews"
-                value={form.minPaidViews}
-                onChange={setIntField}
-                className={styles.input}
-                aria-invalid={invalid('minPaidViews')}
-                autoComplete="off"
-              />
-              <FieldError>{errors.minPaidViews}</FieldError>
-              <span className={styles.hint}>Ниже порога ролик не оплачивается.</span>
-            </label>
-            <label className={styles.label}>
-              Роликов от одного креатора
-              <input
-                type="text"
-                inputMode="numeric"
-                name="maxVideosPerCreator"
-                value={form.maxVideosPerCreator}
-                onChange={setIntField}
-                className={styles.input}
-                aria-invalid={invalid('maxVideosPerCreator')}
-                autoComplete="off"
-              />
-              <FieldError>{errors.maxVideosPerCreator}</FieldError>
-            </label>
-            <div className={`${styles.label} ${styles.labelWide}`}>
-              Приём откликов
-              <div className={styles.dateRange}>
+            <div className={styles.field}>
+              <span className={ui.label}>Площадки</span>
+              <div className={ui.chips} role="group" aria-label="Площадки">
+                {VIDEO_PLATFORMS.map((platform) => {
+                  const selected = form.platforms.includes(platform);
+                  return (
+                    <button
+                      key={platform}
+                      type="button"
+                      className={selected ? ui.chipActive : ui.chip}
+                      onClick={() => togglePlatform(platform)}
+                      aria-pressed={selected}
+                    >
+                      {selected ? <Icon name="check" size={14} /> : <SocialIcon name={platform} className={styles.chipIcon} />}
+                      {PLATFORM_LABELS[platform]}
+                    </button>
+                  );
+                })}
+              </div>
+              <FieldError>{errors.platforms}</FieldError>
+              <span className={ui.hint}>
+                Креатор сможет подать ролик только с выбранных площадок.
+              </span>
+            </div>
+
+            <div className={styles.field}>
+              <span className={ui.label}>Регион просмотров</span>
+              <div className={ui.chips} role="radiogroup" aria-label="Регион просмотров">
+                {VIEW_REGIONS.map((region) => {
+                  const selected = form.viewRegion === region;
+                  return (
+                    <button
+                      key={region}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      className={selected ? ui.chipActive : ui.chip}
+                      onClick={() => setViewRegion(region)}
+                    >
+                      {viewRegionLabel(region)}
+                    </button>
+                  );
+                })}
+              </div>
+              <FieldError>{errors.viewRegion}</FieldError>
+              <span className={ui.hint}>
+                Оплачиваются только просмотры из выбранного региона; «весь мир» — все просмотры.
+              </span>
+              {regionBlindWarning && (
+                <span className={ui.hintWarn}>
+                  {platformLabels(blindPlatforms)} географию просмотров{' '}
+                  {blindPlatforms.length > 1 ? 'не отдают' : 'не отдаёт'}: ролики оттуда по такому
+                  региону не оплатятся. Географию отдаёт только YouTube с доступом к аналитике.
+                </span>
+              )}
+            </div>
+
+            <div className={styles.fieldGrid}>
+              <div className={styles.field}>
+                <label className={ui.label} htmlFor="campaign-rate">
+                  Ставка за 1 000 просмотров
+                </label>
+                <div className={styles.money}>
+                  <input
+                    id="campaign-rate"
+                    type="text"
+                    inputMode="decimal"
+                    name="rateRub"
+                    value={form.rateRub}
+                    onChange={setMoneyField}
+                    className={ui.input}
+                    aria-invalid={invalid('rateRub')}
+                    autoComplete="off"
+                  />
+                  <span className={styles.moneyUnit}>₽</span>
+                </div>
+                <FieldError>{errors.rateRub}</FieldError>
+              </div>
+              <div className={styles.field}>
+                <label className={ui.label} htmlFor="campaign-budget">
+                  Общий бюджет
+                </label>
+                <div className={styles.money}>
+                  <input
+                    id="campaign-budget"
+                    type="text"
+                    inputMode="decimal"
+                    name="budgetRub"
+                    value={form.budgetRub}
+                    onChange={setMoneyField}
+                    className={ui.input}
+                    aria-invalid={invalid('budgetRub')}
+                    autoComplete="off"
+                  />
+                  <span className={styles.moneyUnit}>₽</span>
+                </div>
+                <FieldError>{errors.budgetRub}</FieldError>
+                <span className={ui.hint}>
+                  Резервируется из кошелька.
+                  {availableKopecks != null && (
+                    <>
+                      {' '}
+                      Доступно {formatRubles(availableKopecks)}
+                      {!isNew && savedBudgetKopecks > 0
+                        ? ` (из них ${formatRubles(savedBudgetKopecks)} уже в этой кампании)`
+                        : ''}
+                      .
+                    </>
+                  )}{' '}
+                  <Link to="/app/wallet" className={ui.linkAccent}>
+                    Финансы
+                  </Link>
+                </span>
+              </div>
+              <div className={styles.field}>
+                <label className={ui.label} htmlFor="campaign-min-payout">
+                  Порог вывода для креатора
+                </label>
+                <div className={styles.money}>
+                  <input
+                    id="campaign-min-payout"
+                    type="text"
+                    inputMode="decimal"
+                    name="minPayoutRub"
+                    value={form.minPayoutRub}
+                    onChange={setMoneyField}
+                    className={ui.input}
+                    aria-invalid={invalid('minPayoutRub')}
+                    autoComplete="off"
+                  />
+                  <span className={styles.moneyUnit}>₽</span>
+                </div>
+                <FieldError>{errors.minPayoutRub}</FieldError>
+                <span className={ui.hint}>
+                  Заработанное по кампании уходит в кошелёк креатора, когда накопится эта сумма.
+                </span>
+              </div>
+              <div className={styles.field}>
+                <label className={ui.label} htmlFor="campaign-ends">
+                  Приём работ до
+                </label>
                 <input
-                  type="date"
-                  name="startsOn"
-                  value={form.startsOn}
-                  onChange={setField}
-                  className={styles.input}
-                  aria-invalid={invalid('startsOn')}
-                  aria-label="Приём откликов с"
-                />
-                <span className={styles.dateDash}>—</span>
-                <input
+                  id="campaign-ends"
                   type="date"
                   name="endsOn"
                   value={form.endsOn}
                   onChange={setField}
                   min={form.startsOn || undefined}
-                  className={styles.input}
+                  className={ui.input}
                   aria-invalid={invalid('endsOn')}
-                  aria-label="Приём откликов до"
                 />
+                <FieldError>{errors.endsOn}</FieldError>
+                <span className={ui.hint}>По Москве, включительно. Пусто — без ограничения.</span>
               </div>
-              <FieldError>{errors.startsOn || errors.endsOn}</FieldError>
-              <span className={styles.hint}>По Москве, включительно.</span>
             </div>
-          </div>
-        </details>
 
-        <h2 className={`${styles.cardTitle} ${styles.sectionTitle}`}>Материалы для креатора</h2>
-        <p className={styles.sectionLead}>
-          Бриф, баннеры, референсы — файлом или ссылкой. Креатор откроет или скачает их со
-          страницы объявления.
-        </p>
-        <MaterialList
-          materials={form.materials}
-          onRemove={removeMaterial}
-          className={styles.materials}
-        />
-        <div className={styles.materialAdd}>
-          <label
-            className={`${styles.materialFile} ${
-              materialProgress !== null || materialsFull ? styles.materialFileBusy : ''
-            }`}
-          >
-            {materialProgress !== null ? `загрузка ${materialProgress}%` : '+ файл'}
-            <input
-              type="file"
-              onChange={handleMaterialChange}
-              className={styles.photoInput}
-              disabled={materialProgress !== null || materialsFull}
+            <details className={styles.extra} open={!isNew}>
+              <summary className={styles.extraSummary}>
+                <span>Дополнительно</span>
+                <span className={styles.extraNote}>старт приёма, пороги, лимит роликов</span>
+              </summary>
+              <div className={styles.fieldGrid}>
+                <div className={styles.field}>
+                  <label className={ui.label} htmlFor="campaign-starts">
+                    Приём работ с
+                  </label>
+                  <input
+                    id="campaign-starts"
+                    type="date"
+                    name="startsOn"
+                    value={form.startsOn}
+                    onChange={setField}
+                    className={ui.input}
+                    aria-invalid={invalid('startsOn')}
+                  />
+                  <FieldError>{errors.startsOn}</FieldError>
+                </div>
+                <div className={styles.field}>
+                  <label className={ui.label} htmlFor="campaign-length">
+                    Длина ролика от, сек
+                  </label>
+                  <input
+                    id="campaign-length"
+                    type="text"
+                    inputMode="numeric"
+                    name="minVideoSeconds"
+                    value={form.minVideoSeconds}
+                    onChange={setIntField}
+                    className={ui.input}
+                    aria-invalid={invalid('minVideoSeconds')}
+                    autoComplete="off"
+                  />
+                  <FieldError>{errors.minVideoSeconds}</FieldError>
+                  <span className={ui.hint}>Проверяете вручную.</span>
+                </div>
+                <div className={styles.field}>
+                  <label className={ui.label} htmlFor="campaign-min-views">
+                    Оплата от, просмотров
+                  </label>
+                  <input
+                    id="campaign-min-views"
+                    type="text"
+                    inputMode="numeric"
+                    name="minPaidViews"
+                    value={form.minPaidViews}
+                    onChange={setIntField}
+                    className={ui.input}
+                    aria-invalid={invalid('minPaidViews')}
+                    autoComplete="off"
+                  />
+                  <FieldError>{errors.minPaidViews}</FieldError>
+                  <span className={ui.hint}>Ниже порога ролик не оплачивается.</span>
+                </div>
+                <div className={styles.field}>
+                  <label className={ui.label} htmlFor="campaign-max-videos">
+                    Роликов от одного креатора
+                  </label>
+                  <input
+                    id="campaign-max-videos"
+                    type="text"
+                    inputMode="numeric"
+                    name="maxVideosPerCreator"
+                    value={form.maxVideosPerCreator}
+                    onChange={setIntField}
+                    className={ui.input}
+                    aria-invalid={invalid('maxVideosPerCreator')}
+                    autoComplete="off"
+                  />
+                  <FieldError>{errors.maxVideosPerCreator}</FieldError>
+                </div>
+              </div>
+            </details>
+
+            <div className={ui.divider} />
+
+            <h3 className={styles.materialsTitle}>
+              <Icon name="plus" size={22} className={ui.accent} /> Прикрепить бриф и материалы
+            </h3>
+            <p className={ui.hint}>
+              PDF, изображения, архив до 100 МБ или ссылка. Всего до {MATERIALS_MAX} материалов.
+            </p>
+            <MaterialList
+              materials={form.materials}
+              onRemove={removeMaterial}
+              className={styles.materials}
             />
-          </label>
-          <div className={styles.linkForm}>
-            <Field label="Ссылка" className={styles.linkField}>
+            <div className={styles.materialAdd}>
+              <label
+                className={`${ui.btnSecondary} ${styles.fileBtn} ${
+                  materialProgress !== null || materialsFull ? styles.fileBtnBusy : ''
+                }`}
+              >
+                <Icon name="file" size={16} />
+                {materialProgress !== null ? `Загрузка ${materialProgress}%` : 'Файл'}
+                <input
+                  type="file"
+                  onChange={handleMaterialChange}
+                  className={styles.fileInput}
+                  disabled={materialProgress !== null || materialsFull}
+                />
+              </label>
               <input
                 type="text"
                 name="url"
                 value={link.url}
                 onChange={setLinkField}
                 onKeyDown={addLinkOnEnter}
-                className={styles.input}
+                className={ui.input}
                 aria-invalid={linkError ? 'true' : undefined}
                 maxLength={2048}
                 autoComplete="off"
+                placeholder="Ссылка на материалы"
                 disabled={materialsFull}
               />
-            </Field>
-            <Field label="Подпись" className={styles.linkField}>
               <input
                 type="text"
                 name="title"
                 value={link.title}
                 onChange={setLinkField}
                 onKeyDown={addLinkOnEnter}
-                className={styles.input}
+                className={ui.input}
                 maxLength={255}
                 autoComplete="off"
+                placeholder="Подпись"
                 disabled={materialsFull}
               />
-            </Field>
-            <button
-              type="button"
-              className={styles.actionBtn}
-              onClick={handleAddLink}
-              disabled={materialsFull}
-            >
-              + ссылка
-            </button>
+              <button
+                type="button"
+                className={ui.btnSecondary}
+                onClick={handleAddLink}
+                disabled={materialsFull}
+              >
+                Добавить ссылку
+              </button>
+            </div>
+            <FieldError>{linkError}</FieldError>
+
+            {error && <p className={`${ui.errorText} ${styles.formError}`}>{error}</p>}
+            {!error && dirty && !isNew && (
+              <p className={styles.formNote}>Есть несохранённые изменения</p>
+            )}
+          </section>
+
+          <div className={styles.actions}>
+            {isNew ? (
+              <>
+                <button
+                  type="button"
+                  className={`${ui.btnSecondary} ${ui.btnLarge}`}
+                  onClick={() => submit('DRAFT')}
+                  disabled={busy}
+                >
+                  {saving ? 'Сохранение…' : 'Сохранить черновик'}
+                </button>
+                <button
+                  type="button"
+                  className={`${ui.btnPrimary} ${ui.btnLarge}`}
+                  onClick={() => submit('ACTIVE')}
+                  disabled={busy}
+                >
+                  {saving ? 'Запуск…' : 'Запустить кампанию →'}
+                </button>
+              </>
+            ) : (
+              <>
+                <label className={styles.statusField}>
+                  <span className={ui.label}>Статус</span>
+                  <select
+                    name="status"
+                    value={form.status}
+                    onChange={setField}
+                    className={ui.input}
+                  >
+                    {CAMPAIGN_STATUS_OPTIONS.map((status) => (
+                      <option key={status} value={status}>
+                        {CAMPAIGN_STATUS_LABELS[status]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="submit"
+                  className={`${ui.btnPrimary} ${ui.btnLarge}`}
+                  disabled={busy || !dirty}
+                >
+                  {saving ? 'Сохранение…' : 'Сохранить'}
+                </button>
+              </>
+            )}
           </div>
         </div>
-        <FieldError>{linkError}</FieldError>
-        <p className={styles.sectionLead}>
-          Файлы до 100 МБ, всего до {MATERIALS_MAX} материалов. Загруженный файл станет
-          доступен креаторам после сохранения объявления.
-        </p>
 
-        {error && <p className={styles.error}>{error}</p>}
-
-        <div className={styles.formActions}>
-          <button
-            type="submit"
-            className={`${styles.submit} ${dirty ? '' : styles.submitIdle}`}
-            disabled={saving || uploadProgress !== null || materialProgress !== null || !dirty}
-          >
-            {saving ? 'Сохранение…' : isNew ? 'Создать объявление' : 'Сохранить'}
-          </button>
-          <Link to="/app/campaigns" className={styles.cancelBtn}>
-            Отмена
-          </Link>
-          {!isNew && (
-            <button
-              type="button"
-              className={styles.deleteBtn}
-              onClick={handleDelete}
-              disabled={saving || deleting}
-            >
-              {deleting ? 'Удаление…' : 'Удалить'}
-            </button>
-          )}
-        </div>
-      </form>
-
-      {!isNew && (
-        <section className={styles.card}>
-          <h2 className={styles.cardTitle}>Отклики</h2>
-          {applicationsError && <p className={styles.banner}>{applicationsError}</p>}
-          {applicationsLoading ? (
-            <p className={styles.message}>Загрузка откликов…</p>
-          ) : applications.length === 0 ? (
-            <p className={styles.message}>
-              Откликов пока нет. Активное объявление видно креаторам на доске.
+        <aside className={styles.preview}>
+          <section className={ui.card}>
+            <h2 className={ui.cardTitle}>Предпросмотр оффера</h2>
+            <div className={ui.chips}>
+              {form.platforms.length > 0 ? (
+                form.platforms.map((platform) => (
+                  <span key={platform} className={ui.chipActive}>
+                    {PLATFORM_LABELS[platform]}
+                  </span>
+                ))
+              ) : (
+                <span className={ui.chipOutline}>Площадки не выбраны</span>
+              )}
+            </div>
+            <p className={styles.previewTitle}>{previewTitle}</p>
+            <p className={styles.previewMeta}>
+              {customerName || 'Бренд'}
+              {previewPlatforms ? ` · ${previewPlatforms}` : ''}
+              {form.viewRegion !== 'WORLD' ? ` · ${viewRegionLabel(form.viewRegion)}` : ''}
             </p>
-          ) : (
-            <ul className={styles.list}>
-              {applications.map((application) => (
-                <li key={application.id} className={styles.item}>
-                  <div className={styles.itemHead}>
-                    <span className={styles.creator}>
-                      {application.creatorName}{' '}
-                      <TrustBadge level={application.creatorTrustLevel} />
-                    </span>
-                    <span className={styles.itemBadges}>
-                      <FraudBadge status={application.fraudStatus} />
-                      <span
-                        className={`${styles.status} ${
-                          APPLICATION_STATUS_CLASS[application.status] || ''
-                        }`}
-                      >
-                        {application.statusDescription ||
-                          APPLICATION_STATUS_LABELS[application.status] ||
-                          application.status}
-                      </span>
-                    </span>
-                  </div>
+            <p className={styles.previewRate}>
+              {rateKopecks > 0 ? formatRubles(rateKopecks) : '— ₽'}{' '}
+              <span className={styles.previewRateUnit}>/ 1 000</span>
+            </p>
+            <div className={ui.divider} />
+            <div className={ui.kv}>
+              <span className={ui.kvKey}>Бюджет</span>
+              <span className={ui.kvValue}>{budgetKopecks > 0 ? formatRubles(budgetKopecks) : '—'}</span>
+            </div>
+            <div className={ui.kv}>
+              <span className={ui.kvKey}>Потенциальный охват</span>
+              <span className={ui.kvValue}>
+                {reachViews > 0 ? `≈ ${formatCompactViews(reachViews)}` : '—'}
+              </span>
+            </div>
+            <div className={ui.kv}>
+              <span className={ui.kvKey}>Порог вывода</span>
+              <span className={ui.kvValue}>
+                {rubToKopecks(form.minPayoutRub) ? formatRubles(rubToKopecks(form.minPayoutRub)) : '—'}
+              </span>
+            </div>
+            <p className={styles.previewNote}>
+              Оценка по ставке, без гарантии объёма. Просмотры считаются по официальным API площадок.
+            </p>
+          </section>
 
-                  <p className={styles.itemMeta}>
-                    {application.platformDescription ||
-                      PLATFORM_LABELS[application.platform] ||
-                      application.platform}
-                    {application.creatorTelegram ? ` · ${application.creatorTelegram}` : ''}
-                    {' · '}
-                    {formatDate(application.createdAt)}
-                  </p>
-
-                  <a
-                    className={styles.videoLink}
-                    href={application.videoUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {application.videoUrl}
-                  </a>
-
-                  {application.comment && (
-                    <p className={styles.comment}>{application.comment}</p>
-                  )}
-
-                  <CreatorSocials userId={application.creatorId} />
-
-                  <p className={styles.numbers}>
-                    просмотров: <b>{formatViews(application.views ?? 0)}</b>
-                    {application.campaignViewRegion &&
-                      application.campaignViewRegion !== 'WORLD' && (
-                        <>
-                          {' · '}
-                          {application.viewsGeographyKnown === false ? (
-                            <span className={styles.numbersWarn}>
-                              география недоступна — в расчёт не идут
-                            </span>
-                          ) : (
-                            <>
-                              в расчёт: <b>{formatViews(application.payableViews ?? 0)}</b>
-                            </>
-                          )}
-                        </>
-                      )}
-                    {' · '}
-                    начислено: <b>{formatRubles(application.accruedKopecks ?? 0)}</b>
-                  </p>
-
-                  {application.fraudStatus === 'SUSPICIOUS' && (
-                    <p className={styles.fraudNote}>
-                      Антифрод заметил признаки накрутки: деньги креатору заморожены до решения
-                      платформы. Вы можете отклонить отклик сами.
-                    </p>
-                  )}
-                  {application.fraudStatus === 'FRAUD' && (
-                    <p className={styles.fraudNote}>
-                      Накрутка: начисление по ролику обнулено, бюджет не тратится.
-                    </p>
-                  )}
-                  <FraudFlags flags={application.fraudFlags} />
-
-                  <div className={styles.actions}>
-                    {APPLICATION_ACTIONS.filter(
-                      (action) => action.status !== application.status
-                    ).map((action) => (
-                      <button
-                        key={action.status}
-                        type="button"
-                        className={
-                          action.status === 'REJECTED' ? styles.rejectBtn : styles.actionBtn
-                        }
-                        onClick={() => handleApplicationStatus(application, action.status)}
-                        disabled={busyApplicationId === application.id}
-                      >
-                        {action.label}
-                      </button>
-                    ))}
-                  </div>
-                </li>
-              ))}
-            </ul>
+          {isNew && wallet && (
+            <section className={ui.card}>
+              <span className={ui.eyebrow}>Кошелёк</span>
+              <p className={styles.previewRate}>{formatRubles(wallet.balanceKopecks ?? 0)}</p>
+              <p className={styles.previewNote}>
+                Свободно для резервирования. В кампаниях уже {formatRubles(wallet.allocatedKopecks ?? 0)}.
+              </p>
+            </section>
           )}
-        </section>
-      )}
+
+          <section className={ui.cardHint}>
+            <p className={styles.hintTitle}>Хороший бриф — сильный контент</p>
+            <p>Опишите результат и обязательные детали. Оставьте креатору пространство для идеи.</p>
+          </section>
+        </aside>
+      </form>
     </div>
   );
 };

@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import FieldError from '../shared/FieldError/FieldError';
 import Field from '../shared/Field/Field';
+import Icon from '../shared/Icon/Icon';
 import WalletSummary from '../shared/WalletSummary/WalletSummary';
 import OperationRows from '../shared/OperationRows/OperationRows';
 import ProofUploader from '../shared/ProofUploader/ProofUploader';
@@ -11,6 +12,7 @@ import { financeOperationLink } from '../../shared/routes';
 import { errorMessage } from '../../shared/auth';
 import { formatRubInput, formatRubles, rubToKopecks } from '../../shared/money';
 import { formatDate } from '../../shared/dictionaries';
+import ui from '../../shared/ui.module.css';
 import styles from './FinanceCustomer.module.css';
 
 const TRON_RE = /^T[1-9A-HJ-NP-Za-km-z]{33}$/;
@@ -19,16 +21,16 @@ const OPERATIONS = {
   TOP_UP: {
     label: 'Пополнить',
     verb: 'Пополнение',
-    hint: 'Заказчик уже перевёл USDT платформе. Сумма сразу станет доступной, а операция будет ждать его подтверждения в кошельке.',
+    hint: 'Рекламодатель уже перевёл USDT платформе. Сумма сразу станет доступной, а операция будет ждать его подтверждения в кошельке.',
     request: (userId, body) => apiClient.api.topUpWallet(userId, body),
-    done: (amount) => `Кошелёк пополнен на ${amount} — ждём подтверждения заказчика`,
+    done: (amount) => `Кошелёк пополнен на ${amount} — ждём подтверждения рекламодателя`,
   },
   WITHDRAWAL: {
     label: 'Вывести',
     verb: 'Вывод',
-    hint: 'USDT уже отправлены заказчику. Списать можно только из свободного остатка: деньги в объявлениях не трогаются.',
+    hint: 'USDT уже отправлены рекламодателю. Списать можно только из свободного остатка: деньги в кампаниях не трогаются.',
     request: (userId, body) => apiClient.api.withdrawFromWallet(userId, body),
-    done: (amount) => `С кошелька выведено ${amount} — ждём подтверждения заказчика`,
+    done: (amount) => `С кошелька выведено ${amount} — ждём подтверждения рекламодателя`,
   },
 };
 
@@ -114,7 +116,7 @@ const FinanceCustomer = () => {
     setErrors(nextErrors);
     if (Object.values(nextErrors).some(Boolean)) return;
 
-    const who = wallet?.customerName || wallet?.customerEmail || 'заказчика';
+    const who = wallet?.customerName || wallet?.customerEmail || 'рекламодателя';
     if (
       !window.confirm(
         `${current.verb} ${formatRubles(amountKopecks)} для ${who}. Подтверждаете?`
@@ -147,21 +149,27 @@ const FinanceCustomer = () => {
     }
   };
 
+  const backLink = (
+    <Link to="/app/finance" className={ui.backLink}>
+      <Icon name="arrowLeft" size={16} />
+      Ко всем рекламодателям
+    </Link>
+  );
+
   if (loading) {
     return (
-      <div className={styles.wrap}>
-        <p className={styles.message}>Загрузка кошелька…</p>
+      <div className={ui.page}>
+        {backLink}
+        <p className={ui.message}>Загрузка кошелька…</p>
       </div>
     );
   }
 
   if (pageError && !wallet) {
     return (
-      <div className={styles.wrap}>
-        <p className={styles.banner}>{pageError}</p>
-        <Link to="/app/finance" className={styles.backLink}>
-          ← ко всем заказчикам
-        </Link>
+      <div className={ui.page}>
+        {backLink}
+        <p className={ui.errorBanner}>{pageError}</p>
       </div>
     );
   }
@@ -169,26 +177,29 @@ const FinanceCustomer = () => {
   const current = OPERATIONS[operation];
 
   return (
-    <div className={styles.wrap}>
-      <Link to="/app/finance" className={styles.backLink}>
-        ← ко всем заказчикам
-      </Link>
-      <h1 className={styles.title}>{wallet.customerName || wallet.customerEmail}</h1>
-      <p className={styles.subtitle}>
-        {wallet.customerEmail}
-        {wallet.customerCompany ? ` · ${wallet.customerCompany}` : ''}
-        {wallet.updatedAt ? ` · кошелёк обновлён ${formatDate(wallet.updatedAt)}` : ''}
-      </p>
+    <div className={ui.page}>
+      {backLink}
+      <header className={ui.pageHead}>
+        <div className={ui.pageHeadMain}>
+          <span className={ui.eyebrow}>Кошелёк рекламодателя</span>
+          <h1 className={ui.title}>{wallet.customerName || wallet.customerEmail}</h1>
+          <p className={ui.subtitle}>
+            {wallet.customerEmail}
+            {wallet.customerCompany ? ` · ${wallet.customerCompany}` : ''}
+            {wallet.updatedAt ? ` · кошелёк обновлён ${formatDate(wallet.updatedAt)}` : ''}
+          </p>
+        </div>
+      </header>
 
       <WalletSummary wallet={wallet} />
 
-      <form className={styles.card} onSubmit={handleSubmit} noValidate>
-        <div className={styles.tabs} role="group" aria-label="Операция">
+      <form className={`${ui.card} ${styles.block}`} onSubmit={handleSubmit} noValidate>
+        <div className={ui.chips} role="group" aria-label="Операция">
           {Object.entries(OPERATIONS).map(([key, item]) => (
             <button
               key={key}
               type="button"
-              className={`${styles.tab} ${operation === key ? styles.tabActive : ''}`}
+              className={operation === key ? ui.chipActive : ui.chip}
               onClick={() => selectOperation(key)}
               aria-pressed={operation === key}
             >
@@ -206,7 +217,7 @@ const FinanceCustomer = () => {
                 setAmountRub(formatRubInput(e.target.value));
                 clearError('amountRub');
               }}
-              className={styles.input}
+              className={ui.input}
               aria-invalid={errors.amountRub ? 'true' : undefined}
               autoComplete="off"
               disabled={saving}
@@ -221,7 +232,7 @@ const FinanceCustomer = () => {
                 setTxId(e.target.value);
                 clearError('txId');
               }}
-              className={styles.input}
+              className={ui.input}
               aria-invalid={errors.txId ? 'true' : undefined}
               maxLength={255}
               autoComplete="off"
@@ -231,7 +242,7 @@ const FinanceCustomer = () => {
             <FieldError>{errors.txId}</FieldError>
           </Field>
           {operation === 'WITHDRAWAL' && (
-            <Field label="Адрес TRON заказчика (USDT TRC-20) *" className={styles.labelWide}>
+            <Field label="Адрес TRON рекламодателя (USDT TRC-20) *" className={styles.wide}>
               <input
                 type="text"
                 value={tronAddress}
@@ -239,7 +250,7 @@ const FinanceCustomer = () => {
                   setTronAddress(e.target.value);
                   clearError('tronAddress');
                 }}
-                className={styles.input}
+                className={ui.input}
                 aria-invalid={errors.tronAddress ? 'true' : undefined}
                 autoComplete="off"
                 spellCheck={false}
@@ -248,7 +259,7 @@ const FinanceCustomer = () => {
               <FieldError>{errors.tronAddress}</FieldError>
             </Field>
           )}
-          <div className={styles.labelWide}>
+          <div className={styles.wide}>
             <ProofUploader
               proofs={proofs}
               onChange={(next) => {
@@ -259,26 +270,26 @@ const FinanceCustomer = () => {
             />
             <FieldError>{errors.proofs}</FieldError>
           </div>
-          <Field label="Основание" className={styles.labelWide}>
+          <Field label="Основание" className={styles.wide}>
             <input
               type="text"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              className={styles.input}
+              className={ui.input}
               maxLength={500}
               autoComplete="off"
               disabled={saving}
             />
-            <span className={styles.hint}>{current.hint}</span>
+            <span className={ui.hint}>{current.hint}</span>
           </Field>
         </div>
 
-        {error && <p className={styles.error}>{error}</p>}
+        {error && <p className={`${ui.errorText} ${styles.formError}`}>{error}</p>}
 
         <div className={styles.formActions}>
           <button
             type="submit"
-            className={operation === 'WITHDRAWAL' ? styles.dangerBtn : styles.submit}
+            className={operation === 'WITHDRAWAL' ? ui.btnDanger : ui.btnPrimary}
             disabled={saving}
           >
             {saving ? 'Проводим…' : current.label}
@@ -286,8 +297,8 @@ const FinanceCustomer = () => {
         </div>
       </form>
 
-      <section className={styles.card}>
-        <h2 className={styles.cardTitle}>Операции</h2>
+      <section className={`${ui.card} ${styles.block}`}>
+        <h2 className={ui.cardTitle}>Операции</h2>
         <OperationRows
           rows={transactions}
           loading={transactionsLoading}
