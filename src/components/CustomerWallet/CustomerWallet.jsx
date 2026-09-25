@@ -1,22 +1,29 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import OperationRows from '../shared/OperationRows/OperationRows';
+import Field from '../shared/Field/Field';
+import FieldError from '../shared/FieldError/FieldError';
 import Icon from '../shared/Icon/Icon';
 import { errorMessage } from '../../shared/auth';
-import { formatRubles } from '../../shared/money';
+import { formatRubInput, formatRubles, rubToKopecks } from '../../shared/money';
 import { formatDate } from '../../shared/dictionaries';
 import ui from '../../shared/ui.module.css';
 import styles from './CustomerWallet.module.css';
 
 const CustomerWallet = () => {
+  const navigate = useNavigate();
+  const amountRef = useRef(null);
   const [wallet, setWallet] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [transactionsLoading, setTransactionsLoading] = useState(true);
   const [pageError, setPageError] = useState('');
   const [transactionsError, setTransactionsError] = useState('');
+  const [amountRub, setAmountRub] = useState('');
+  const [amountError, setAmountError] = useState('');
+  const [creating, setCreating] = useState(false);
 
   const loadWallet = useCallback(async () => {
     try {
@@ -47,18 +54,41 @@ const CustomerWallet = () => {
     loadTransactions();
   }, [loadWallet, loadTransactions]);
 
-  const copyAddress = async () => {
+  const startTopUp = () => {
+    amountRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    amountRef.current?.focus({ preventScroll: true });
+  };
+
+  const createTopUp = async (e) => {
+    e.preventDefault();
+    const amountKopecks = rubToKopecks(amountRub);
+    if (amountKopecks == null || amountKopecks <= 0) {
+      setAmountError('Сумма в рублях, больше нуля');
+      amountRef.current?.focus();
+      return;
+    }
+    setCreating(true);
+    setAmountError('');
     try {
-      await navigator.clipboard.writeText(wallet.topUpTronAddress);
-      toast.success('Адрес скопирован');
-    } catch {
-      toast.error('Не удалось скопировать — выделите адрес вручную');
+      const res = await apiClient.api.requestTopUp({ amountKopecks });
+      toast.success('Заявка создана — переведите USDT на адрес из заявки');
+      navigate(`/app/wallet/${res.data.transaction.id}`);
+    } catch (err) {
+      setAmountError(errorMessage(err, 'Не удалось создать заявку'));
+      setCreating(false);
     }
   };
 
-  const awaiting = transactions.filter(
-    (row) => row.status === 'SENT' && (row.type === 'TOP_UP' || row.type === 'WITHDRAWAL')
+  const unpaidTopUps = transactions.filter(
+    (row) => row.type === 'TOP_UP' && row.status === 'PENDING'
   ).length;
+  const awaitingWithdrawals = transactions.filter(
+    (row) => row.type === 'WITHDRAWAL' && row.status === 'SENT'
+  ).length;
+  const onReviewKopecks = transactions
+    .filter((row) => row.type === 'TOP_UP' && row.status === 'SENT')
+    .reduce((sum, row) => sum + (row.amountKopecks || 0), 0);
+  const topUpAvailable = Boolean(wallet?.topUpTronAddress);
 
   if (loading) {
     return (
@@ -88,9 +118,10 @@ const CustomerWallet = () => {
           </p>
         </div>
         <div className={`${ui.pageHeadActions} ${styles.headActions}`}>
-          <Link to="/app/campaigns/new" className={ui.btnPrimary}>
-            + Создать кампанию
-          </Link>
+          <button type="button" className={ui.btnPrimary} onClick={startTopUp}>
+            <Icon name="plus" size={16} />
+            Пополнить баланс
+          </button>
         </div>
       </header>
 
@@ -101,7 +132,9 @@ const CustomerWallet = () => {
           <span className={styles.balanceLabel}>Свободно в кошельке</span>
           <span className={styles.balanceValue}>{formatRubles(wallet?.balanceKopecks ?? 0)}</span>
           <span className={styles.balanceNote}>
-            Бюджет кампании резервируется из кошелька при создании
+            {onReviewKopecks > 0
+              ? `Ещё ${formatRubles(onReviewKopecks)} на проверке — зачислим, как только увидим перевод`
+              : 'Бюджет кампании резервируется из кошелька при создании'}
           </span>
         </section>
 
@@ -120,31 +153,48 @@ const CustomerWallet = () => {
       </div>
 
       <section className={`${ui.card} ${styles.topUp}`}>
-        <div className={styles.topUpMain}>
-          <h2 className={ui.cardTitle}>Как пополнить</h2>
-          <p className={styles.text}>
-            Переведите USDT (TRC-20) на адрес платформы и сообщите менеджеру финансов номер
-            транзакции. Пополнение и вывод проводит менеджер: к операции он прикладывает
-            скриншот и номер транзакции, вам остаётся сверить перевод и подтвердить его в
-            истории.
-          </p>
-          {wallet?.topUpTronAddress && (
-            <div className={styles.addressRow}>
-              <code className={styles.address}>{wallet.topUpTronAddress}</code>
-              <button
-                type="button"
-                className={`${ui.btnSecondary} ${ui.btnSmall}`}
-                onClick={copyAddress}
-              >
-                <Icon name="copy" size={14} />
-                Скопировать
-              </button>
-            </div>
+        <form className={styles.topUpMain} onSubmit={createTopUp} noValidate>
+          <h2 className={ui.cardTitle}>Пополнить баланс</h2>
+          <ol className={styles.steps}>
+            <li>Укажите сумму — заведём заявку на пополнение с адресом для оплаты.</li>
+            <li>Переведите USDT (TRC-20) на этот адрес и приложите к заявке скриншот или PDF перевода.</li>
+            <li>Финансист сверит поступление и зачислит деньги на баланс.</li>
+          </ol>
+          <div className={styles.topUpForm}>
+            <Field label="Сумма, ₽" className={styles.amount}>
+              <input
+                ref={amountRef}
+                type="text"
+                inputMode="decimal"
+                value={amountRub}
+                onChange={(e) => {
+                  setAmountRub(formatRubInput(e.target.value));
+                  setAmountError('');
+                }}
+                className={ui.input}
+                aria-invalid={amountError ? 'true' : undefined}
+                autoComplete="off"
+                disabled={creating || !topUpAvailable}
+              />
+              <FieldError>{amountError}</FieldError>
+            </Field>
+            <button
+              type="submit"
+              className={ui.btnPrimary}
+              disabled={creating || !topUpAvailable}
+            >
+              {creating ? 'Создаём…' : 'Создать заявку'}
+            </button>
+          </div>
+          {!topUpAvailable && (
+            <p className={ui.hintWarn}>
+              Адрес для пополнения ещё не настроен — напишите менеджеру финансов.
+            </p>
           )}
-        </div>
+        </form>
         <p className={styles.topUpAside}>
-          Если бюджет кампании уменьшить, разница вернётся в кошелёк. Ниже суммы, уже
-          начисленной креаторам, бюджет опустить нельзя.
+          Деньги появятся на балансе после проверки перевода. Пока заявка не оплачена, её можно
+          отменить. Если уменьшить бюджет кампании, разница вернётся в кошелёк.
         </p>
       </section>
 
@@ -152,10 +202,16 @@ const CustomerWallet = () => {
         <h2 className={ui.sectionTitle}>История операций</h2>
       </div>
       <section className={ui.card}>
-        {awaiting > 0 && (
+        {unpaidTopUps > 0 && (
           <p className={styles.awaiting}>
-            Ждут вашего подтверждения: {awaiting}. Откройте операцию, сверьте перевод и
-            подтвердите.
+            Ждут оплаты: {unpaidTopUps}. Откройте заявку, переведите USDT и приложите скриншот или
+            PDF перевода.
+          </p>
+        )}
+        {awaitingWithdrawals > 0 && (
+          <p className={styles.awaiting}>
+            Ждут вашего подтверждения: {awaitingWithdrawals}. Откройте вывод, проверьте поступление
+            и подтвердите.
           </p>
         )}
         <OperationRows

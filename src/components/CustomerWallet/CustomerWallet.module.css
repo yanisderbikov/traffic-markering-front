@@ -56,30 +56,28 @@
   min-width: 0;
 }
 
-.text {
-  margin: 0 0 16px;
+.steps {
+  margin: 0 0 18px;
+  padding-left: 1.2em;
   font-size: 0.88rem;
   line-height: 1.55;
   color: var(--color-ink-soft);
 }
 
-.addressRow {
+.steps li + li {
+  margin-top: 4px;
+}
+
+.topUpForm {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   flex-wrap: wrap;
 }
 
-.address {
-  flex: 1 1 260px;
-  min-width: 0;
-  padding: 10px 14px;
-  border-radius: var(--field-radius);
-  background: var(--color-field);
-  border: 1px solid var(--color-field-border);
-  font-size: 0.85rem;
-  color: var(--color-ink);
-  overflow-wrap: anywhere;
+.amount {
+  flex: 1 1 220px;
+  max-width: 320px;
 }
 
 .topUpAside {
@@ -115,7 +113,7 @@
     width: 100%;
   }
 
-  .headActions > a {
+  .headActions > * {
     flex: 1 1 100%;
   }
 
@@ -127,7 +125,11 @@
     grid-template-columns: 1fr;
   }
 
-  .addressRow > button {
+  .amount {
+    max-width: none;
+  }
+
+  .topUpForm > button {
     width: 100%;
   }
 }

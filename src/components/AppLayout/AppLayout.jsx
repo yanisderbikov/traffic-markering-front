@@ -16,6 +16,7 @@ const MENU = [
   { to: '/app/wallet', label: 'Финансы', short: 'Финансы', icon: 'wallet', section: SECTIONS.WALLET },
   { to: '/app/earnings', label: 'Финансы', short: 'Финансы', icon: 'wallet', section: SECTIONS.EARNINGS },
   { to: '/app/finance', label: 'Кошельки заказчиков', short: 'Кошельки', icon: 'wallet', section: SECTIONS.FINANCE, end: true },
+  { to: '/app/finance/top-ups', label: 'Пополнения', short: 'Пополнения', icon: 'plus', section: SECTIONS.FINANCE },
   { to: '/app/finance/payouts', label: 'Выплаты', short: 'Выплаты', icon: 'download', section: SECTIONS.FINANCE },
   { to: '/app/finance/operations', label: 'Все операции', short: 'Операции', icon: 'chart', section: SECTIONS.FINANCE },
   { to: '/app/admin/fraud', label: 'Антифрод', short: 'Антифрод', icon: 'shield', section: SECTIONS.FRAUD, end: true },

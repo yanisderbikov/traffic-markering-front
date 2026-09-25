@@ -735,7 +735,34 @@ export interface WalletTransactionDTO {
   createdAt?: string;
 }
 
-/** Пополнение или вывод по кошельку заказчика: деньги уже переведены, финансист прикладывает документы */
+/** Заявка заказчика на пополнение: сколько он собирается перевести */
+export interface TopUpCreateRequestDTO {
+  /**
+   * Сумма в копейках
+   * @format int64
+   * @example 5000000
+   */
+  amountKopecks: number;
+}
+
+/** Заказчик перевёл USDT по заявке: скриншоты или файлы перевода и, если есть, номер транзакции */
+export interface TopUpPaidRequestDTO {
+  /**
+   * Номер (хеш) транзакции в сети TRON; необязателен, но ускоряет проверку
+   * @minLength 0
+   * @maxLength 255
+   * @example "7c1e0f…9a2b"
+   */
+  txId?: string;
+  /**
+   * Ключи файлов из /api/files/transfer-proof/presign
+   * @maxItems 10
+   * @minItems 1
+   */
+  proofKeys: string[];
+}
+
+/** Вывод из кошелька заказчика: USDT уже отправлены, финансист прикладывает документы */
 export interface WalletOperationRequestDTO {
   /**
    * Сумма в копейках
@@ -757,7 +784,7 @@ export interface WalletOperationRequestDTO {
    */
   proofKeys: string[];
   /**
-   * Адрес TRON заказчика, куда ушли USDT; обязателен для вывода, для пополнения не нужен
+   * Адрес TRON заказчика, куда ушли USDT
    * @minLength 0
    * @maxLength 64
    * @example "TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE"
@@ -1709,29 +1736,6 @@ export class Api<
 
 
     /**
-     * @description Сумма в копейках, больше нуля; комментарий — основание платежа
-     *
-     * @tags Finance
-     * @name TopUpWallet
-     * @summary Пополнить кошелёк заказчика
-     * @request POST:/api/finance/customers/{userId}/top-up
-     * @secure
-     */
-    topUpWallet: (
-      userId: number,
-      data: WalletOperationRequestDTO,
-      params: RequestParams = {},
-    ) =>
-      this.request<OperationDetailDTO, any>({
-        path: `/api/finance/customers/${userId}/top-up`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
      * @description Только из свободного остатка (409, если не хватает): USDT уже отправлены на адрес TRON заказчика, номер транзакции и скриншоты обязательны. Операция в SENT ждёт подтверждения заказчика
      *
      * @tags Finance
@@ -1874,6 +1878,40 @@ export class Api<
         ...params,
       }),
 
+    /**
+     * @description Короткие строки: кто, сколько, статус; открытые (PENDING, SENT) сверху
+     *
+     * @tags Finance
+     * @name FinanceTopUps
+     * @summary Заявки заказчиков на пополнение
+     * @request GET:/api/finance/top-ups
+     * @secure
+     */
+    financeTopUps: (params: RequestParams = {}) =>
+      this.request<OperationRowDTO[], any>({
+        path: `/api/finance/top-ups`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * @description Пока заявка открыта (PENDING или SENT): USDT пришли на адрес платформы, сумма зачисляется на баланс заказчика, заявка переходит в CONFIRMED
+     *
+     * @tags Finance
+     * @name ConfirmTopUp
+     * @summary Подтвердить поступление по заявке на пополнение
+     * @request POST:/api/finance/top-ups/{id}/confirm
+     * @secure
+     */
+    confirmTopUp: (id: number, params: RequestParams = {}) =>
+      this.request<OperationDetailDTO, any>({
+        path: `/api/finance/top-ups/${id}/confirm`,
+        method: "POST",
+        secure: true,
+        ...params,
+      }),
+
 
     /**
      * @description Только из PENDING. Номер транзакции и скриншоты обязательны; заявка переходит в SENT и ждёт подтверждения креатора
@@ -1899,7 +1937,7 @@ export class Api<
       }),
 
     /**
-     * @description Пока операция открыта (PENDING или SENT): деньги возвращаются туда, откуда ушли, владелец кошелька видит причину. 409, если пополнение уже разошлось по объявлениям
+     * @description Пока операция открыта (PENDING или SENT): владелец кошелька видит причину. По выводу и выплате деньги возвращаются в кошелёк; по заявке на пополнение ничего не зачислялось, она просто закрывается
      *
      * @tags Finance
      * @name RejectOperation
@@ -1922,11 +1960,11 @@ export class Api<
       }),
 
     /**
-     * @description Для менеджера финансов: presigned PUT-ссылка на скриншот перевода USDT. Полученный key передаётся в пополнение, вывод заказчику или отправку выплаты креатору
+     * @description Presigned PUT-ссылка на скриншот или PDF перевода USDT. Заказчик прикладывает его к своей заявке на пополнение, менеджер финансов — к выводу заказчику или выплате креатору
      *
      * @tags File
      * @name PresignTransferProof
-     * @summary Ссылка на загрузку скриншота перевода
+     * @summary Ссылка на загрузку подтверждения перевода
      * @request POST:/api/files/transfer-proof/presign
      * @secure
      */
@@ -1977,17 +2015,76 @@ export class Api<
       }),
 
     /**
-     * @description Только для операции в статусе SENT: заказчик сверил перевод финансиста и подтверждает его
+     * @description Только для вывода в статусе SENT: заказчик проверил поступление USDT и подтверждает его
      *
      * @tags Wallet
      * @name ConfirmWalletOperation
-     * @summary Подтвердить пополнение или вывод
+     * @summary Подтвердить вывод
      * @request POST:/api/wallet/operations/{id}/confirm
      * @secure
      */
     confirmWalletOperation: (id: number, params: RequestParams = {}) =>
       this.request<OperationDetailDTO, any>({
         path: `/api/wallet/operations/${id}/confirm`,
+        method: "POST",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * @description Заказчик сам заводит пополнение на сумму в копейках и получает адрес TRON платформы, куда перевести USDT. Баланс не меняется, пока финансист не подтвердит поступление. 503 — адрес для пополнения не настроен
+     *
+     * @tags Wallet
+     * @name RequestTopUp
+     * @summary Заявка на пополнение
+     * @request POST:/api/wallet/top-ups
+     * @secure
+     */
+    requestTopUp: (data: TopUpCreateRequestDTO, params: RequestParams = {}) =>
+      this.request<OperationDetailDTO, any>({
+        path: `/api/wallet/top-ups`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description Только из PENDING: скриншоты или файлы перевода обязательны, номер транзакции — по желанию. Заявка переходит в SENT и ждёт проверки финансиста
+     *
+     * @tags Wallet
+     * @name MarkTopUpPaid
+     * @summary Отметить заявку на пополнение оплаченной
+     * @request POST:/api/wallet/top-ups/{id}/paid
+     * @secure
+     */
+    markTopUpPaid: (
+      id: number,
+      data: TopUpPaidRequestDTO,
+      params: RequestParams = {},
+    ) =>
+      this.request<OperationDetailDTO, any>({
+        path: `/api/wallet/top-ups/${id}/paid`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description Только пока заявка не оплачена (PENDING)
+     *
+     * @tags Wallet
+     * @name CancelTopUp
+     * @summary Отменить заявку на пополнение
+     * @request POST:/api/wallet/top-ups/{id}/cancel
+     * @secure
+     */
+    cancelTopUp: (id: number, params: RequestParams = {}) =>
+      this.request<OperationDetailDTO, any>({
+        path: `/api/wallet/top-ups/${id}/cancel`,
         method: "POST",
         secure: true,
         ...params,

@@ -29,6 +29,7 @@ import OperationPage from './components/OperationPage/OperationPage';
 import FinancePayouts from './components/FinancePayouts/FinancePayouts';
 import FinancePayout from './components/FinancePayout/FinancePayout';
 import FinanceOperations from './components/FinanceOperations/FinanceOperations';
+import FinanceTopUps from './components/FinanceTopUps/FinanceTopUps';
 import Info from './components/Info/Info';
 import Privacy from './components/Info/Privacy';
 import Terms from './components/Info/Terms';
@@ -50,6 +51,7 @@ const KNOWN_PATHS = new Set([
   '/app/applications',
   '/app/earnings',
   '/app/finance',
+  '/app/finance/top-ups',
   '/app/finance/payouts',
   '/app/finance/operations',
   '/app/admin/users',
@@ -192,6 +194,7 @@ function App() {
           <Route path="/app/earnings" element={<CreatorEarnings />} />
           <Route path="/app/earnings/:operationId" element={<OperationPage scope="earnings" />} />
           <Route path="/app/finance" element={<FinanceCustomers />} />
+          <Route path="/app/finance/top-ups" element={<FinanceTopUps />} />
           <Route path="/app/finance/payouts" element={<FinancePayouts />} />
           <Route path="/app/finance/payouts/:payoutId" element={<FinancePayout />} />
           <Route path="/app/finance/operations" element={<FinanceOperations />} />

@@ -1,0 +1,17 @@
+.filters {
+  margin-bottom: 20px;
+}
+
+.count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--pill-radius);
+  background: var(--color-badge);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: inherit;
+}

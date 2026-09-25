@@ -13,6 +13,22 @@
   border-top: 1px solid var(--color-border);
 }
 
+.payment {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border);
+}
+
+.buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .actionText {
   margin: 0;
   max-width: 34rem;
@@ -22,7 +38,8 @@
 }
 
 @media (max-width: 560px) {
-  .actions > * {
+  .actions > *,
+  .buttons > * {
     width: 100%;
   }
 }

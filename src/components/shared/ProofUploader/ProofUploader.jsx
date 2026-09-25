@@ -2,14 +2,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import apiClient from '../../../apiClient';
+import Icon from '../Icon/Icon';
 import { errorMessage } from '../../../shared/auth';
 import styles from './ProofUploader.module.css';
 
-const PROOF_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const PROOF_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
 const PROOF_MAX_BYTES = 10 * 1024 * 1024;
 const PROOF_MAX_COUNT = 10;
 
-const ProofUploader = ({ proofs, onChange, disabled = false, label = 'Скриншоты перевода *' }) => {
+const ProofUploader = ({ proofs, onChange, disabled = false, label = 'Скриншоты или PDF перевода *' }) => {
   const [uploading, setUploading] = useState(false);
   const latest = useRef(proofs);
   latest.current = proofs;
@@ -26,7 +27,7 @@ const ProofUploader = ({ proofs, onChange, disabled = false, label = 'Скрин
     e.target.value = '';
     if (!files.length) return;
     if (proofs.length + files.length > PROOF_MAX_COUNT) {
-      toast.error(`Не больше ${PROOF_MAX_COUNT} скриншотов`);
+      toast.error(`Не больше ${PROOF_MAX_COUNT} файлов`);
       return;
     }
     setUploading(true);
@@ -34,7 +35,7 @@ const ProofUploader = ({ proofs, onChange, disabled = false, label = 'Скрин
     try {
       for (const file of files) {
         if (!PROOF_TYPES.includes(file.type)) {
-          toast.error(`${file.name}: только JPEG, PNG, WebP или GIF`);
+          toast.error(`${file.name}: только JPEG, PNG, WebP, GIF или PDF`);
           continue;
         }
         if (file.size > PROOF_MAX_BYTES) {
@@ -46,11 +47,19 @@ const ProofUploader = ({ proofs, onChange, disabled = false, label = 'Скрин
           contentType: file.type,
         });
         await axios.put(res.data.uploadUrl, file, { headers: { 'Content-Type': file.type } });
-        next = [...next, { key: res.data.key, preview: URL.createObjectURL(file) }];
+        next = [
+          ...next,
+          {
+            key: res.data.key,
+            preview: URL.createObjectURL(file),
+            name: file.name,
+            isPdf: file.type === 'application/pdf',
+          },
+        ];
         onChange(next);
       }
     } catch (err) {
-      toast.error(errorMessage(err, 'Не удалось загрузить скриншот'));
+      toast.error(errorMessage(err, 'Не удалось загрузить файл'));
     } finally {
       setUploading(false);
     }
@@ -67,12 +76,19 @@ const ProofUploader = ({ proofs, onChange, disabled = false, label = 'Скрин
       <div className={styles.row}>
         {proofs.map((proof) => (
           <div key={proof.key} className={styles.preview}>
-            <img src={proof.preview} alt="Скриншот" className={styles.image} />
+            {proof.isPdf ? (
+              <span className={styles.file} title={proof.name}>
+                <Icon name="file" size={28} />
+                <span className={styles.fileName}>{proof.name}</span>
+              </span>
+            ) : (
+              <img src={proof.preview} alt="Скриншот" className={styles.image} />
+            )}
             <button
               type="button"
               className={styles.remove}
               onClick={() => remove(proof)}
-              aria-label="Убрать скриншот"
+              aria-label="Убрать файл"
               disabled={disabled}
             >
               ×
@@ -83,7 +99,7 @@ const ProofUploader = ({ proofs, onChange, disabled = false, label = 'Скрин
           {uploading ? '…' : '+'}
           <input
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
+            accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
             multiple
             onChange={handleFiles}
             className={styles.input}
@@ -91,7 +107,7 @@ const ProofUploader = ({ proofs, onChange, disabled = false, label = 'Скрин
           />
         </label>
       </div>
-      <span className={styles.hint}>JPEG, PNG, WebP или GIF до 10 МБ, до 10 штук.</span>
+      <span className={styles.hint}>JPEG, PNG, WebP, GIF или PDF до 10 МБ, до 10 штук.</span>
     </div>
   );
 };

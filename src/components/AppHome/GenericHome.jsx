@@ -17,6 +17,7 @@ import {
   payoutStats,
   pendingPayouts,
   plural,
+  topUpsOnReview,
 } from './homeStats';
 import ui from '../../shared/ui.module.css';
 import styles from './AppHome.module.css';
@@ -36,6 +37,7 @@ const LOADERS = {
   earnings: () => apiClient.api.myEarnings(),
   operations: () => apiClient.api.myOperations(),
   payouts: () => apiClient.api.financePayouts(),
+  topUps: () => apiClient.api.financeTopUps(),
   customers: () => apiClient.api.financeCustomers(),
 };
 
@@ -170,6 +172,7 @@ const GenericHome = () => {
   const earnings = useRequest(has(SECTIONS.EARNINGS), LOADERS.earnings);
   const operations = useRequest(has(SECTIONS.EARNINGS), LOADERS.operations);
   const payouts = useRequest(has(SECTIONS.FINANCE), LOADERS.payouts);
+  const topUps = useRequest(has(SECTIONS.FINANCE), LOADERS.topUps);
   const customers = useRequest(has(SECTIONS.FINANCE), LOADERS.customers);
 
   const states = { campaigns, wallet, applications, earnings, payouts, customers };
@@ -177,14 +180,14 @@ const GenericHome = () => {
   const primary = PRIMARY_ACTIONS.find((action) => has(action.section));
 
   const attention = [];
-  const settled = [walletOperations, campaigns, operations, payouts].every((s) => !s.loading);
+  const settled = [walletOperations, campaigns, operations, payouts, topUps].every((s) => !s.loading);
   if (settled) {
     const awaitingOps = awaitingWalletOperations(walletOperations.data);
     if (awaitingOps > 0) {
       attention.push({
         to: '/app/wallet',
         count: awaitingOps,
-        text: `${plural(awaitingOps, ['операция ждёт', 'операции ждут', 'операций ждут'])} вашего подтверждения`,
+        text: `${plural(awaitingOps, ['операция ждёт', 'операции ждут', 'операций ждут'])} вашего действия`,
       });
     }
     const exhausted = exhaustedCampaigns(campaigns.data);
@@ -209,6 +212,14 @@ const GenericHome = () => {
         to: '/app/finance/payouts',
         count: pending,
         text: `${plural(pending, ['выплата ждёт', 'выплаты ждут', 'выплат ждут'])} отправки`,
+      });
+    }
+    const reviewing = topUpsOnReview(topUps.data);
+    if (reviewing > 0) {
+      attention.push({
+        to: '/app/finance/top-ups',
+        count: reviewing,
+        text: `${plural(reviewing, ['пополнение ждёт', 'пополнения ждут', 'пополнений ждут'])} проверки`,
       });
     }
   }

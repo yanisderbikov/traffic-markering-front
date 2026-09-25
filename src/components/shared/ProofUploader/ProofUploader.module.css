@@ -29,6 +29,27 @@
   object-fit: cover;
 }
 
+.file {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  color: var(--color-muted);
+}
+
+.fileName {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .remove {
   position: absolute;
   top: 6px;

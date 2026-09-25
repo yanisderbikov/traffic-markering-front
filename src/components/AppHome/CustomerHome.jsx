@@ -70,7 +70,7 @@ const CustomerHome = () => {
     attention.push({
       to: '/app/wallet',
       count: awaitingOps,
-      text: `${plural(awaitingOps, ['операция ждёт', 'операции ждут', 'операций ждут'])} вашего подтверждения`,
+      text: `${plural(awaitingOps, ['операция ждёт', 'операции ждут', 'операций ждут'])} вашего действия`,
     });
   }
   const exhausted = exhaustedCampaigns(rows);

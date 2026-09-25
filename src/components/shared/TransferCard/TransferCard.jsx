@@ -8,6 +8,7 @@ import styles from './TransferCard.module.css';
 
 const URL_SPLIT_RE = /(https?:\/\/\S+)/g;
 const URL_RE = /^https?:\/\/\S+$/;
+const PDF_RE = /\.pdf$/i;
 
 const linkify = (text) =>
   text.split(URL_SPLIT_RE).map((part, index) =>
@@ -30,10 +31,21 @@ const copy = async (value, done) => {
 };
 
 const SENT_LABEL = {
-  TOP_UP: 'Зачислена',
+  TOP_UP: 'Оплачена',
   WITHDRAWAL: 'Отправлена',
   PAYOUT: 'Отправлена',
 };
+
+const CONFIRMED_LABEL = {
+  TOP_UP: 'Зачислена',
+};
+
+const ACTOR_LABEL = {
+  PAYOUT: 'Заявку подал',
+  TOP_UP: 'Создал',
+};
+
+const SETTLED_STATUSES = ['DONE', 'CONFIRMED'];
 
 const OWNER_LABEL = {
   PAYOUT: 'Креатор',
@@ -47,10 +59,15 @@ const TransferCard = ({ detail, showOwner = false, children }) => {
   if (!transaction) return null;
 
   const isPayout = transaction.type === 'PAYOUT';
+  const isTopUp = transaction.type === 'TOP_UP';
+  const showBalanceAfter = !isTopUp || SETTLED_STATUSES.includes(transaction.status);
   const timeline = [
     { label: 'Создана', at: transaction.createdAt },
     transfer?.sentAt && { label: SENT_LABEL[transaction.type] || 'Отправлена', at: transfer.sentAt },
-    transfer?.confirmedAt && { label: 'Подтверждена', at: transfer.confirmedAt },
+    transfer?.confirmedAt && {
+      label: CONFIRMED_LABEL[transaction.type] || 'Подтверждена',
+      at: transfer.confirmedAt,
+    },
     transfer?.closedAt &&
       !transfer?.confirmedAt && {
         label: transaction.status === 'CANCELLED' ? 'Отменена' : 'Отклонена',
@@ -73,7 +90,11 @@ const TransferCard = ({ detail, showOwner = false, children }) => {
             {signedRubles(transaction.amountKopecks)}
           </span>
         </div>
-        <StatusBadge status={transaction.status} description={transaction.statusDescription} />
+        <StatusBadge
+          type={transaction.type}
+          status={transaction.status}
+          description={transaction.statusDescription}
+        />
       </div>
 
       <dl className={styles.facts}>
@@ -104,7 +125,7 @@ const TransferCard = ({ detail, showOwner = false, children }) => {
         )}
         {transfer?.tronAddress && (
           <>
-            <dt>Кошелёк TRON</dt>
+            <dt>{isTopUp ? 'Адрес для оплаты' : 'Кошелёк TRON'}</dt>
             <dd className={styles.addressRow}>
               <code className={styles.address}>{transfer.tronAddress}</code>
               <button
@@ -142,12 +163,22 @@ const TransferCard = ({ detail, showOwner = false, children }) => {
         )}
         {transaction.actorName && (
           <>
-            <dt>{isPayout ? 'Заявку подал' : 'Провёл'}</dt>
+            <dt>{ACTOR_LABEL[transaction.type] || 'Провёл'}</dt>
             <dd>{transaction.actorName}</dd>
           </>
         )}
-        <dt>Остаток после</dt>
-        <dd>{formatRubles(transaction.balanceAfterKopecks ?? 0)}</dd>
+        {isTopUp && transfer?.processedByName && (
+          <>
+            <dt>Проверил</dt>
+            <dd>{transfer.processedByName}</dd>
+          </>
+        )}
+        {showBalanceAfter && (
+          <>
+            <dt>Остаток после</dt>
+            <dd>{formatRubles(transaction.balanceAfterKopecks ?? 0)}</dd>
+          </>
+        )}
         <dt>История</dt>
         <dd className={styles.timeline}>
           {timeline.map((step) => (
@@ -168,7 +199,9 @@ const TransferCard = ({ detail, showOwner = false, children }) => {
       {transfer && (transfer.financeComment || transfer.proofs?.length > 0) && (
         <div className={styles.proofBlock}>
           <span className={styles.blockTitle}>
-            Документы перевода{transfer.processedByName ? ` · ${transfer.processedByName}` : ''}
+            {isTopUp
+              ? 'Подтверждение оплаты'
+              : `Документы перевода${transfer.processedByName ? ` · ${transfer.processedByName}` : ''}`}
           </span>
           {transfer.financeComment && (
             <p className={styles.text}>{linkify(transfer.financeComment)}</p>
@@ -183,7 +216,14 @@ const TransferCard = ({ detail, showOwner = false, children }) => {
                   rel="noreferrer"
                   className={styles.proof}
                 >
-                  <img src={proof.url} alt="Скриншот перевода" className={styles.proofImage} />
+                  {PDF_RE.test(proof.key) ? (
+                    <span className={styles.proofFile}>
+                      <Icon name="file" size={28} />
+                      PDF
+                    </span>
+                  ) : (
+                    <img src={proof.url} alt="Скриншот перевода" className={styles.proofImage} />
+                  )}
                 </a>
               ))}
             </div>

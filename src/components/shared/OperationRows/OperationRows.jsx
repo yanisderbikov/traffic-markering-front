@@ -2,9 +2,9 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { signedRubles } from '../../../shared/money';
 import {
-  OPERATION_STATUS_LABELS,
   WALLET_TRANSACTION_LABELS,
   formatDate,
+  operationStatusLabel,
 } from '../../../shared/dictionaries';
 import styles from './OperationRows.module.css';
 
@@ -25,9 +25,9 @@ const POINT_CLASS = {
   TRON: styles.pointTron,
 };
 
-export const StatusBadge = ({ status, description }) => (
+export const StatusBadge = ({ type, status, description }) => (
   <span className={`${styles.status} ${STATUS_CLASS[status] || ''}`}>
-    {OPERATION_STATUS_LABELS[status] || description || status}
+    {operationStatusLabel(type, status) || description || status}
   </span>
 );
 
@@ -93,7 +93,7 @@ const OperationRows = ({ rows, loading, error, linkFor, emptyText }) => {
               {signedRubles(row.amountKopecks)}
             </span>
             <span role="cell" className={styles.statusCell}>
-              <StatusBadge status={row.status} description={row.statusDescription} />
+              <StatusBadge type={row.type} status={row.status} description={row.statusDescription} />
             </span>
           </Link>
         );

@@ -165,7 +165,7 @@ const FinancePayout = () => {
                   setErrors((prev) => ({ ...prev, proofs: '' }));
                 }}
                 disabled={busy}
-                label="Скриншоты отправки *"
+                label="Скриншоты или PDF отправки *"
               />
               <FieldError>{errors.proofs}</FieldError>
             </div>

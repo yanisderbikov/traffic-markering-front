@@ -3,6 +3,8 @@ import { Link, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import TransferCard from '../shared/TransferCard/TransferCard';
+import ProofUploader from '../shared/ProofUploader/ProofUploader';
+import Field from '../shared/Field/Field';
 import Icon from '../shared/Icon/Icon';
 import { errorMessage } from '../../shared/auth';
 import { formatRubles } from '../../shared/money';
@@ -26,6 +28,7 @@ const SCOPES = {
     load: (id) => apiClient.api.financeOperation(id),
     back: '/app/finance/operations',
     backLabel: 'Ко всем операциям',
+    backByType: { TOP_UP: { to: '/app/finance/top-ups', label: 'Ко всем пополнениям' } },
     showOwner: true,
     financeActions: true,
   },
@@ -33,15 +36,12 @@ const SCOPES = {
 
 const TITLES = {
   PAYOUT: 'Заявка на вывод',
-  TOP_UP: 'Пополнение',
+  TOP_UP: 'Заявка на пополнение',
   WITHDRAWAL: 'Вывод',
 };
 
-const CONFIRM_TEXT = {
-  TOP_UP: (amount) =>
-    `Финансист зачислил ${amount} по вашему переводу. Сверьте номер транзакции и скриншоты и подтвердите операцию.`,
-  WITHDRAWAL: (amount) =>
-    `Финансист отправил ${amount} в USDT на ваш кошелёк TRON. Проверьте поступление и подтвердите получение.`,
+const REJECT_PROMPT = {
+  TOP_UP: 'Причина отклонения — её увидит рекламодатель. На баланс ничего не зачислится.',
 };
 
 const OperationPage = ({ scope = 'earnings' }) => {
@@ -51,6 +51,8 @@ const OperationPage = ({ scope = 'earnings' }) => {
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [proofs, setProofs] = useState([]);
+  const [txId, setTxId] = useState('');
 
   const load = useCallback(async () => {
     try {
@@ -83,9 +85,31 @@ const OperationPage = ({ scope = 'earnings' }) => {
     }
   };
 
+  const markPaid = async () => {
+    if (!proofs.length) {
+      toast.error('Приложите скриншот или PDF перевода');
+      return;
+    }
+    if (!window.confirm('Отправить заявку на проверку? После этого отменить её не получится.')) return;
+    setBusy(true);
+    try {
+      const res = await apiClient.api.markTopUpPaid(Number(operationId), {
+        txId: txId.trim() || undefined,
+        proofKeys: proofs.map((proof) => proof.key),
+      });
+      setDetail(res.data);
+      toast.success('Заявка отправлена на проверку');
+    } catch (err) {
+      toast.error(errorMessage(err, 'Не удалось отправить подтверждение оплаты'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const reject = async () => {
     const reason = window.prompt(
-      'Причина отклонения — её увидит рекламодатель. Деньги вернутся туда, откуда ушли.'
+      REJECT_PROMPT[detail?.transaction?.type] ||
+        'Причина отклонения — её увидит рекламодатель. Деньги вернутся туда, откуда ушли.'
     );
     if (reason == null) return;
     if (!reason.trim()) {
@@ -104,10 +128,14 @@ const OperationPage = ({ scope = 'earnings' }) => {
     }
   };
 
+  const back = config.backByType?.[detail?.transaction?.type] || {
+    to: config.back,
+    label: config.backLabel,
+  };
   const backLink = (
-    <Link to={config.back} className={ui.backLink}>
+    <Link to={back.to} className={ui.backLink}>
       <Icon name="arrowLeft" size={16} />
-      {config.backLabel}
+      {back.label}
     </Link>
   );
 
@@ -132,7 +160,9 @@ const OperationPage = ({ scope = 'earnings' }) => {
   const transaction = detail.transaction;
   const amount = formatRubles(Math.abs(transaction.amountKopecks ?? 0));
   const isPayout = transaction.type === 'PAYOUT';
-  const isCustomerTransfer = transaction.type === 'TOP_UP' || transaction.type === 'WITHDRAWAL';
+  const isTopUp = transaction.type === 'TOP_UP';
+  const isWithdrawal = transaction.type === 'WITHDRAWAL';
+  const isOpen = transaction.status === 'PENDING' || transaction.status === 'SENT';
 
   return (
     <div className={`${ui.page} ${styles.narrow}`}>
@@ -188,9 +218,57 @@ const OperationPage = ({ scope = 'earnings' }) => {
             </button>
           </div>
         )}
-        {config.customerActions && isCustomerTransfer && transaction.status === 'SENT' && (
+        {config.customerActions && isTopUp && transaction.status === 'PENDING' && (
+          <div className={styles.payment}>
+            <p className={styles.actionText}>
+              Переведите USDT (TRC-20) на сумму {amount} на адрес для оплаты выше. Затем приложите
+              скриншот или PDF перевода — заявка уйдёт на проверку, и после неё деньги появятся на
+              балансе.
+            </p>
+            <ProofUploader proofs={proofs} onChange={setProofs} disabled={busy} />
+            <Field label="Номер транзакции">
+              <input
+                type="text"
+                value={txId}
+                onChange={(e) => setTxId(e.target.value)}
+                className={ui.input}
+                maxLength={255}
+                autoComplete="off"
+                spellCheck={false}
+                disabled={busy}
+              />
+              <span className={ui.hint}>Необязательно, но с ним перевод найдут быстрее.</span>
+            </Field>
+            <div className={styles.buttons}>
+              <button
+                type="button"
+                className={ui.btnSecondary}
+                disabled={busy}
+                onClick={() =>
+                  act(apiClient.api.cancelTopUp, `Отменить заявку на ${amount}?`, 'Заявка отменена')
+                }
+              >
+                Отменить заявку
+              </button>
+              <button type="button" className={ui.btnPrimary} disabled={busy} onClick={markPaid}>
+                {busy ? 'Отправляем…' : 'Я оплатил'}
+              </button>
+            </div>
+          </div>
+        )}
+        {config.customerActions && isTopUp && transaction.status === 'SENT' && (
           <div className={styles.actions}>
-            <p className={styles.actionText}>{CONFIRM_TEXT[transaction.type](amount)}</p>
+            <p className={styles.actionText}>
+              Заявка на проверке: финансист сверит поступление и зачислит {amount} на баланс.
+            </p>
+          </div>
+        )}
+        {config.customerActions && isWithdrawal && transaction.status === 'SENT' && (
+          <div className={styles.actions}>
+            <p className={styles.actionText}>
+              Финансист отправил {amount} в USDT на ваш кошелёк TRON. Проверьте поступление и
+              подтвердите получение.
+            </p>
             <button
               type="button"
               className={ui.btnPrimary}
@@ -198,7 +276,7 @@ const OperationPage = ({ scope = 'earnings' }) => {
               onClick={() =>
                 act(
                   apiClient.api.confirmWalletOperation,
-                  `Подтверждаете ${transaction.type === 'TOP_UP' ? 'пополнение' : 'вывод'} на ${amount}?`,
+                  `Подтверждаете вывод на ${amount}?`,
                   'Операция подтверждена'
                 )
               }
@@ -207,7 +285,35 @@ const OperationPage = ({ scope = 'earnings' }) => {
             </button>
           </div>
         )}
-        {config.financeActions && isCustomerTransfer && transaction.status === 'SENT' && (
+        {config.financeActions && isTopUp && isOpen && (
+          <div className={styles.actions}>
+            <p className={styles.actionText}>
+              {transaction.status === 'SENT'
+                ? 'Рекламодатель отметил оплату. Сверьте поступление на адрес платформы: пришли деньги — зачислите, нет — отклоните с причиной.'
+                : 'Рекламодатель ещё не отметил оплату. Если перевод уже пришёл на адрес платформы, можно зачислить сразу.'}
+            </p>
+            <div className={styles.buttons}>
+              <button type="button" className={ui.btnDanger} onClick={reject} disabled={busy}>
+                Отклонить
+              </button>
+              <button
+                type="button"
+                className={ui.btnPrimary}
+                disabled={busy}
+                onClick={() =>
+                  act(
+                    apiClient.api.confirmTopUp,
+                    `Подтверждаете, что ${amount} пришли на адрес платформы? Сумма зачислится на баланс рекламодателя.`,
+                    'Поступление подтверждено, баланс пополнен'
+                  )
+                }
+              >
+                {busy ? 'Зачисляем…' : 'Подтвердить поступление'}
+              </button>
+            </div>
+          </div>
+        )}
+        {config.financeActions && isWithdrawal && transaction.status === 'SENT' && (
           <div className={styles.actions}>
             <p className={styles.actionText}>
               Ждём подтверждения рекламодателя. Если перевод не сошёлся — отклоните операцию,

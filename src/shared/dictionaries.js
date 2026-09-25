@@ -76,6 +76,15 @@ export const OPERATION_STATUS_LABELS = {
   CANCELLED: 'отменена',
 };
 
+const TOP_UP_STATUS_LABELS = {
+  PENDING: 'ждёт оплаты',
+  SENT: 'на проверке',
+  CONFIRMED: 'зачислена',
+};
+
+export const operationStatusLabel = (type, status) =>
+  (type === 'TOP_UP' && TOP_UP_STATUS_LABELS[status]) || OPERATION_STATUS_LABELS[status];
+
 export const formatDate = (value) => {
   if (!value) return '';
   // Бэк может отдавать Instant как epoch-секунды — переводим в миллисекунды.

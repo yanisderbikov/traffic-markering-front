@@ -47,13 +47,15 @@ export const exhaustedCampaigns = (rows) =>
 // ---- Кошелёк заказчика (myWalletOperations) ----
 
 /**
- * Пополнения и выводы, которые финансист уже провёл и ждёт подтверждения
- * заказчика — та же формула, что `awaiting` на странице кошелька.
+ * Операции, где ход за заказчиком: неоплаченные заявки на пополнение и выводы,
+ * которые финансист отправил и ждёт подтверждения, — как на странице кошелька.
  */
 export const awaitingWalletOperations = (rows) =>
   countBy(
     asList(rows),
-    (row) => row.status === 'SENT' && (row.type === 'TOP_UP' || row.type === 'WITHDRAWAL')
+    (row) =>
+      (row.type === 'TOP_UP' && row.status === 'PENDING') ||
+      (row.type === 'WITHDRAWAL' && row.status === 'SENT')
   );
 
 // ---- Отклики креатора (myApplications) ----
@@ -96,6 +98,8 @@ export const payoutStats = (rows) => {
 
 /** Заявки, которые финансисту ещё предстоит отправить — как pendingCount на странице выплат. */
 export const pendingPayouts = (rows) => countBy(asList(rows), (row) => row.status === 'PENDING');
+
+export const topUpsOnReview = (rows) => countBy(asList(rows), (row) => row.status === 'SENT');
 
 // ---- Кошельки заказчиков (financeCustomers) ----
 
