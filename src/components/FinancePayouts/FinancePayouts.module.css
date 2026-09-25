@@ -10,7 +10,7 @@
   height: 20px;
   padding: 0 6px;
   border-radius: var(--pill-radius);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--color-badge);
   font-size: 0.7rem;
   font-weight: 700;
   color: inherit;

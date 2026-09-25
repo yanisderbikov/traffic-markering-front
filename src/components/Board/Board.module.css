@@ -59,7 +59,7 @@
   padding: 10px 22px;
   border-radius: 12px;
   background: var(--color-accent);
-  color: var(--color-page);
+  color: var(--color-on-accent-dark);
 }
 
 .statCountValue {

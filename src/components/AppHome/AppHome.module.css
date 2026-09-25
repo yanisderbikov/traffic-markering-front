@@ -214,7 +214,7 @@
   width: 100%;
   max-width: 64px;
   border-radius: 8px;
-  background: #5a2a17;
+  background: var(--color-bar);
   transition: background 0.15s ease;
 }
 

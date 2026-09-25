@@ -121,7 +121,7 @@ const AppLayout = () => {
     <div className={styles.layout}>
       <aside className={styles.sidebar}>
         <NavLink to="/app" className={styles.brand} aria-label="offer">
-          <Logo light withText />
+          <Logo withText />
         </NavLink>
         {roleLabel && <span className={styles.rolePill}>{roleLabel}</span>}
         {navList}
@@ -131,7 +131,7 @@ const AppLayout = () => {
       <div className={styles.main}>
         <header className={styles.topbar}>
           <NavLink to="/app" className={styles.topbarBrand} aria-label="offer">
-            <Logo light withText />
+            <Logo withText />
           </NavLink>
           <span className={styles.breadcrumb}>
             Рабочее пространство{roleLabel ? ` / ${roleLabel}` : ''}

@@ -7,7 +7,7 @@ const AuthLayout = ({ title, caption, children, footer }) => (
   <div className={styles.page}>
     <header className={styles.header}>
       <Link to="/" className={styles.brand} aria-label="На главную">
-        <Logo light withText />
+        <Logo withText />
       </Link>
     </header>
     <main className={styles.main}>

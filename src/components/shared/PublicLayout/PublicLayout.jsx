@@ -57,7 +57,7 @@ const PublicLayout = ({ children, wide = false }) => {
       <header className={styles.header}>
         <div className={`${styles.headerInner} ${wide ? styles.wide : ''}`}>
           <Link to="/" className={styles.brand} aria-label="offer">
-            <Logo light withText />
+            <Logo withText />
           </Link>
           <nav className={styles.nav} aria-label="Разделы сайта">
             {links}
@@ -85,7 +85,7 @@ const PublicLayout = ({ children, wide = false }) => {
 
       <footer className={styles.footer}>
         <div className={`${styles.footerInner} ${wide ? styles.wide : ''}`}>
-          <Logo light withText className={styles.footerLogo} />
+          <Logo withText className={styles.footerLogo} />
           <span className={styles.tagline}>Контент. Охват. Результат.</span>
           <nav className={styles.footerNav} aria-label="Документы">
             <NavLink to="/info" className={styles.footerLink}>

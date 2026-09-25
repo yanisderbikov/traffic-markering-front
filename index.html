@@ -4,6 +4,17 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#101111" />
+    <script>
+      (function () {
+        var preference = null;
+        try {
+          preference = localStorage.getItem('theme');
+        } catch (e) {}
+        var systemLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+        var light = preference === 'light' || (preference !== 'dark' && systemLight);
+        document.documentElement.dataset.theme = light ? 'light' : 'dark';
+      })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />

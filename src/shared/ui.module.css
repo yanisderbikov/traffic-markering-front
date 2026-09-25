@@ -134,7 +134,7 @@
 }
 
 .cardHint {
-  background: #503024;
+  background: var(--color-hint);
   border: none;
   border-radius: var(--card-radius);
   padding: 22px 24px;
@@ -313,7 +313,7 @@
 }
 
 .btnLight:hover:not(:disabled) {
-  background: #fff;
+  background: var(--color-ink-soft);
 }
 
 .btnLarge {

@@ -18,7 +18,3 @@
 .word {
   fill: var(--color-ink);
 }
-
-.light .word {
-  fill: #fff;
-}

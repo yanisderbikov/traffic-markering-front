@@ -165,7 +165,7 @@
   margin-top: 8px;
   padding: 22px 24px;
   border-radius: 14px;
-  background: #503024;
+  background: var(--color-hint);
 }
 
 .hintCardTitle {

@@ -18,8 +18,8 @@ const Word = () => (
   </g>
 );
 
-const Logo = ({ withText = false, light = false, className = '' }) => (
-  <span className={`${styles.logo} ${light ? styles.light : ''} ${className}`}>
+const Logo = ({ withText = false, className = '' }) => (
+  <span className={`${styles.logo} ${className}`}>
     <svg
       className={styles.svg}
       viewBox={withText ? '0 0 346.18 88.95' : '0 0 54.58 88.95'}

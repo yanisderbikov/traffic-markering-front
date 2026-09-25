@@ -7,7 +7,7 @@ import styles from './NotFound.module.css';
 const NotFound = () => (
   <div className={styles.page}>
     <Link to="/" className={styles.brand} aria-label="offer">
-      <Logo light withText />
+      <Logo withText />
     </Link>
     <main className={styles.body}>
       <p className={styles.code}>404</p>
