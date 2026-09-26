@@ -4,6 +4,8 @@ import apiClient from './apiClient';
 import styles from './App.module.css';
 import Board from './components/Board/Board';
 import Landing from './components/Landing/Landing';
+import AdvLanding from './components/AdvLanding/AdvLanding';
+import CreatorLanding from './components/CreatorLanding/CreatorLanding';
 import ShellSwitch from './components/AppLayout/ShellSwitch';
 import CampaignPage from './components/CampaignPage/CampaignPage';
 import ApplyPage from './components/ApplyPage/ApplyPage';
@@ -38,6 +40,8 @@ import Terms from './components/Info/Terms';
 // динамические шаблоны ниже, — 404 (и такие страницы закрываем от индексации).
 const KNOWN_PATHS = new Set([
   '/',
+  '/adv',
+  '/creator',
   '/board',
   '/login',
   '/register',
@@ -79,6 +83,16 @@ const PAGE_SEO = {
     title: 'offer — монетизируй охваты',
     description:
       'Бренды покупают измеримый охват, креаторы создают контент и зарабатывают на просмотрах. Прозрачные ставки, понятный бюджет.',
+  },
+  '/adv': {
+    title: 'offer для рекламодателей — платите за реальные просмотры',
+    description:
+      'Креаторы снимают ролики для Shorts, TikTok и Reels, а бюджет списывается только за просмотры, подтверждённые API площадок. Накрутку не оплачиваем, остаток бюджета возвращается.',
+  },
+  '/creator': {
+    title: 'offer для креаторов — зарабатывай на просмотрах',
+    description:
+      'Платим за подтверждённые просмотры твоих роликов в YouTube Shorts, TikTok и Instagram Reels: ставка за 1000 просмотров, бюджет зарезервирован заранее, выплаты в USDT.',
   },
   '/board': {
     title: 'офферы — offer',
@@ -171,6 +185,8 @@ function App() {
           path="/"
           element={apiClient.hasLiveToken() ? <Navigate to="/app" replace /> : <Landing />}
         />
+        <Route path="/adv" element={<AdvLanding />} />
+        <Route path="/creator" element={<CreatorLanding />} />
         <Route path="/board" element={<Board />} />
         <Route element={<ShellSwitch />}>
           <Route path="/campaigns/:publicId" element={<CampaignPage />} />

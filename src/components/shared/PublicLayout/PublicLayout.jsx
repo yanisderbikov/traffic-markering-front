@@ -6,14 +6,20 @@ import Icon from '../Icon/Icon';
 import styles from './PublicLayout.module.css';
 
 const NAV = [
-  { to: '/#brands', label: 'Рекламодателям' },
-  { to: '/#creators', label: 'Креаторам' },
+  { to: '/adv', label: 'Рекламодателям' },
+  { to: '/creator', label: 'Креаторам' },
   { to: '/info', label: 'Как это работает' },
 ];
 
 const YEAR = new Date().getFullYear();
 
-const PublicLayout = ({ children, wide = false }) => {
+const PublicLayout = ({
+  children,
+  wide = false,
+  nav = NAV,
+  startTo = '/register',
+  startLabel = 'Начать',
+}) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const authorized = apiClient.hasLiveToken();
@@ -27,7 +33,7 @@ const PublicLayout = ({ children, wide = false }) => {
     return location.pathname.startsWith(to);
   };
 
-  const links = NAV.map((item) => (
+  const links = nav.map((item) => (
     <a
       key={item.to}
       href={item.to}
@@ -46,8 +52,8 @@ const PublicLayout = ({ children, wide = false }) => {
       <Link to="/login" className={styles.secondary}>
         Войти
       </Link>
-      <Link to="/register" className={styles.primary}>
-        Начать
+      <Link to={startTo} className={styles.primary}>
+        {startLabel}
       </Link>
     </>
   );
