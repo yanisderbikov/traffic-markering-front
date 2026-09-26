@@ -67,10 +67,10 @@ const DYNAMIC_PATHS = [
   /^\/campaigns\/[^/]+\/apply$/,
   /^\/app\/campaigns\/[^/]+$/,
   /^\/app\/finance\/\d+$/,
-  /^\/app\/earnings\/\d+$/,
-  /^\/app\/wallet\/\d+$/,
-  /^\/app\/finance\/payouts\/\d+$/,
-  /^\/app\/finance\/operations\/\d+$/,
+  /^\/app\/earnings\/[A-Z0-9]+$/,
+  /^\/app\/wallet\/[A-Z0-9]+$/,
+  /^\/app\/finance\/payouts\/[A-Z0-9]+$/,
+  /^\/app\/finance\/operations\/[A-Z0-9]+$/,
 ];
 
 // Заголовок и описание вкладки по пути. Ключ — уже нормализованный pathname.

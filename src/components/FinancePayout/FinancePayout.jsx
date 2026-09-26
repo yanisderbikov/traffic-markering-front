@@ -27,7 +27,7 @@ const FinancePayout = () => {
 
   const load = useCallback(async () => {
     try {
-      const res = await apiClient.api.financeOperation(Number(payoutId));
+      const res = await apiClient.api.financeOperation(payoutId);
       setDetail(res.data);
       setPageError('');
     } catch (err) {
@@ -57,7 +57,7 @@ const FinancePayout = () => {
     setBusy(true);
     setError('');
     try {
-      const res = await apiClient.api.markPayoutSent(Number(payoutId), {
+      const res = await apiClient.api.markPayoutSent(payoutId, {
         txId: txId.trim(),
         comment: comment.trim() || undefined,
         proofKeys: proofs.map((proof) => proof.key),
@@ -84,7 +84,7 @@ const FinancePayout = () => {
     setBusy(true);
     setError('');
     try {
-      const res = await apiClient.api.rejectOperation(Number(payoutId), { reason: reason.trim() });
+      const res = await apiClient.api.rejectOperation(payoutId, { reason: reason.trim() });
       setDetail(res.data);
       toast.success('Заявка отклонена, деньги возвращены креатору');
     } catch (err) {

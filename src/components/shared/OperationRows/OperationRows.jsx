@@ -115,7 +115,7 @@ const OperationRows = ({ rows, loading, error, linkFor, emptyText }) => {
       {rows.map((row) => {
         const closed = row.status === 'REJECTED' || row.status === 'CANCELLED';
         return (
-          <Link key={row.id} to={linkFor(row)} className={styles.row} role="row">
+          <Link key={row.publicId} to={linkFor(row)} className={styles.row} role="row">
             <span className={styles.date} role="cell">
               {formatDate(row.createdAt)}
             </span>

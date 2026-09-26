@@ -57,7 +57,7 @@ const OperationPage = ({ scope = 'earnings' }) => {
 
   const load = useCallback(async () => {
     try {
-      const res = await config.load(Number(operationId));
+      const res = await config.load(operationId);
       setDetail(res.data);
       setPageError('');
     } catch (err) {
@@ -76,7 +76,7 @@ const OperationPage = ({ scope = 'earnings' }) => {
     if (!window.confirm(question)) return;
     setBusy(true);
     try {
-      const res = await request(Number(operationId));
+      const res = await request(operationId);
       setDetail(res.data);
       toast.success(done);
     } catch (err) {
@@ -94,7 +94,7 @@ const OperationPage = ({ scope = 'earnings' }) => {
     if (!window.confirm('Отправить заявку на проверку? После этого отменить её не получится.')) return;
     setBusy(true);
     try {
-      const res = await apiClient.api.markTopUpPaid(Number(operationId), {
+      const res = await apiClient.api.markTopUpPaid(operationId, {
         txId: txId.trim() || undefined,
         proofKeys: proofs.map((proof) => proof.key),
       });
@@ -119,7 +119,7 @@ const OperationPage = ({ scope = 'earnings' }) => {
     }
     setBusy(true);
     try {
-      const res = await apiClient.api.rejectOperation(Number(operationId), { reason: reason.trim() });
+      const res = await apiClient.api.rejectOperation(operationId, { reason: reason.trim() });
       setDetail(res.data);
       toast.success('Операция отклонена');
     } catch (err) {
@@ -331,7 +331,7 @@ const OperationPage = ({ scope = 'earnings' }) => {
             <p className={styles.actionText}>
               Отправка USDT, скриншоты и отклонение — на странице заявки.
             </p>
-            <Link to={`/app/finance/payouts/${transaction.id}`} className={ui.btnPrimary}>
+            <Link to={`/app/finance/payouts/${transaction.publicId}`} className={ui.btnPrimary}>
               Открыть заявку →
             </Link>
           </div>

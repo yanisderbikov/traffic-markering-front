@@ -96,7 +96,7 @@ const CreatorEarnings = () => {
     try {
       const res = await apiClient.api.requestPayout({ amountKopecks, tronAddress });
       toast.success(`Заявка на ${formatRubles(amountKopecks)} отправлена финансисту`);
-      navigate(`/app/earnings/${res.data.transaction.id}`);
+      navigate(`/app/earnings/${res.data.transaction.publicId}`);
     } catch (err) {
       setError(errorMessage(err, 'Не удалось создать заявку'));
     } finally {
@@ -283,7 +283,7 @@ const CreatorEarnings = () => {
           rows={visibleRows}
           loading={rowsLoading}
           error={rowsError}
-          linkFor={(row) => `/app/earnings/${row.id}`}
+          linkFor={(row) => `/app/earnings/${row.publicId}`}
           emptyText={
             filter === 'all'
               ? 'Начислений пока нет: они появятся после одобрения работы и первых просмотров.'

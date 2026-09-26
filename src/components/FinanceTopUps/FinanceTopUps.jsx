@@ -81,7 +81,7 @@ const FinanceTopUps = () => {
           rows={visible}
           loading={loading}
           error={pageError}
-          linkFor={(row) => `/app/finance/operations/${row.id}`}
+          linkFor={(row) => `/app/finance/operations/${row.publicId}`}
           emptyText="Заявок с таким статусом нет."
         />
       </section>

@@ -688,8 +688,11 @@ export interface WalletDTO {
 
 /** Операция по кошельку; сумма со знаком относительно свободных средств */
 export interface WalletTransactionDTO {
-  /** @format int64 */
-  id?: number;
+  /**
+   * Публичный номер операции для ссылок
+   * @example "K7Q2M9XA"
+   */
+  publicId?: string;
   /** Тип: TOP_UP, WITHDRAWAL, ALLOCATION, RELEASE */
   type?: string;
   /**
@@ -821,10 +824,13 @@ export interface FlowPointDTO {
   campaignPublicId?: string;
 }
 
-/** Строка списка операций: суть, откуда → куда и статус; подробности — отдельной ручкой по id */
+/** Строка списка операций: суть, откуда → куда и статус; подробности — отдельной ручкой по publicId */
 export interface OperationRowDTO {
-  /** @format int64 */
-  id?: number;
+  /**
+   * Публичный номер операции для ссылок
+   * @example "K7Q2M9XA"
+   */
+  publicId?: string;
   /** Тип: TOP_UP, WITHDRAWAL, ALLOCATION, RELEASE, EARNING, PAYOUT */
   type?: string;
   /**
@@ -1797,12 +1803,12 @@ export class Api<
      * @tags Earnings
      * @name MyOperation
      * @summary Операция целиком
-     * @request GET:/api/earnings/operations/{id}
+     * @request GET:/api/earnings/operations/{publicId}
      * @secure
      */
-    myOperation: (id: number, params: RequestParams = {}) =>
+    myOperation: (publicId: string, params: RequestParams = {}) =>
       this.request<OperationDetailDTO, any>({
-        path: `/api/earnings/operations/${id}`,
+        path: `/api/earnings/operations/${publicId}`,
         method: "GET",
         secure: true,
         ...params,
@@ -1833,12 +1839,12 @@ export class Api<
      * @tags Earnings
      * @name ConfirmPayout
      * @summary Подтвердить получение
-     * @request POST:/api/earnings/payouts/{id}/confirm
+     * @request POST:/api/earnings/payouts/{publicId}/confirm
      * @secure
      */
-    confirmPayout: (id: number, params: RequestParams = {}) =>
+    confirmPayout: (publicId: string, params: RequestParams = {}) =>
       this.request<OperationDetailDTO, any>({
-        path: `/api/earnings/payouts/${id}/confirm`,
+        path: `/api/earnings/payouts/${publicId}/confirm`,
         method: "POST",
         secure: true,
         ...params,
@@ -1850,12 +1856,12 @@ export class Api<
      * @tags Earnings
      * @name CancelPayout
      * @summary Отменить заявку
-     * @request POST:/api/earnings/payouts/{id}/cancel
+     * @request POST:/api/earnings/payouts/{publicId}/cancel
      * @secure
      */
-    cancelPayout: (id: number, params: RequestParams = {}) =>
+    cancelPayout: (publicId: string, params: RequestParams = {}) =>
       this.request<OperationDetailDTO, any>({
-        path: `/api/earnings/payouts/${id}/cancel`,
+        path: `/api/earnings/payouts/${publicId}/cancel`,
         method: "POST",
         secure: true,
         ...params,
@@ -1901,12 +1907,12 @@ export class Api<
      * @tags Finance
      * @name ConfirmTopUp
      * @summary Подтвердить поступление по заявке на пополнение
-     * @request POST:/api/finance/top-ups/{id}/confirm
+     * @request POST:/api/finance/top-ups/{publicId}/confirm
      * @secure
      */
-    confirmTopUp: (id: number, params: RequestParams = {}) =>
+    confirmTopUp: (publicId: string, params: RequestParams = {}) =>
       this.request<OperationDetailDTO, any>({
-        path: `/api/finance/top-ups/${id}/confirm`,
+        path: `/api/finance/top-ups/${publicId}/confirm`,
         method: "POST",
         secure: true,
         ...params,
@@ -1919,16 +1925,16 @@ export class Api<
      * @tags Finance
      * @name MarkPayoutSent
      * @summary Отметить выплату отправленной
-     * @request POST:/api/finance/payouts/{id}/sent
+     * @request POST:/api/finance/payouts/{publicId}/sent
      * @secure
      */
     markPayoutSent: (
-      id: number,
+      publicId: string,
       data: TransferSentRequestDTO,
       params: RequestParams = {},
     ) =>
       this.request<OperationDetailDTO, any>({
-        path: `/api/finance/payouts/${id}/sent`,
+        path: `/api/finance/payouts/${publicId}/sent`,
         method: "POST",
         body: data,
         secure: true,
@@ -1942,16 +1948,16 @@ export class Api<
      * @tags Finance
      * @name RejectOperation
      * @summary Отклонить пополнение, вывод или выплату
-     * @request POST:/api/finance/operations/{id}/reject
+     * @request POST:/api/finance/operations/{publicId}/reject
      * @secure
      */
     rejectOperation: (
-      id: number,
+      publicId: string,
       data: TransferRejectRequestDTO,
       params: RequestParams = {},
     ) =>
       this.request<OperationDetailDTO, any>({
-        path: `/api/finance/operations/${id}/reject`,
+        path: `/api/finance/operations/${publicId}/reject`,
         method: "POST",
         body: data,
         secure: true,
@@ -2003,12 +2009,12 @@ export class Api<
      * @tags Wallet
      * @name MyWalletOperation
      * @summary Операция по моему кошельку целиком
-     * @request GET:/api/wallet/operations/{id}
+     * @request GET:/api/wallet/operations/{publicId}
      * @secure
      */
-    myWalletOperation: (id: number, params: RequestParams = {}) =>
+    myWalletOperation: (publicId: string, params: RequestParams = {}) =>
       this.request<OperationDetailDTO, any>({
-        path: `/api/wallet/operations/${id}`,
+        path: `/api/wallet/operations/${publicId}`,
         method: "GET",
         secure: true,
         ...params,
@@ -2020,12 +2026,12 @@ export class Api<
      * @tags Wallet
      * @name ConfirmWalletOperation
      * @summary Подтвердить вывод
-     * @request POST:/api/wallet/operations/{id}/confirm
+     * @request POST:/api/wallet/operations/{publicId}/confirm
      * @secure
      */
-    confirmWalletOperation: (id: number, params: RequestParams = {}) =>
+    confirmWalletOperation: (publicId: string, params: RequestParams = {}) =>
       this.request<OperationDetailDTO, any>({
-        path: `/api/wallet/operations/${id}/confirm`,
+        path: `/api/wallet/operations/${publicId}/confirm`,
         method: "POST",
         secure: true,
         ...params,
@@ -2056,16 +2062,16 @@ export class Api<
      * @tags Wallet
      * @name MarkTopUpPaid
      * @summary Отметить заявку на пополнение оплаченной
-     * @request POST:/api/wallet/top-ups/{id}/paid
+     * @request POST:/api/wallet/top-ups/{publicId}/paid
      * @secure
      */
     markTopUpPaid: (
-      id: number,
+      publicId: string,
       data: TopUpPaidRequestDTO,
       params: RequestParams = {},
     ) =>
       this.request<OperationDetailDTO, any>({
-        path: `/api/wallet/top-ups/${id}/paid`,
+        path: `/api/wallet/top-ups/${publicId}/paid`,
         method: "POST",
         body: data,
         secure: true,
@@ -2079,12 +2085,12 @@ export class Api<
      * @tags Wallet
      * @name CancelTopUp
      * @summary Отменить заявку на пополнение
-     * @request POST:/api/wallet/top-ups/{id}/cancel
+     * @request POST:/api/wallet/top-ups/{publicId}/cancel
      * @secure
      */
-    cancelTopUp: (id: number, params: RequestParams = {}) =>
+    cancelTopUp: (publicId: string, params: RequestParams = {}) =>
       this.request<OperationDetailDTO, any>({
-        path: `/api/wallet/top-ups/${id}/cancel`,
+        path: `/api/wallet/top-ups/${publicId}/cancel`,
         method: "POST",
         secure: true,
         ...params,
@@ -2134,12 +2140,12 @@ export class Api<
      * @tags Finance
      * @name FinanceOperation
      * @summary Операция целиком
-     * @request GET:/api/finance/operations/{id}
+     * @request GET:/api/finance/operations/{publicId}
      * @secure
      */
-    financeOperation: (id: number, params: RequestParams = {}) =>
+    financeOperation: (publicId: string, params: RequestParams = {}) =>
       this.request<OperationDetailDTO, any>({
-        path: `/api/finance/operations/${id}`,
+        path: `/api/finance/operations/${publicId}`,
         method: "GET",
         secure: true,
         ...params,

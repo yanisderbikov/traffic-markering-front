@@ -238,8 +238,8 @@ const CreatorHome = () => {
         ) : (
           <ul className={styles.accruals}>
             {accruals.map((row) => (
-              <li key={row.id}>
-                <Link to={`/app/earnings/${row.id}`} className={styles.accrual}>
+              <li key={row.publicId}>
+                <Link to={`/app/earnings/${row.publicId}`} className={styles.accrual}>
                   <span className={styles.accrualIcon} aria-hidden="true">
                     ₽
                   </span>

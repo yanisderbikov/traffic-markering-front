@@ -88,7 +88,7 @@ const FinancePayouts = () => {
           rows={visible}
           loading={loading}
           error={pageError}
-          linkFor={(row) => `/app/finance/payouts/${row.id}`}
+          linkFor={(row) => `/app/finance/payouts/${row.publicId}`}
           emptyText="Заявок с таким статусом нет."
         />
       </section>

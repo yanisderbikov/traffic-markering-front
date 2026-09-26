@@ -74,7 +74,7 @@ const CustomerWallet = () => {
     try {
       const res = await apiClient.api.requestTopUp({ amountKopecks });
       toast.success('Заявка создана — переведите USDT на адрес из заявки');
-      navigate(`/app/wallet/${res.data.transaction.id}`);
+      navigate(`/app/wallet/${res.data.transaction.publicId}`);
     } catch (err) {
       setAmountError(errorMessage(err, 'Не удалось создать заявку'));
       setCreating(false);
@@ -225,7 +225,7 @@ const CustomerWallet = () => {
           rows={transactions}
           loading={transactionsLoading}
           error={transactionsError}
-          linkFor={(row) => `/app/wallet/${row.id}`}
+          linkFor={(row) => `/app/wallet/${row.publicId}`}
           emptyText="Операций по кошельку пока не было."
         />
       </section>
