@@ -6,13 +6,18 @@ import { formatRubles } from '../../shared/money';
 import WorkCard, { WorkCardSkeleton } from '../shared/WorkCard/WorkCard';
 import Skeleton from '../shared/Skeleton/Skeleton';
 import Icon from '../shared/Icon/Icon';
+import { plural } from '../AppHome/homeStats';
+import { isAwaitingVideo, videoReminder } from '../../shared/workReminder';
 import ui from '../../shared/ui.module.css';
 import styles from './CreatorApplications.module.css';
 
 const isApproved = (application) =>
   application.status === 'APPROVED' || application.status === 'COMPLETED';
 const isActiveWork = (application) =>
-  application.status === 'PENDING' || application.status === 'APPROVED';
+  application.status === 'IN_PROGRESS' ||
+  application.status === 'PENDING' ||
+  application.status === 'APPROVED';
+const awaitingFirst = (a, b) => Number(isAwaitingVideo(b)) - Number(isAwaitingVideo(a));
 const isFinishedWork = (application) =>
   application.status === 'COMPLETED' || application.status === 'REJECTED';
 
@@ -66,11 +71,15 @@ const CreatorApplications = () => {
   };
 
   const handleWithdraw = async (application) => {
-    if (!window.confirm(`Отозвать отклик на «${application.campaignTitle}»?`)) return;
+    const awaitingVideo = isAwaitingVideo(application);
+    const question = awaitingVideo
+      ? `Отказаться от оффера «${application.campaignTitle}»?`
+      : `Отозвать отклик на «${application.campaignTitle}»?`;
+    if (!window.confirm(question)) return;
     setBusyId(application.id);
     try {
       await apiClient.api.deleteApplication(application.id);
-      toast.success('Отклик отозван');
+      toast.success(awaitingVideo ? 'Оффер убран из работ' : 'Отклик отозван');
       await loadApplications();
     } catch (err) {
       toast.error(
@@ -87,7 +96,11 @@ const CreatorApplications = () => {
     0
   );
   const activeTab = TABS.find((item) => item.id === tab) || TABS[0];
-  const shown = applications.filter(activeTab.match);
+  const shown = applications.filter(activeTab.match).sort(awaitingFirst);
+  const awaiting = applications
+    .filter(isAwaitingVideo)
+    .filter((application) => videoReminder(application).tone !== 'closed');
+  const urgent = awaiting.filter((application) => videoReminder(application).tone === 'urgent');
 
   return (
     <div className={ui.page}>
@@ -139,6 +152,19 @@ const CreatorApplications = () => {
       </div>
 
       {pageError && <p className={`${ui.errorBanner} ${styles.banner}`}>{pageError}</p>}
+
+      {awaiting.length > 0 && (
+        <div className={styles.attention} role="status">
+          <span className={styles.attentionCount}>{awaiting.length}</span>
+          <span>
+            {plural(awaiting.length, ['оффер ждёт', 'оффера ждут', 'офферов ждут'])} ссылку на
+            ролик. Опубликуйте ролик и прикрепите ссылку в карточке — без неё бренд не увидит
+            работу и просмотры не считаются.
+            {urgent.length > 0 &&
+              ` По ${urgent.length} ${plural(urgent.length, ['офферу', 'офферам', 'офферам'])} приём роликов заканчивается в ближайшие дни.`}
+          </span>
+        </div>
+      )}
 
       <div className={`${ui.chips} ${styles.tabs}`} role="tablist" aria-label="Фильтр работ">
         {TABS.map((item) => (

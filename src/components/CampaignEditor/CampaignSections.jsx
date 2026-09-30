@@ -12,10 +12,17 @@ import {
   platformsWithoutGeography,
   viewRegionLabel,
 } from '../../shared/viewRegion';
-import { formatRubles, rubToKopecks } from '../../shared/money';
+import { formatRubles, formatViews, rubToKopecks } from '../../shared/money';
 import { useDebouncedValue } from '../../shared/useDebouncedValue';
 import { PLATFORM_LABELS } from '../../shared/dictionaries';
-import { MATERIALS_MAX, compareToMedian, isRequired, missingFields } from './campaignForm';
+import { pluralize } from '../../shared/requirements';
+import {
+  MATERIALS_MAX,
+  compareToMedian,
+  compareToTopicAverage,
+  isRequired,
+  missingFields,
+} from './campaignForm';
 import ui from '../../shared/ui.module.css';
 import styles from './CampaignEditor.module.css';
 
@@ -123,6 +130,78 @@ const MedianComparison = ({ value, medianKopecks, loading }) => {
   );
 };
 
+const TopicRateAdvice = ({ value, topic }) => {
+  const settledValue = useDebouncedValue(value, MEDIAN_SETTLE_MS);
+  const average = (
+    <span className={styles.medianValue}>{formatRubles(topic.averageRatePerThousandKopecks)}</span>
+  );
+  const tone =
+    value === settledValue
+      ? compareToTopicAverage(rubToKopecks(value), topic.averageRatePerThousandKopecks)
+      : null;
+  if (tone === 'below') {
+    return (
+      <span className={ui.hintWarn}>
+        Ниже средней ставки по тематике «{topic.description}» — {average} за 1 000 просмотров.
+        Лучше добавить: за такую ставку креаторы берутся неохотно, и роликов может не быть.
+      </span>
+    );
+  }
+  if (tone === 'ok') {
+    return (
+      <span className={ui.hintOk}>
+        Не ниже средней по тематике «{topic.description}» — {average}. Креаторам будет интересно.
+      </span>
+    );
+  }
+  return (
+    <span className={ui.hint}>
+      Средняя ставка по тематике «{topic.description}» — {average} за 1 000 просмотров.
+    </span>
+  );
+};
+
+const TopicField = ({ editor }) => {
+  const { form, errors, topics, benchmarksLoading } = editor;
+  return (
+    <div className={styles.field}>
+      <FieldLabel field="topic">Тематика</FieldLabel>
+      {benchmarksLoading ? (
+        <Skeleton width="min(24rem, 90%)" />
+      ) : topics.length === 0 ? (
+        <span className={ui.hintWarn}>Не удалось загрузить тематики — обновите страницу.</span>
+      ) : (
+        <div className={ui.chips} role="radiogroup" aria-label="Тематика">
+          {topics.map((topic) => {
+            const selected = form.topic === topic.code;
+            return (
+              <button
+                key={topic.code}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                className={selected ? ui.chipActive : ui.chip}
+                onClick={() => editor.setTopic(topic.code)}
+              >
+                {selected && <Icon name="check" size={14} />}
+                {topic.description}
+                <span className={styles.topicRate}>
+                  ~{formatRubles(topic.averageRatePerThousandKopecks)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+      <FieldError>{errors.topic}</FieldError>
+      <span className={ui.hint}>
+        Рядом — средняя ставка за 1 000 просмотров по тематике. От неё посчитаем подсказку на шаге
+        бюджета.
+      </span>
+    </div>
+  );
+};
+
 const IntInput = ({ editor, id, name }) => (
   <input id={id} type="text" inputMode="numeric" onChange={editor.setIntField} {...inputProps(editor, name)} />
 );
@@ -145,6 +224,8 @@ export const BriefFields = ({ editor }) => {
         />
         <FieldError>{errors.title}</FieldError>
       </div>
+
+      <TopicField editor={editor} />
 
       <div className={styles.field}>
         <FieldLabel field="description" htmlFor="campaign-description">
@@ -390,8 +471,10 @@ export const BudgetFields = ({ editor, onOpenWallet }) => {
     benchmarksLoading,
     walletLoading,
     prefillRate,
+    topic,
   } = editor;
   const launched = campaign.status !== 'DRAFT';
+  const minPaidViews = minPaidViewsFor(form.minPaidRub, form.rateRub);
 
   useEffect(() => {
     prefillRate();
@@ -411,11 +494,15 @@ export const BudgetFields = ({ editor, onOpenWallet }) => {
         </FieldLabel>
         <MoneyInput editor={editor} id="campaign-rate" name="rateRub" />
         <FieldError>{errors.rateRub}</FieldError>
-        <MedianComparison
-          value={form.rateRub}
-          medianKopecks={benchmarks?.medianRatePerThousandKopecks}
-          loading={benchmarksLoading}
-        />
+        {topic ? (
+          <TopicRateAdvice value={form.rateRub} topic={topic} />
+        ) : (
+          <MedianComparison
+            value={form.rateRub}
+            medianKopecks={benchmarks?.medianRatePerThousandKopecks}
+            loading={benchmarksLoading}
+          />
+        )}
       </div>
       <div className={styles.field}>
         <FieldLabel field="budgetRub" htmlFor="campaign-budget">
@@ -462,12 +549,17 @@ export const BudgetFields = ({ editor, onOpenWallet }) => {
         </span>
       </div>
       <div className={styles.field}>
-        <FieldLabel field="minPaidViews" htmlFor="campaign-min-views">
-          Оплата от, просмотров
+        <FieldLabel field="minPaidRub" htmlFor="campaign-min-paid">
+          Оплата от
         </FieldLabel>
-        <IntInput editor={editor} id="campaign-min-views" name="minPaidViews" />
-        <FieldError>{errors.minPaidViews}</FieldError>
-        <span className={ui.hint}>Ниже порога ролик не оплачивается. Пусто — платите за все.</span>
+        <MoneyInput editor={editor} id="campaign-min-paid" name="minPaidRub" />
+        <FieldError>{errors.minPaidRub}</FieldError>
+        <span className={ui.hint}>
+          {minPaidViews
+            ? `≈ ${formatViews(minPaidViews)} ${pluralize(minPaidViews, ['просмотр', 'просмотра', 'просмотров'])} по вашей ставке. `
+            : ''}
+          Ролик, заработавший меньше, не оплачивается. Пусто — платите за все.
+        </span>
       </div>
     </div>
   );

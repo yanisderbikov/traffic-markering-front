@@ -14,6 +14,7 @@ import { RequiredNote, STEP_FIELDS } from './CampaignSections';
 import {
   CAMPAIGN_STEPS,
   FORM_STEPS,
+  compareToTopicAverage,
   fieldLabel,
   firstIncompleteStep,
   formFromCampaign,
@@ -35,9 +36,10 @@ const moneyOrDash = (value) => {
   return kopecks == null ? '—' : formatRubles(kopecks);
 };
 
-const reviewRows = (form) => ({
+const reviewRows = (form, topic) => ({
   brief: [
     ['Название', orDash(form.title.trim())],
+    ['Тематика', orDash(topic?.description)],
     ['Описание', form.description.trim() ? 'заполнено' : '—'],
     ['Обложка', form.photoKey ? 'загружена' : '—'],
     [
@@ -61,12 +63,15 @@ const reviewRows = (form) => ({
     ['Ставка за 1 000 просмотров', moneyOrDash(form.rateRub)],
     ['Общий бюджет', moneyOrDash(form.budgetRub)],
     ['Порог вывода', moneyOrDash(form.minPayoutRub)],
-    ['Оплата', form.minPaidViews ? `от ${form.minPaidViews} просмотров` : 'с первого просмотра'],
+    ['Оплата', form.minPaidRub ? `от ${form.minPaidRub} ₽ за ролик` : 'с первого просмотра'],
   ],
 });
 
-const LaunchReview = ({ form, onEdit, disabled }) => {
-  const rows = reviewRows(form);
+const LaunchReview = ({ form, topic, onEdit, disabled }) => {
+  const rows = reviewRows(form, topic);
+  const rateKopecks = rubToKopecks(form.rateRub);
+  const rateBelowTopic =
+    compareToTopicAverage(rateKopecks, topic?.averageRatePerThousandKopecks) === 'below';
   const missing = missingLabels(form);
   return (
     <div className={styles.review}>
@@ -97,6 +102,13 @@ const LaunchReview = ({ form, onEdit, disabled }) => {
           </section>
         );
       })}
+      {rateBelowTopic && (
+        <p className={ui.hintWarn}>
+          Ставка {formatRubles(rateKopecks)} ниже средней по тематике «{topic.description}» —{' '}
+          {formatRubles(topic.averageRatePerThousandKopecks)} за 1 000 просмотров. Запустить можно,
+          но креаторы могут не откликнуться — лучше поднять ставку.
+        </p>
+      )}
       {missing.length > 0 ? (
         <p className={ui.hintWarn}>Чтобы запустить кампанию, заполните: {missing.join(', ')}.</p>
       ) : (
@@ -294,6 +306,7 @@ const CampaignWizard = ({ campaign: initialCampaign, onLaunched }) => {
             ) : (
               <LaunchReview
                 form={editor.form}
+                topic={editor.topic}
                 onEdit={(index) => goTo(index, true)}
                 disabled={busy}
               />

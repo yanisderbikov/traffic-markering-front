@@ -134,6 +134,25 @@ export interface CampaignCreateUpdateRequestDTO {
    */
   photoKey?: string;
   /**
+   * Тематика объявления; обязательна для запуска
+   * @example "TECH"
+   */
+  topic?:
+    | "ENTERTAINMENT"
+    | "GAMING"
+    | "LIFESTYLE"
+    | "FOOD"
+    | "BEAUTY_FASHION"
+    | "SPORT_HEALTH"
+    | "TRAVEL"
+    | "APPS"
+    | "TECH"
+    | "EDUCATION"
+    | "AUTO"
+    | "REAL_ESTATE"
+    | "FINANCE"
+    | "OTHER";
+  /**
    * Ставка за 1000 просмотров, в копейках; обязательна для запуска
    * @format int64
    * @example 35000
@@ -158,10 +177,10 @@ export interface CampaignCreateUpdateRequestDTO {
    */
   platforms?: ("TELEGRAM" | "INSTAGRAM" | "TIKTOK" | "YOUTUBE_SHORTS")[];
   /**
-   * Регион, просмотры из которого оплачиваются: RUSSIA (только РФ), CIS (СНГ), WORLD (весь мир); null — весь мир
-   * @example "RUSSIA"
+   * Регион, просмотры из которого оплачиваются: CIS (СНГ), WORLD (весь мир); null — весь мир.
+   * @example "CIS"
    */
-  viewRegion?: "RUSSIA" | "CIS" | "WORLD";
+  viewRegion?: "CIS" | "WORLD";
   minVideoSeconds?: number;
   /**
    * Сколько просмотров должен набрать ролик, чтобы его оплатили; ниже порога начислений нет, null — оплачиваются все просмотры
@@ -256,6 +275,28 @@ export interface CampaignBenchmarkDTO {
    * @example 10000000
    */
   medianBudgetKopecks: number;
+  /** Тематики со средними ставками за 1000 просмотров, в порядке показа */
+  topics: CampaignTopicDTO[];
+}
+
+/** Тематика объявления со средней ставкой по ней */
+export interface CampaignTopicDTO {
+  /**
+   * Код тематики
+   * @example "TECH"
+   */
+  code: string;
+  /**
+   * Название тематики
+   * @example "Технологии и гаджеты"
+   */
+  description: string;
+  /**
+   * Средняя ставка за 1000 просмотров по тематике, в копейках
+   * @format int64
+   * @example 20000
+   */
+  averageRatePerThousandKopecks: number;
 }
 
 /** Объявление целиком: карточка заказчика и публичная страница */
@@ -270,6 +311,13 @@ export interface CampaignDTO {
   photoUrl?: string;
   /** Ключ фотографии в хранилище; отправляется обратно при обновлении */
   photoKey?: string;
+  /** Тематика; null — не выбрана */
+  topic?: string;
+  /**
+   * Человекочитаемая тематика
+   * @example "Технологии и гаджеты"
+   */
+  topicDescription?: string;
   /**
    * Ставка за 1000 просмотров, в копейках
    * @format int64
@@ -304,7 +352,7 @@ export interface CampaignDTO {
   statusDescription?: string;
   /** Площадки, с которых принимаются ролики: INSTAGRAM, TIKTOK, YOUTUBE_SHORTS */
   platforms?: string[];
-  /** Регион оплачиваемых просмотров: RUSSIA, CIS, WORLD */
+  /** Регион оплачиваемых просмотров: CIS, WORLD */
   viewRegion?: string;
   /**
    * Человекочитаемый регион просмотров
@@ -439,6 +487,19 @@ export interface ApplicationCreateRequestDTO {
    */
   campaignId: string;
   /**
+   * Ссылка на выложенный ролик; площадка определяется по ней: YouTube, TikTok или Instagram. Без ссылки оффер берётся в работу (IN_PROGRESS), ролик прикладывается позже
+   * @minLength 0
+   * @maxLength 1024
+   * @example "https://www.tiktok.com/@demo/video/123"
+   */
+  videoUrl?: string;
+  /** Комментарий заказчику: что сняли и почему так */
+  comment?: string;
+}
+
+/** Ролик к взятому в работу офферу */
+export interface ApplicationVideoRequestDTO {
+  /**
    * Ссылка на выложенный ролик; площадка определяется по ней: YouTube, TikTok или Instagram
    * @minLength 0
    * @maxLength 1024
@@ -457,7 +518,11 @@ export interface ApplicationDTO {
   publicId?: string;
   /** @format uuid */
   campaignId?: string;
+  /** Короткий номер объявления для ссылки на него */
+  campaignPublicId?: string;
   campaignTitle?: string;
+  /** Когда объявление перестаёт принимать отклики и ролики, ISO-8601; null — бессрочно */
+  campaignEndsAt?: string;
   /**
    * Ставка объявления за 1000 просмотров, в копейках
    * @format int64
@@ -468,7 +533,7 @@ export interface ApplicationDTO {
    * @format int64
    */
   minPayoutKopecks?: number;
-  /** Регион оплачиваемых просмотров объявления: RUSSIA, CIS, WORLD */
+  /** Регион оплачиваемых просмотров объявления: CIS, WORLD */
   campaignViewRegion?: string;
   /**
    * Человекочитаемый регион просмотров объявления
@@ -489,7 +554,7 @@ export interface ApplicationDTO {
   platformDescription?: string;
   videoUrl?: string;
   comment?: string;
-  /** Статус: PENDING, APPROVED, REJECTED, COMPLETED */
+  /** Статус: IN_PROGRESS (взят в работу, ролика ещё нет), PENDING, APPROVED, REJECTED, COMPLETED */
   status?: string;
   /**
    * Человекочитаемый статус
@@ -549,7 +614,7 @@ export interface ApplicationStatusUpdateRequestDTO {
    * Новый статус: APPROVED, REJECTED или COMPLETED
    * @example "APPROVED"
    */
-  status: "PENDING" | "APPROVED" | "REJECTED" | "COMPLETED";
+  status: "IN_PROGRESS" | "PENDING" | "APPROVED" | "REJECTED" | "COMPLETED";
 }
 
 /** Карточка объявления на публичной доске */
@@ -588,7 +653,7 @@ export interface CampaignBoardDTO {
   minPayoutKopecks?: number;
   /** Площадки, с которых принимаются ролики: INSTAGRAM, TIKTOK, YOUTUBE_SHORTS */
   platforms?: string[];
-  /** Регион оплачиваемых просмотров: RUSSIA, CIS, WORLD */
+  /** Регион оплачиваемых просмотров: CIS, WORLD */
   viewRegion?: string;
   /**
    * Человекочитаемый регион просмотров
@@ -1489,7 +1554,7 @@ export class Api<
       }),
 
     /**
-     * @description Креатор прикладывает ссылку на ролик. Откликнуться можно только на активное объявление, один раз и не на своё; повторный отклик — 409
+     * @description Без ссылки на ролик отклик встаёт в IN_PROGRESS: креатор снимает ролик и прикладывает его позже, повторный вызов возвращает тот же отклик. Со ссылкой площадка определяется по ней, должна быть среди площадок объявления, а аккаунт этой площадки должен быть привязан в профиле
      *
      * @tags Application
      * @name Apply
@@ -1501,6 +1566,29 @@ export class Api<
       this.request<ApplicationDTO, any>({
         path: `/api/applications`,
         method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description Ролик к отклику в статусе IN_PROGRESS: те же проверки площадки, аккаунта и дублей, что и при отклике со ссылкой. После этого отклик уходит заказчику на рассмотрение (PENDING)
+     *
+     * @tags Application
+     * @name AttachVideo
+     * @summary Приложить ролик к работе
+     * @request PUT:/api/applications/{id}/video
+     * @secure
+     */
+    attachVideo: (
+      id: string,
+      data: ApplicationVideoRequestDTO,
+      params: RequestParams = {},
+    ) =>
+      this.request<ApplicationDTO, any>({
+        path: `/api/applications/${id}/video`,
+        method: "PUT",
         body: data,
         secure: true,
         type: ContentType.Json,

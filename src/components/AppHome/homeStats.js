@@ -64,6 +64,7 @@ export const applicationStats = (rows) => {
   const list = asList(rows);
   return {
     approved: countBy(list, (row) => row.status === 'APPROVED'),
+    awaitingVideo: countBy(list, (row) => row.status === 'IN_PROGRESS'),
     pending: countBy(list, (row) => row.status === 'PENDING'),
     // Просмотры считаем только по одобренным и завершённым: у отклонённых
     // и ожидающих их либо нет, либо они не оплачиваются.

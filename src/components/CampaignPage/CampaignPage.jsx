@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import MaterialList from '../shared/MaterialList/MaterialList';
 import SocialIcon from '../shared/SocialIcon/SocialIcon';
@@ -93,10 +94,13 @@ const CampaignPageSkeleton = ({ boardPath }) => (
 
 const CampaignPage = () => {
   const { publicId } = useParams();
+  const navigate = useNavigate();
 
   const [campaign, setCampaign] = useState(null);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState('');
+  const [workInProgress, setWorkInProgress] = useState(null);
+  const [taking, setTaking] = useState(false);
 
   const authorized = apiClient.hasLiveToken();
   const role = authorized ? apiClient.getJwtMetadata()?.role : null;
@@ -122,6 +126,35 @@ const CampaignPage = () => {
   useEffect(() => {
     loadCampaign();
   }, [loadCampaign]);
+
+  useEffect(() => {
+    if (!isCreator) return;
+    apiClient.api
+      .myApplications()
+      .then((res) => {
+        const rows = Array.isArray(res.data) ? res.data : [];
+        setWorkInProgress(
+          rows.find((row) => row.campaignPublicId === publicId && row.status === 'IN_PROGRESS') ||
+            null
+        );
+      })
+      .catch(() => setWorkInProgress(null));
+  }, [isCreator, publicId]);
+
+  const handleTake = async () => {
+    setTaking(true);
+    try {
+      await apiClient.api.apply({ campaignId: campaign.id });
+      toast.success('Оффер в работе — снимите ролик и пришлите ссылку в «Моих работах»');
+      navigate('/app/applications');
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || err?.message || 'Не удалось взять оффер в работу'
+      );
+    } finally {
+      setTaking(false);
+    }
+  };
 
   if (loading) {
     return <CampaignPageSkeleton boardPath={authorized ? '/app/board' : '/board'} />;
@@ -167,7 +200,7 @@ const CampaignPage = () => {
     },
     {
       title: 'Опубликовать и прислать ссылку',
-      text: 'Откликнитесь на оффер ссылкой на ролик из подключённого аккаунта. Бренд увидит заявку сразу.',
+      text: 'Возьмите оффер в работу — он появится в «Моих работах». Когда ролик выйдет в подключённом аккаунте, пришлите на него ссылку, и бренд увидит заявку.',
     },
     {
       title: 'Получить одобрение и набирать просмотры',
@@ -178,7 +211,7 @@ const CampaignPage = () => {
   const renderCta = (large = false) => {
     const size = large ? `${ui.btnPrimary} ${ui.btnLarge} ${ui.btnBlock}` : ui.btnPrimary;
     if (!authorized) {
-      const from = encodeURIComponent(applyPath);
+      const from = encodeURIComponent(`/campaigns/${publicId}`);
       return (
         <Link to={`/login?from=${from}`} className={size}>
           Войти и откликнуться
@@ -199,10 +232,17 @@ const CampaignPage = () => {
         </span>
       );
     }
+    if (workInProgress) {
+      return (
+        <Link to={applyPath} className={size}>
+          Прикрепить ролик
+        </Link>
+      );
+    }
     return (
-      <Link to={applyPath} className={size}>
-        Откликнуться на оффер
-      </Link>
+      <button type="button" className={size} onClick={handleTake} disabled={taking}>
+        {taking ? 'Берём в работу…' : 'Взять в работу'}
+      </button>
     );
   };
 
@@ -210,7 +250,9 @@ const CampaignPage = () => {
     ? 'Откликаются креаторы. Регистрация занимает минуту, пароль не нужен.'
     : !isCreator
       ? `Вы вошли как ${role === 'CUSTOMER' ? 'рекламодатель' : 'администратор'}. Отклики оставляют креаторы.`
-      : 'Начисления зависят от подтверждённых просмотров и условий кампании.';
+      : workInProgress
+        ? 'Оффер уже у вас в работе. Пришлите ссылку, как только ролик выйдет.'
+        : 'Ссылку на ролик пришлёте позже — оффер сохранится в «Моих работах».';
 
   return (
     <div className={ui.page}>

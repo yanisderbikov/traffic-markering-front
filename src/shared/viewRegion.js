@@ -1,13 +1,12 @@
 import { PLATFORM_LABELS, VIEW_REGION_LABELS } from './dictionaries';
 
-export const VIEW_REGIONS = ['RUSSIA', 'CIS', 'WORLD'];
+export const VIEW_REGIONS = ['CIS', 'WORLD'];
 
 export const DEFAULT_VIEW_REGION = 'WORLD';
 
 const GEOGRAPHY_PLATFORMS = ['YOUTUBE_SHORTS'];
 
 const REGION_VIEWS = {
-  RUSSIA: 'просмотры из России',
   CIS: 'просмотры из России и стран СНГ',
   WORLD: 'все просмотры, откуда бы они ни были',
 };

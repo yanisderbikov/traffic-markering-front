@@ -12,6 +12,7 @@ import {
   PHOTO_MAX_BYTES,
   PHOTO_TYPES,
   formFromCampaign,
+  findTopic,
   formToRequest,
   normalizeLink,
   sameValue,
@@ -67,12 +68,17 @@ const useCampaignForm = (initialCampaign) => {
     return () => URL.revokeObjectURL(photoPreview);
   }, [photoPreview]);
 
+  const topics = benchmarks?.topics ?? [];
+  const topic = findTopic(topics, form.topic);
+
   const prefillRate = useCallback(() => {
     if (ratePrefilled.current || !benchmarks) return;
     ratePrefilled.current = true;
-    const rateRub = suggestedRateInput(benchmarks.medianRatePerThousandKopecks);
+    const baseKopecks =
+      topic?.averageRatePerThousandKopecks ?? benchmarks.medianRatePerThousandKopecks;
+    const rateRub = suggestedRateInput(baseKopecks);
     setForm((prev) => (prev.rateRub ? prev : { ...prev, rateRub }));
-  }, [benchmarks]);
+  }, [benchmarks, topic]);
 
   const touch = (name) => {
     clearFieldError(setErrors, name);
@@ -99,6 +105,7 @@ const useCampaignForm = (initialCampaign) => {
   };
 
   const setViewRegion = (region) => updateField('viewRegion', region);
+  const setTopic = (code) => updateField('topic', code);
 
   const materialsFull = form.materials.length >= MATERIALS_MAX;
 
@@ -329,6 +336,8 @@ const useCampaignForm = (initialCampaign) => {
     walletLoading,
     benchmarks,
     benchmarksLoading,
+    topics,
+    topic,
     availableKopecks,
     savedBudgetKopecks,
     setField,
@@ -336,6 +345,7 @@ const useCampaignForm = (initialCampaign) => {
     setIntField,
     togglePlatform,
     setViewRegion,
+    setTopic,
     prefillRate,
     removeMaterial,
     handlePhotoChange,

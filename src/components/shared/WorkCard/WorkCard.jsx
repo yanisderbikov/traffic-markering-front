@@ -5,10 +5,11 @@ import Skeleton from '../Skeleton/Skeleton';
 import { formatRubles, formatViews } from '../../../shared/money';
 import { PLATFORM_LABELS, formatDate } from '../../../shared/dictionaries';
 import { isWorldRegion } from '../../../shared/viewRegion';
+import { isAwaitingVideo, videoReminder } from '../../../shared/workReminder';
 import ui from '../../../shared/ui.module.css';
 import styles from './WorkCard.module.css';
 
-const STAGES = ['Отклик', 'Одобрено', 'Просмотры', 'Начисления'];
+const STAGES = ['Ролик', 'Одобрено', 'Просмотры', 'Начисления'];
 
 const stageOf = (application) => {
   switch (application.status) {
@@ -17,6 +18,7 @@ const stageOf = (application) => {
     case 'COMPLETED':
       return 4;
     case 'REJECTED':
+    case 'IN_PROGRESS':
       return 0;
     default:
       return 1;
@@ -24,6 +26,7 @@ const stageOf = (application) => {
 };
 
 const STATUS_CHIP = {
+  IN_PROGRESS: { className: ui.chipWarning, label: 'Ждёт ролик' },
   PENDING: { className: ui.chipWarning, label: 'Ждёт решения бренда' },
   APPROVED: { className: ui.chipSuccess, label: 'В работе' },
   COMPLETED: { className: ui.chipOutline, label: 'Завершена' },
@@ -57,6 +60,16 @@ const WorkCard = ({ application, onWithdraw, busy = false }) => {
   const geographyMissing =
     !isWorldRegion(application.campaignViewRegion) && application.viewsGeographyKnown === false;
   const fraud = application.fraudStatus === 'SUSPICIOUS' || application.fraudStatus === 'FRAUD';
+  const awaitingVideo = isAwaitingVideo(application);
+  const reminder = awaitingVideo ? videoReminder(application) : null;
+  const kicker = [
+    platform,
+    application.createdAt
+      ? `${awaitingVideo ? 'в работе с' : 'отклик от'} ${formatDate(application.createdAt)}`
+      : '',
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <article className={styles.card}>
@@ -66,10 +79,7 @@ const WorkCard = ({ application, onWithdraw, busy = false }) => {
             {(application.campaignTitle || '·').trim().charAt(0).toUpperCase()}
           </span>
           <div className={styles.titles}>
-            <span className={styles.kicker}>
-              {platform}
-              {application.createdAt ? ` · отклик от ${formatDate(application.createdAt)}` : ''}
-            </span>
+            <span className={styles.kicker}>{kicker}</span>
             <h3 className={styles.title}>{application.campaignTitle}</h3>
           </div>
         </div>
@@ -101,23 +111,33 @@ const WorkCard = ({ application, onWithdraw, busy = false }) => {
           <b>{formatRubles(application.ratePerThousandKopecks)}</b>
           <span className={ui.muted}> / 1 000</span>
         </span>
-        <span>
-          <span className={ui.muted}>Просмотров </span>
-          <b>{formatViews(application.views ?? 0)}</b>
-        </span>
-        {!isWorldRegion(application.campaignViewRegion) && !geographyMissing && (
+        {!awaitingVideo && (
+          <span>
+            <span className={ui.muted}>Просмотров </span>
+            <b>{formatViews(application.views ?? 0)}</b>
+          </span>
+        )}
+        {!awaitingVideo && !isWorldRegion(application.campaignViewRegion) && !geographyMissing && (
           <span>
             <span className={ui.muted}>В расчёт </span>
             <b>{formatViews(application.payableViews ?? 0)}</b>
           </span>
         )}
-        <span>
-          <span className={ui.muted}>Начислено </span>
-          <b className={ui.success}>{formatRubles(application.accruedKopecks ?? 0)}</b>
-        </span>
+        {!awaitingVideo && (
+          <span>
+            <span className={ui.muted}>Начислено </span>
+            <b className={ui.success}>{formatRubles(application.accruedKopecks ?? 0)}</b>
+          </span>
+        )}
       </div>
 
-      <p className={styles.hint}>{hintOf(application)}</p>
+      {reminder ? (
+        <p className={`${styles.reminder} ${styles[`reminder_${reminder.tone}`] || ''}`}>
+          {reminder.text}
+        </p>
+      ) : (
+        <p className={styles.hint}>{hintOf(application)}</p>
+      )}
       {geographyMissing && (
         <p className={styles.warn}>
           География просмотров недоступна: просмотры по этой работе не оплачиваются.
@@ -143,15 +163,23 @@ const WorkCard = ({ application, onWithdraw, busy = false }) => {
               Открыть оффер
             </Link>
           )}
-          {onWithdraw && application.status === 'PENDING' && (
+          {onWithdraw && (application.status === 'PENDING' || awaitingVideo) && (
             <button
               type="button"
               className={`${ui.btnDanger} ${ui.btnSmall}`}
               onClick={() => onWithdraw(application)}
               disabled={busy}
             >
-              Отозвать
+              {awaitingVideo ? 'Отказаться' : 'Отозвать'}
             </button>
+          )}
+          {awaitingVideo && reminder.tone !== 'closed' && application.campaignPublicId && (
+            <Link
+              to={`/campaigns/${application.campaignPublicId}/apply`}
+              className={`${ui.btnPrimary} ${ui.btnSmall}`}
+            >
+              Прикрепить ролик
+            </Link>
           )}
         </div>
       </div>

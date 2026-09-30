@@ -23,7 +23,10 @@ const LOADERS = {
 const SKELETON_WORKS = 2;
 const SKELETON_ACCRUALS = 3;
 
-const isActiveWork = (row) => row.status === 'PENDING' || row.status === 'APPROVED';
+const isActiveWork = (row) =>
+  row.status === 'IN_PROGRESS' || row.status === 'PENDING' || row.status === 'APPROVED';
+const awaitingFirst = (a, b) =>
+  Number(b.status === 'IN_PROGRESS') - Number(a.status === 'IN_PROGRESS');
 const isFinishedWork = (row) => row.status === 'COMPLETED' || row.status === 'REJECTED';
 
 const CreatorHome = () => {
@@ -39,7 +42,7 @@ const CreatorHome = () => {
   const stats = applicationStats(rows);
   const activeRows = rows.filter(isActiveWork);
   const finishedRows = rows.filter(isFinishedWork);
-  const shown = (tab === 'active' ? activeRows : finishedRows).slice(0, 3);
+  const shown = (tab === 'active' ? [...activeRows].sort(awaitingFirst) : finishedRows).slice(0, 3);
 
   const accruals = asList(operations.data)
     .filter((row) => row.type === 'EARNING')
@@ -68,6 +71,17 @@ const CreatorHome = () => {
           </Link>
         </div>
       </header>
+
+      {stats.awaitingVideo > 0 && (
+        <Link to="/app/applications" className={styles.attention}>
+          <span className={styles.attentionCount}>{stats.awaitingVideo}</span>
+          <span>
+            {plural(stats.awaitingVideo, ['оффер ждёт', 'оффера ждут', 'офферов ждут'])} ссылку на
+            ролик
+          </span>
+          <span className={styles.attentionArrow}>→</span>
+        </Link>
+      )}
 
       {awaitingPayouts > 0 && (
         <Link to="/app/earnings" className={styles.attention}>

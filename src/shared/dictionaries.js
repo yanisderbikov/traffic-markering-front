@@ -11,7 +11,6 @@ export const PLATFORM_LABELS = {
 };
 
 export const VIEW_REGION_LABELS = {
-  RUSSIA: 'только РФ',
   CIS: 'СНГ',
   WORLD: 'весь мир',
 };
@@ -24,6 +23,7 @@ export const CAMPAIGN_STATUS_LABELS = {
 };
 
 export const APPLICATION_STATUS_LABELS = {
+  IN_PROGRESS: 'в работе, ждёт ролик',
   PENDING: 'на рассмотрении',
   APPROVED: 'одобрен',
   REJECTED: 'отклонён',

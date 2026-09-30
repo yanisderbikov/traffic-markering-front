@@ -2,6 +2,7 @@ import { DEFAULT_VIEW_REGION, VIEW_REGIONS } from '../../shared/viewRegion';
 import {
   formatIntInput,
   formatRubInput,
+  formatRubles,
   formatViews,
   kopecksToRub,
   parseIntInput,
@@ -18,13 +19,14 @@ export const emptyForm = {
   title: '',
   description: '',
   photoKey: '',
+  topic: '',
   rateRub: '',
   budgetRub: '',
   minPayoutRub: '',
   platforms: [],
   viewRegion: DEFAULT_VIEW_REGION,
   minVideoSeconds: '',
-  minPaidViews: '',
+  minPaidRub: '',
   maxVideosPerCreator: '',
   startsOn: '',
   endsOn: '',
@@ -35,13 +37,14 @@ export const FORM_FIELDS = Object.keys(emptyForm);
 
 export const MEDIAN_TOLERANCE_PERCENT = 5;
 export const SUGGESTED_RATE_MARKUP = 1.05;
+export const MIN_BUDGET_KOPECKS = 1_000_000;
 
 export const CAMPAIGN_STEPS = [
   {
     id: 'brief',
     title: 'Бриф',
     heading: 'Расскажите о задаче',
-    fields: ['title', 'description', 'photoKey', 'materials'],
+    fields: ['title', 'topic', 'description', 'photoKey', 'materials'],
   },
   {
     id: 'terms',
@@ -53,7 +56,7 @@ export const CAMPAIGN_STEPS = [
     id: 'budget',
     title: 'Бюджет',
     heading: 'Сколько платите',
-    fields: ['rateRub', 'budgetRub', 'minPayoutRub', 'minPaidViews'],
+    fields: ['rateRub', 'budgetRub', 'minPayoutRub', 'minPaidRub'],
   },
   {
     id: 'launch',
@@ -72,6 +75,11 @@ const REQUIRED = {
     label: 'название',
     message: 'Укажите название',
     filled: (form) => Boolean(form.title.trim()),
+  },
+  topic: {
+    label: 'тематика',
+    message: 'Выберите тематику',
+    filled: (form) => Boolean(form.topic),
   },
   description: {
     label: 'описание',
@@ -116,7 +124,7 @@ const OPTIONAL_LABELS = {
   endsOn: 'окончание приёма',
   minVideoSeconds: 'длина ролика',
   maxVideosPerCreator: 'лимит роликов',
-  minPaidViews: 'порог просмотров',
+  minPaidRub: 'порог оплаты',
 };
 
 export const fieldLabel = (field) => REQUIRED[field]?.label ?? OPTIONAL_LABELS[field];
@@ -142,14 +150,20 @@ const formatError = (form, field, budgetError) => {
       return positiveOrEmpty(rubToKopecks(form.rateRub), 'Ставка должна быть больше нуля');
     case 'budgetRub': {
       const budget = rubToKopecks(form.budgetRub);
-      return budget == null ? '' : budgetError(budget);
+      if (budget == null) return '';
+      if (budget < MIN_BUDGET_KOPECKS) return `Минимальный бюджет — ${formatRubles(MIN_BUDGET_KOPECKS)}`;
+      return budgetError(budget);
     }
     case 'minPayoutRub':
       return positiveOrEmpty(rubToKopecks(form.minPayoutRub), 'Порог вывода должен быть больше нуля');
     case 'minVideoSeconds':
       return positiveOrEmpty(parseIntInput(form.minVideoSeconds), 'Длина ролика — целое число секунд');
-    case 'minPaidViews':
-      return positiveOrEmpty(parseIntInput(form.minPaidViews), 'Порог просмотров должен быть больше нуля');
+    case 'minPaidRub': {
+      const minPaid = rubToKopecks(form.minPaidRub);
+      if (minPaid == null) return '';
+      if (minPaid <= 0) return 'Порог оплаты должен быть больше нуля';
+      return moneyFilled(form.rateRub) ? '' : 'Сначала укажите ставку';
+    }
     case 'maxVideosPerCreator':
       return positiveOrEmpty(
         parseIntInput(form.maxVideosPerCreator),
@@ -176,6 +190,16 @@ export const validateCampaign = (form, fields, { requireFilled, budgetError }) =
 
 const kopecksToInput = (kopecks) =>
   kopecks == null ? '' : formatRubInput(String(kopecksToRub(kopecks)));
+
+export const minPaidViewsFor = (minPaidRub, rateRub) => {
+  const minPaid = rubToKopecks(minPaidRub);
+  const rate = rubToKopecks(rateRub);
+  if (!minPaid || !rate || minPaid <= 0 || rate <= 0) return null;
+  return Math.ceil((minPaid * 1000) / rate);
+};
+
+const minPaidRubInput = (views, rateKopecks) =>
+  views && rateKopecks ? kopecksToInput(Math.round((views * rateKopecks) / 1000 / 100) * 100) : '';
 
 const intToInput = (value) => (value == null ? '' : formatIntInput(String(value)));
 
@@ -204,13 +228,14 @@ export const formFromCampaign = (campaign) => ({
   title: campaign.title || '',
   description: campaign.description || '',
   photoKey: campaign.photoKey || '',
+  topic: campaign.topic || '',
   rateRub: kopecksToInput(campaign.ratePerThousandKopecks),
   budgetRub: kopecksToInput(campaign.budgetKopecks),
   minPayoutRub: kopecksToInput(campaign.minPayoutKopecks),
   platforms: Array.isArray(campaign.platforms) ? campaign.platforms : [],
   viewRegion: campaign.viewRegion || DEFAULT_VIEW_REGION,
   minVideoSeconds: intToInput(campaign.minVideoSeconds),
-  minPaidViews: intToInput(campaign.minPaidViews),
+  minPaidRub: minPaidRubInput(campaign.minPaidViews, campaign.ratePerThousandKopecks),
   maxVideosPerCreator: intToInput(campaign.maxVideosPerCreator),
   startsOn: dateInputValue(campaign.startsAt),
   endsOn: dateInputValue(campaign.endsAt),
@@ -221,13 +246,14 @@ export const formToRequest = (form) => ({
   title: form.title.trim() || null,
   description: form.description.trim() || null,
   photoKey: form.photoKey || null,
+  topic: form.topic || null,
   ratePerThousandKopecks: rubToKopecks(form.rateRub),
   budgetKopecks: rubToKopecks(form.budgetRub),
   minPayoutKopecks: rubToKopecks(form.minPayoutRub),
   platforms: form.platforms,
   viewRegion: form.viewRegion,
   minVideoSeconds: parseIntInput(form.minVideoSeconds),
-  minPaidViews: parseIntInput(form.minPaidViews),
+  minPaidViews: minPaidViewsFor(form.minPaidRub, form.rateRub),
   maxVideosPerCreator: parseIntInput(form.maxVideosPerCreator),
   startsAt: startOfDayIso(form.startsOn),
   endsAt: endOfDayIso(form.endsOn),
@@ -268,6 +294,14 @@ export const normalizeLink = (value) => {
 
 export const suggestedRateInput = (medianKopecks) =>
   kopecksToInput(Math.round((medianKopecks * SUGGESTED_RATE_MARKUP) / 100) * 100);
+
+export const findTopic = (topics, code) =>
+  (Array.isArray(topics) ? topics : []).find((topic) => topic.code === code) || null;
+
+export const compareToTopicAverage = (kopecks, averageKopecks) => {
+  if (!(kopecks > 0) || !(averageKopecks > 0)) return null;
+  return kopecks < averageKopecks ? 'below' : 'ok';
+};
 
 export const compareToMedian = (kopecks, medianKopecks) => {
   if (!(kopecks > 0) || !(medianKopecks > 0)) return null;

@@ -23,7 +23,7 @@ import styles from './ApplyPage.module.css';
 
 const ApplySkeleton = () => (
   <div aria-busy="true">
-    <SkeletonPageHead eyebrow="Креатор" title="Отклик на оффер" />
+    <SkeletonPageHead eyebrow="Креатор" title="Ролик по офферу" />
     <div className={styles.columns}>
       <div className={`${ui.card} ${styles.form}`}>
         <div className={styles.field}>
@@ -82,6 +82,7 @@ const ApplyPage = () => {
   const [videoUrlError, setVideoUrlError] = useState('');
   const [sending, setSending] = useState(false);
   const [accounts, setAccounts] = useState(null);
+  const [workInProgress, setWorkInProgress] = useState(null);
 
   const authorized = apiClient.hasLiveToken();
   const role = authorized ? apiClient.getJwtMetadata()?.role : null;
@@ -108,6 +109,20 @@ const ApplyPage = () => {
     if (!isCreator) return;
     loadCampaign();
   }, [isCreator, loadCampaign]);
+
+  useEffect(() => {
+    if (!isCreator) return;
+    apiClient.api
+      .myApplications()
+      .then((res) => {
+        const rows = Array.isArray(res.data) ? res.data : [];
+        setWorkInProgress(
+          rows.find((row) => row.campaignPublicId === publicId && row.status === 'IN_PROGRESS') ||
+            null
+        );
+      })
+      .catch(() => setWorkInProgress(null));
+  }, [isCreator, publicId]);
 
   useEffect(() => {
     if (!isCreator) return;
@@ -176,19 +191,20 @@ const ApplyPage = () => {
     setSending(true);
     setFormError('');
     try {
-      await apiClient.api.apply({
-        campaignId: campaign.id,
-        videoUrl,
-        comment: form.comment.trim() || null,
-      });
-      toast.success('Отклик отправлен — ждём решения заказчика');
+      const comment = form.comment.trim() || null;
+      if (workInProgress) {
+        await apiClient.api.attachVideo(workInProgress.id, { videoUrl, comment });
+      } else {
+        await apiClient.api.apply({ campaignId: campaign.id, videoUrl, comment });
+      }
+      toast.success('Ролик отправлен — ждём решения заказчика');
       navigate('/app/applications');
     } catch (err) {
       setFormError(
         err?.response?.data?.message ||
           err?.response?.data?.error ||
           err?.message ||
-          'Не удалось отправить отклик'
+          'Не удалось отправить ролик'
       );
     } finally {
       setSending(false);
@@ -233,7 +249,7 @@ const ApplyPage = () => {
           <header className={ui.pageHead}>
             <div className={ui.pageHeadMain}>
               <span className={ui.eyebrow}>Креатор</span>
-              <h1 className={ui.title}>Отклик на оффер</h1>
+              <h1 className={ui.title}>Ролик по офферу</h1>
               <p className={ui.subtitle}>
                 {campaign.title} · {customer}
               </p>
@@ -326,10 +342,13 @@ const ApplyPage = () => {
                   className={ui.btnPrimary}
                   disabled={sending || inactive}
                 >
-                  {sending ? 'Отправка…' : 'Отправить отклик'}
+                  {sending ? 'Отправка…' : 'Отправить ролик'}
                 </button>
-                <Link to={campaignPath} className={ui.btnSecondary}>
-                  Отмена
+                <Link
+                  to={workInProgress ? '/app/applications' : campaignPath}
+                  className={ui.btnSecondary}
+                >
+                  Позже
                 </Link>
               </div>
             </form>
