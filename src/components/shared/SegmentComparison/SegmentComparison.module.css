@@ -1,0 +1,122 @@
+.title {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--color-ink);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--color-muted);
+}
+
+/* В узкой колонке оффера метрики идут столбиком, в кабинете заказчика — рядом */
+.metrics {
+  display: grid;
+  gap: 16px 24px;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  margin-top: 18px;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.metricHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.metricLabel {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.percent {
+  padding: 0 10px;
+  border-radius: var(--pill-radius);
+  background: var(--color-surface-alt);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--color-muted);
+}
+
+.above .percent {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.below .percent {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.headline {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--color-ink);
+}
+
+/* Шкала сегмента: слева самые низкие значения, справа самые высокие, риска — медиана */
+.scale {
+  position: relative;
+  height: 6px;
+  margin: 6px 0 4px;
+  border-radius: 3px;
+  background: var(--color-track);
+}
+
+.medianTick {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  left: 50%;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--color-faint);
+}
+
+.dot {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--color-surface);
+  border-radius: 50%;
+  background: var(--color-muted);
+  transform: translate(-50%, -50%);
+}
+
+.above .dot {
+  background: var(--color-success);
+}
+
+.below .dot {
+  background: var(--color-danger);
+}
+
+.note {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--color-faint);
+}
+
+.value {
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--color-ink-soft);
+}

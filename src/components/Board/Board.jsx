@@ -22,6 +22,21 @@ const SORTS = [
   { value: 'budget', label: 'Больше остаток' },
 ];
 
+const SCOPES = [
+  { id: 'new', label: 'Новые офферы' },
+  { id: 'applied', label: 'Вы откликнулись' },
+];
+
+const latestApplicationByCampaign = (applications) => {
+  const byCampaign = new Map();
+  applications.forEach((application) => {
+    if (application.campaignPublicId && !byCampaign.has(application.campaignPublicId)) {
+      byCampaign.set(application.campaignPublicId, application);
+    }
+  });
+  return byCampaign;
+};
+
 const createdTime = (campaign) => {
   const value = campaign.createdAt;
   if (!value) return 0;
@@ -51,11 +66,19 @@ const Board = ({ embedded = false }) => {
   const [error, setError] = useState('');
   const [platform, setPlatform] = useState('');
   const [sort, setSort] = useState('new');
+  const [applications, setApplications] = useState([]);
+  const [scope, setScope] = useState('new');
+
+  const isCreator = embedded && apiClient.getJwtMetadata()?.role === 'CREATOR';
 
   const loadCampaigns = useCallback(async () => {
     try {
-      const res = await apiClient.api.boardCampaigns();
+      const [res, mine] = await Promise.all([
+        apiClient.api.boardCampaigns(),
+        isCreator ? apiClient.api.myApplications().catch(() => null) : null,
+      ]);
       setCampaigns(Array.isArray(res.data) ? res.data : []);
+      if (mine) setApplications(Array.isArray(mine.data) ? mine.data : []);
       setError('');
     } catch (err) {
       setError(
@@ -67,7 +90,7 @@ const Board = ({ embedded = false }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isCreator]);
 
   useEffect(() => {
     loadCampaigns();
@@ -82,12 +105,51 @@ const Board = ({ embedded = false }) => {
     }
   };
 
+  const applied = useMemo(() => latestApplicationByCampaign(applications), [applications]);
+
+  const scoped = useMemo(
+    () =>
+      isCreator
+        ? campaigns.filter((row) => applied.has(row.publicId) === (scope === 'applied'))
+        : campaigns,
+    [campaigns, applied, isCreator, scope]
+  );
+
   const visible = useMemo(() => {
     const filtered = platform
-      ? campaigns.filter((row) => Array.isArray(row.platforms) && row.platforms.includes(platform))
-      : campaigns;
+      ? scoped.filter((row) => Array.isArray(row.platforms) && row.platforms.includes(platform))
+      : scoped;
     return sortCampaigns(filtered, sort);
-  }, [campaigns, platform, sort]);
+  }, [scoped, platform, sort]);
+
+  const appliedCount = campaigns.filter((row) => applied.has(row.publicId)).length;
+  const scopeCounts = { new: campaigns.length - appliedCount, applied: appliedCount };
+
+  const emptyState = () => {
+    if (campaigns.length === 0) {
+      return {
+        title: 'Активных офферов пока нет',
+        text: 'Загляните позже: новые кампании появляются здесь сразу после запуска.',
+      };
+    }
+    if (scoped.length === 0 && scope === 'applied') {
+      return {
+        title: 'Вы ещё не откликались',
+        text: 'Возьмите оффер в работу — он появится здесь, а этапы по нему будут в «Моих работах».',
+      };
+    }
+    if (scoped.length === 0) {
+      return {
+        title: 'Новых офферов нет',
+        text: 'Вы уже откликнулись на все активные офферы. Загляните позже.',
+      };
+    }
+    return {
+      title: 'Под фильтр ничего не подошло',
+      text: 'Попробуйте другую площадку или снимите фильтр.',
+    };
+  };
+  const empty = emptyState();
 
   const openCount = campaigns.filter((row) => campaignAvailability(row).open).length;
   const totalRemaining = campaigns.reduce((sum, row) => sum + remaining(row), 0);
@@ -138,6 +200,26 @@ const Board = ({ embedded = false }) => {
         </div>
       </div>
 
+      {isCreator && (
+        <div className={styles.scopes} role="tablist" aria-label="Офферы">
+          {SCOPES.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="tab"
+              aria-selected={scope === item.id}
+              className={scope === item.id ? styles.scopeActive : styles.scope}
+              onClick={() => setScope(item.id)}
+            >
+              {item.label}
+              <span className={styles.scopeCount}>
+                {loading ? <Skeleton width="1ch" /> : scopeCounts[item.id]}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className={styles.toolbar}>
         <div className={ui.chips} role="group" aria-label="Площадка">
           <button
@@ -184,14 +266,8 @@ const Board = ({ embedded = false }) => {
         </div>
       ) : visible.length === 0 ? (
         <div className={ui.empty}>
-          <p className={ui.emptyTitle}>
-            {campaigns.length === 0 ? 'Активных офферов пока нет' : 'Под фильтр ничего не подошло'}
-          </p>
-          <p className={ui.emptyText}>
-            {campaigns.length === 0
-              ? 'Загляните позже: новые кампании появляются здесь сразу после запуска.'
-              : 'Попробуйте другую площадку или снимите фильтр.'}
-          </p>
+          <p className={ui.emptyTitle}>{empty.title}</p>
+          <p className={ui.emptyText}>{empty.text}</p>
         </div>
       ) : (
         <div className={styles.grid}>
@@ -199,6 +275,7 @@ const Board = ({ embedded = false }) => {
             <CampaignCard
               key={campaign.id || campaign.publicId}
               campaign={campaign}
+              application={applied.get(campaign.publicId)}
               index={index}
             />
           ))}

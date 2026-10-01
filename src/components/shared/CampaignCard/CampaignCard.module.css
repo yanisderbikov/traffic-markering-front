@@ -37,6 +37,21 @@
   transition: border-color 0.15s ease;
 }
 
+.applied {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  max-width: 100%;
+  margin: 0 0 12px;
+  padding: 4px 10px;
+  border-radius: var(--pill-radius);
+  background: var(--color-success-soft);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-success);
+}
+
 .kicker {
   display: flex;
   align-items: baseline;

@@ -1,6 +1,5 @@
 import React from 'react';
 import apiClient from '../../apiClient';
-import Skeleton from '../shared/Skeleton/Skeleton';
 import { formatRubles, rubToKopecks } from '../../shared/money';
 import { viewRegionLabel } from '../../shared/viewRegion';
 import { PLATFORM_LABELS } from '../../shared/dictionaries';
@@ -8,8 +7,8 @@ import { formatCompactViews } from './campaignForm';
 import ui from '../../shared/ui.module.css';
 import styles from './CampaignEditor.module.css';
 
-const CampaignPreview = ({ editor, showWallet = false }) => {
-  const { form, wallet, walletLoading } = editor;
+const CampaignPreview = ({ editor, hideOnMobile = false }) => {
+  const { form } = editor;
   const customerName = apiClient.getJwtMetadata()?.name || '';
   const rateKopecks = rubToKopecks(form.rateRub) || 0;
   const budgetKopecks = rubToKopecks(form.budgetRub) || 0;
@@ -18,7 +17,7 @@ const CampaignPreview = ({ editor, showWallet = false }) => {
   const platforms = form.platforms.map((p) => PLATFORM_LABELS[p] || p).join(', ');
 
   return (
-    <aside className={styles.preview}>
+    <aside className={hideOnMobile ? `${styles.preview} ${styles.desktopOnly}` : styles.preview}>
       <section className={ui.card}>
         <h2 className={ui.cardTitle}>Предпросмотр оффера</h2>
         <div className={ui.chips}>
@@ -62,32 +61,6 @@ const CampaignPreview = ({ editor, showWallet = false }) => {
         <p className={styles.previewNote}>
           Оценка по ставке, без гарантии объёма. Просмотры считаются по официальным API площадок.
         </p>
-      </section>
-
-      {showWallet && walletLoading && (
-        <section className={ui.card} aria-busy="true">
-          <span className={ui.eyebrow}>Кошелёк</span>
-          <p className={styles.previewRate}>
-            <Skeleton width="7ch" />
-          </p>
-          <p className={styles.previewNote}>
-            <Skeleton width="90%" />
-          </p>
-        </section>
-      )}
-      {showWallet && wallet && (
-        <section className={ui.card}>
-          <span className={ui.eyebrow}>Кошелёк</span>
-          <p className={styles.previewRate}>{formatRubles(wallet.balanceKopecks ?? 0)}</p>
-          <p className={styles.previewNote}>
-            Свободно для резервирования. В кампаниях уже {formatRubles(wallet.allocatedKopecks ?? 0)}.
-          </p>
-        </section>
-      )}
-
-      <section className={ui.cardHint}>
-        <p className={styles.hintTitle}>Хороший бриф — сильный контент</p>
-        <p>Опишите результат и обязательные детали. Оставьте креатору пространство для идеи.</p>
       </section>
     </aside>
   );

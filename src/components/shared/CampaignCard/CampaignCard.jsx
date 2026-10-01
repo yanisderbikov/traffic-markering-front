@@ -2,8 +2,9 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import SocialIcon from '../SocialIcon/SocialIcon';
 import Skeleton from '../Skeleton/Skeleton';
+import Icon from '../Icon/Icon';
 import { formatRubles } from '../../../shared/money';
-import { PLATFORM_LABELS } from '../../../shared/dictionaries';
+import { APPLICATION_STATUS_LABELS, PLATFORM_LABELS } from '../../../shared/dictionaries';
 import { formatDay, periodState } from '../../../shared/dates';
 import { DEFAULT_VIEW_REGION, isWorldRegion, viewRegionLabel } from '../../../shared/viewRegion';
 import styles from './CampaignCard.module.css';
@@ -34,7 +35,7 @@ export const campaignAvailability = (campaign) => {
 
 const TicketStub = () => <div className={styles.stub} aria-hidden="true" />;
 
-const CampaignCard = ({ campaign, to, index }) => {
+const CampaignCard = ({ campaign, application, to, index }) => {
   if (!campaign) return null;
 
   const customer = campaign.customerCompany || campaign.customerName || 'Заказчик';
@@ -47,6 +48,12 @@ const CampaignCard = ({ campaign, to, index }) => {
   return (
     <Link to={target} className={styles.card}>
       <div className={styles.body}>
+        {application && (
+          <span className={styles.applied}>
+            <Icon name="check" size={12} />
+            Вы откликнулись · {APPLICATION_STATUS_LABELS[application.status] || application.status}
+          </span>
+        )}
         <p className={styles.kicker}>
           {index != null && (
             <span className={styles.num}>Оффер {String(index + 1).padStart(2, '0')}</span>

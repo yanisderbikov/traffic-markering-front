@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import { errorMessage } from '../../shared/auth';
 import { clearFieldError, hasErrors } from '../../shared/validation';
-import { formatIntInput, formatRubInput, formatRubles } from '../../shared/money';
+import { formatIntInput, formatRubInput, formatRubles, kopecksToRub } from '../../shared/money';
 import {
   FORM_FIELDS,
   MATERIALS_MAX,
@@ -17,6 +17,7 @@ import {
   normalizeLink,
   sameValue,
   suggestedRateInput,
+  topicFromCampaign,
   validateCampaign,
 } from './campaignForm';
 
@@ -37,6 +38,7 @@ const useCampaignForm = (initialCampaign) => {
   const [walletLoading, setWalletLoading] = useState(true);
   const [benchmarks, setBenchmarks] = useState(null);
   const [benchmarksLoading, setBenchmarksLoading] = useState(true);
+  const [pickedTopics, setPickedTopics] = useState([]);
   const ratePrefilled = useRef(false);
   const ownsWallet = apiClient.getJwtMetadata()?.role === 'CUSTOMER';
 
@@ -69,7 +71,8 @@ const useCampaignForm = (initialCampaign) => {
   }, [photoPreview]);
 
   const topics = benchmarks?.topics ?? [];
-  const topic = findTopic(topics, form.topic);
+  const campaignTopic = useMemo(() => topicFromCampaign(campaign), [campaign]);
+  const topic = findTopic([...topics, ...pickedTopics, campaignTopic], form.topic);
 
   const prefillRate = useCallback(() => {
     if (ratePrefilled.current || !benchmarks) return;
@@ -106,6 +109,12 @@ const useCampaignForm = (initialCampaign) => {
 
   const setViewRegion = (region) => updateField('viewRegion', region);
   const setTopic = (code) => updateField('topic', code);
+
+  // Найденная поиском или только что добавленная тематика в топ не входит — запоминаем её
+  const selectTopic = (picked) => {
+    setPickedTopics((prev) => (findTopic(prev, picked.code) ? prev : [...prev, picked]));
+    setTopic(picked.code);
+  };
 
   const materialsFull = form.materials.length >= MATERIALS_MAX;
 
@@ -245,7 +254,16 @@ const useCampaignForm = (initialCampaign) => {
   const spentKopecks = campaign.spentKopecks ?? 0;
   const availableKopecks = wallet ? (wallet.balanceKopecks ?? 0) + savedBudgetKopecks : null;
 
+  const fillAvailableBudget = () => {
+    if (availableKopecks == null) return;
+    updateField('budgetRub', formatRubInput(kopecksToRub(availableKopecks)));
+  };
+
   const budgetError = (budgetKopecks) => {
+    const minBudgetKopecks = benchmarks?.minBudgetKopecks ?? 0;
+    if (budgetKopecks < minBudgetKopecks) {
+      return `Минимальный бюджет — ${formatRubles(minBudgetKopecks)}`;
+    }
     if (budgetKopecks < spentKopecks) {
       return `Нельзя опустить ниже уже начисленного: ${formatRubles(spentKopecks)}`;
     }
@@ -332,7 +350,6 @@ const useCampaignForm = (initialCampaign) => {
     materialsFull,
     link,
     linkError,
-    wallet,
     walletLoading,
     benchmarks,
     benchmarksLoading,
@@ -342,10 +359,12 @@ const useCampaignForm = (initialCampaign) => {
     savedBudgetKopecks,
     setField,
     setMoneyField,
+    fillAvailableBudget,
     setIntField,
     togglePlatform,
     setViewRegion,
     setTopic,
+    selectTopic,
     prefillRate,
     removeMaterial,
     handlePhotoChange,

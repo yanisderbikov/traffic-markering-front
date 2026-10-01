@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import MaterialList from '../shared/MaterialList/MaterialList';
+import SegmentComparison from '../shared/SegmentComparison/SegmentComparison';
 import SocialIcon from '../shared/SocialIcon/SocialIcon';
 import Icon from '../shared/Icon/Icon';
 import Skeleton, { SkeletonText } from '../shared/Skeleton/Skeleton';
@@ -391,6 +392,8 @@ const CampaignPage = () => {
             <div className={styles.asideCta}>{renderCta(true)}</div>
             <p className={styles.ctaNote}>{ctaNote}</p>
           </section>
+
+          <SegmentComparison publicId={publicId} />
 
           <section className={ui.cardSuccess}>
             <p className={styles.successTitle}>

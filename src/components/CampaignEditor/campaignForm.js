@@ -2,7 +2,6 @@ import { DEFAULT_VIEW_REGION, VIEW_REGIONS } from '../../shared/viewRegion';
 import {
   formatIntInput,
   formatRubInput,
-  formatRubles,
   formatViews,
   kopecksToRub,
   parseIntInput,
@@ -37,7 +36,6 @@ export const FORM_FIELDS = Object.keys(emptyForm);
 
 export const MEDIAN_TOLERANCE_PERCENT = 5;
 export const SUGGESTED_RATE_MARKUP = 1.05;
-export const MIN_BUDGET_KOPECKS = 1_000_000;
 
 export const CAMPAIGN_STEPS = [
   {
@@ -150,9 +148,7 @@ const formatError = (form, field, budgetError) => {
       return positiveOrEmpty(rubToKopecks(form.rateRub), 'Ставка должна быть больше нуля');
     case 'budgetRub': {
       const budget = rubToKopecks(form.budgetRub);
-      if (budget == null) return '';
-      if (budget < MIN_BUDGET_KOPECKS) return `Минимальный бюджет — ${formatRubles(MIN_BUDGET_KOPECKS)}`;
-      return budgetError(budget);
+      return budget == null ? '' : budgetError(budget);
     }
     case 'minPayoutRub':
       return positiveOrEmpty(rubToKopecks(form.minPayoutRub), 'Порог вывода должен быть больше нуля');
@@ -296,7 +292,24 @@ export const suggestedRateInput = (medianKopecks) =>
   kopecksToInput(Math.round((medianKopecks * SUGGESTED_RATE_MARKUP) / 100) * 100);
 
 export const findTopic = (topics, code) =>
-  (Array.isArray(topics) ? topics : []).find((topic) => topic.code === code) || null;
+  (Array.isArray(topics) ? topics : []).find((topic) => topic?.code === code) || null;
+
+export const TOPIC_NAME_MIN = 2;
+export const TOPIC_NAME_MAX = 48;
+
+// Как на бэке: регистр, «ё» и лишние пробелы не различаем
+export const normalizeTopicName = (name) =>
+  (name || '').trim().replace(/\s+/g, ' ').toLowerCase().replace(/ё/g, 'е');
+
+// Тематика объявления может не попасть в топ — собираем её из самого объявления
+export const topicFromCampaign = (campaign) =>
+  campaign?.topic
+    ? {
+        code: campaign.topic,
+        description: campaign.topicDescription || campaign.topic,
+        averageRatePerThousandKopecks: campaign.topicAverageRatePerThousandKopecks ?? null,
+      }
+    : null;
 
 export const compareToTopicAverage = (kopecks, averageKopecks) => {
   if (!(kopecks > 0) || !(averageKopecks > 0)) return null;

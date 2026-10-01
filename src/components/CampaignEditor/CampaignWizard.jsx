@@ -346,7 +346,7 @@ const CampaignWizard = ({ campaign: initialCampaign, onLaunched }) => {
           </div>
         </div>
 
-        <CampaignPreview editor={editor} showWallet />
+        <CampaignPreview editor={editor} hideOnMobile />
       </form>
     </div>
   );

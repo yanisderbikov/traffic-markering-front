@@ -18,11 +18,15 @@ import { PLATFORM_LABELS } from '../../shared/dictionaries';
 import { pluralize } from '../../shared/requirements';
 import {
   MATERIALS_MAX,
+  TOPIC_NAME_MAX,
   compareToMedian,
   compareToTopicAverage,
+  findTopic,
   isRequired,
+  minPaidViewsFor,
   missingFields,
 } from './campaignForm';
+import useTopicSearch from './useTopicSearch';
 import ui from '../../shared/ui.module.css';
 import styles from './CampaignEditor.module.css';
 
@@ -161,42 +165,112 @@ const TopicRateAdvice = ({ value, topic }) => {
   );
 };
 
+const TopicChip = ({ topic, selected, ...props }) => (
+  <button type="button" className={selected ? ui.chipActive : ui.chip} {...props}>
+    {selected && <Icon name="check" size={14} />}
+    {topic.description}
+    {topic.averageRatePerThousandKopecks != null && (
+      <span className={styles.topicRate}>~{formatRubles(topic.averageRatePerThousandKopecks)}</span>
+    )}
+  </button>
+);
+
+const TopicSearch = ({ editor }) => {
+  const search = useTopicSearch(editor.selectTopic);
+  const typed = search.query.trim().replace(/\s+/g, ' ');
+  return (
+    <div className={styles.topicSearch}>
+      <div className={styles.topicSearchBox}>
+        <Icon name="search" size={16} className={styles.topicSearchIcon} />
+        <input
+          type="text"
+          className={ui.input}
+          value={search.query}
+          onChange={(e) => search.setQuery(e.target.value)}
+          onKeyDown={search.onKeyDown}
+          maxLength={TOPIC_NAME_MAX}
+          placeholder="Найти или добавить тематику"
+          aria-label="Найти или добавить тематику"
+          autoComplete="off"
+        />
+      </div>
+      {search.active && (
+        <div className={styles.topicResults} aria-live="polite">
+          {search.searching ? (
+            <span className={styles.topicSearching}>
+              <span className={styles.medianSpinner} aria-hidden="true" />
+              Ищем…
+            </span>
+          ) : (
+            <>
+              {search.results.length > 0 ? (
+                <div className={ui.chips}>
+                  {search.results.map((item) => (
+                    <TopicChip
+                      key={item.code}
+                      topic={item}
+                      selected={editor.form.topic === item.code}
+                      aria-pressed={editor.form.topic === item.code}
+                      onClick={() => search.pick(item)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                !search.error && <span className={ui.hint}>Такой тематики пока нет.</span>
+              )}
+              {search.canAdd && (
+                <button
+                  type="button"
+                  className={ui.linkAccent}
+                  onClick={search.add}
+                  disabled={search.adding}
+                >
+                  <Icon name="plus" size={14} />
+                  {search.adding ? 'Добавляем…' : `Добавить «${typed}»`}
+                </button>
+              )}
+              {search.error && <span className={ui.hintWarn}>{search.error}</span>}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const TopicField = ({ editor }) => {
-  const { form, errors, topics, benchmarksLoading } = editor;
+  const { form, errors, topics, topic, benchmarksLoading } = editor;
+  // Выбранная поиском тематика может не входить в топ — показываем её в общем ряду
+  const chips = topic && !findTopic(topics, topic.code) ? [...topics, topic] : topics;
   return (
     <div className={styles.field}>
       <FieldLabel field="topic">Тематика</FieldLabel>
       {benchmarksLoading ? (
         <Skeleton width="min(24rem, 90%)" />
-      ) : topics.length === 0 ? (
-        <span className={ui.hintWarn}>Не удалось загрузить тематики — обновите страницу.</span>
+      ) : chips.length === 0 ? (
+        <span className={ui.hintWarn}>Не удалось загрузить популярные тематики — найдите свою поиском.</span>
       ) : (
         <div className={ui.chips} role="radiogroup" aria-label="Тематика">
-          {topics.map((topic) => {
-            const selected = form.topic === topic.code;
+          {chips.map((item) => {
+            const selected = form.topic === item.code;
             return (
-              <button
-                key={topic.code}
-                type="button"
+              <TopicChip
+                key={item.code}
+                topic={item}
+                selected={selected}
                 role="radio"
                 aria-checked={selected}
-                className={selected ? ui.chipActive : ui.chip}
-                onClick={() => editor.setTopic(topic.code)}
-              >
-                {selected && <Icon name="check" size={14} />}
-                {topic.description}
-                <span className={styles.topicRate}>
-                  ~{formatRubles(topic.averageRatePerThousandKopecks)}
-                </span>
-              </button>
+                onClick={() => editor.setTopic(item.code)}
+              />
             );
           })}
         </div>
       )}
+      <TopicSearch editor={editor} />
       <FieldError>{errors.topic}</FieldError>
       <span className={ui.hint}>
         Рядом — средняя ставка за 1 000 просмотров по тематике. От неё посчитаем подсказку на шаге
-        бюджета.
+        бюджета. Нет подходящей — найдите поиском или добавьте свою.
       </span>
     </div>
   );
@@ -471,6 +545,7 @@ export const BudgetFields = ({ editor, onOpenWallet }) => {
     benchmarksLoading,
     walletLoading,
     prefillRate,
+    fillAvailableBudget,
     topic,
   } = editor;
   const launched = campaign.status !== 'DRAFT';
@@ -494,7 +569,7 @@ export const BudgetFields = ({ editor, onOpenWallet }) => {
         </FieldLabel>
         <MoneyInput editor={editor} id="campaign-rate" name="rateRub" />
         <FieldError>{errors.rateRub}</FieldError>
-        {topic ? (
+        {topic?.averageRatePerThousandKopecks != null ? (
           <TopicRateAdvice value={form.rateRub} topic={topic} />
         ) : (
           <MedianComparison
@@ -533,6 +608,19 @@ export const BudgetFields = ({ editor, onOpenWallet }) => {
               .
             </>
           )}{' '}
+          {availableKopecks > 0 && (
+            <>
+              <button
+                type="button"
+                className={ui.linkAccent}
+                onClick={fillAvailableBudget}
+                disabled={rubToKopecks(form.budgetRub) === availableKopecks}
+              >
+                Использовать всё
+              </button>
+              {' · '}
+            </>
+          )}
           <Link to="/app/wallet" className={ui.linkAccent} onClick={handleWalletClick}>
             Финансы
           </Link>

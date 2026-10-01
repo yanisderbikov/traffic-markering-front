@@ -72,7 +72,7 @@ export const CampaignFormSkeleton = ({ stepper = false }) => (
           ))}
         </section>
       </div>
-      <aside className={styles.preview}>
+      <aside className={stepper ? `${styles.preview} ${styles.desktopOnly}` : styles.preview}>
         <section className={ui.card}>
           <h2 className={ui.cardTitle}>Предпросмотр оффера</h2>
           <p className={styles.previewTitle}>

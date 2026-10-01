@@ -6,6 +6,7 @@ import BudgetBar from '../shared/BudgetBar/BudgetBar';
 import CreatorSocials from '../shared/CreatorSocials/CreatorSocials';
 import Icon from '../shared/Icon/Icon';
 import RejectDialog from '../shared/RejectDialog/RejectDialog';
+import SegmentComparison from '../shared/SegmentComparison/SegmentComparison';
 import { FraudBadge, FraudFlags, TrustBadge } from '../shared/FraudBadge/FraudBadge';
 import { errorMessage } from '../../shared/auth';
 import { DEFAULT_VIEW_REGION, viewRegionLabel } from '../../shared/viewRegion';
@@ -267,6 +268,8 @@ const CampaignOverview = ({ campaign, onReload }) => {
           </ul>
         </section>
       </div>
+
+      <SegmentComparison publicId={campaign.publicId} owner className={styles.segment} />
 
       <div className={ui.sectionHead}>
         <h2 className={ui.sectionTitle}>Отклики креаторов</h2>
