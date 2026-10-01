@@ -97,3 +97,25 @@ export const formatRublesCompact = (kopecks) => {
   if (!unit) return formatRubles(kopecks);
   return `${COMPACT_RUB_FORMATTER.format(rubles / unit.size)}${unit.suffix}`;
 };
+
+const USDT_FORMATTER = new Intl.NumberFormat('ru-RU', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const RATE_FORMATTER = new Intl.NumberFormat('ru-RU', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 4,
+});
+
+export const kopecksToUsdt = (kopecks, rubPerUsdt) => {
+  if (kopecks == null || !rubPerUsdt) return null;
+  return Math.ceil(Number((Math.abs(Number(kopecks)) / rubPerUsdt).toFixed(6))) / 100;
+};
+
+export const formatUsdt = (amount) => {
+  if (amount == null) return '—';
+  return `${USDT_FORMATTER.format(amount)} USDT`;
+};
+
+export const formatRate = (rubPerUsdt) => `${RATE_FORMATTER.format(rubPerUsdt)} ₽`;

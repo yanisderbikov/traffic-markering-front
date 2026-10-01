@@ -1,14 +1,8 @@
 import React from 'react';
 import Icon from '../shared/Icon/Icon';
-import { setThemePreference, useThemePreference } from '../../shared/theme';
+import { THEME_OPTIONS, setThemePreference, useThemePreference } from '../../shared/theme';
 import ui from '../../shared/ui.module.css';
 import styles from './ThemeSettings.module.css';
-
-const THEME_OPTIONS = [
-  { value: 'auto', label: 'Авто', icon: 'monitor' },
-  { value: 'light', label: 'Светлая', icon: 'sun' },
-  { value: 'dark', label: 'Тёмная', icon: 'moon' },
-];
 
 const ThemeSettings = () => {
   const preference = useThemePreference();

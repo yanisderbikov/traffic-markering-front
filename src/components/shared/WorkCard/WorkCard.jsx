@@ -27,7 +27,7 @@ const stageOf = (application) => {
 
 const STATUS_CHIP = {
   IN_PROGRESS: { className: ui.chipWarning, label: 'Ждёт ролик' },
-  PENDING: { className: ui.chipWarning, label: 'Ждёт решения бренда' },
+  PENDING: { className: ui.chipWarning, label: 'На модерации' },
   APPROVED: { className: ui.chipSuccess, label: 'В работе' },
   COMPLETED: { className: ui.chipOutline, label: 'Завершена' },
   REJECTED: { className: ui.chipDanger, label: 'Отклонена' },
@@ -36,13 +36,15 @@ const STATUS_CHIP = {
 const hintOf = (application) => {
   switch (application.status) {
     case 'PENDING':
-      return 'Бренд смотрит вашу заявку. Ролик уже можно дорабатывать по брифу.';
+      return 'Ролик проверяют. Деньги за просмотры начнут капать сразу после одобрения.';
     case 'APPROVED':
       return 'Просмотры считаются автоматически по ссылке на ролик.';
     case 'COMPLETED':
       return 'Работа завершена. Начисления по ней остаются в кошельке.';
     case 'REJECTED':
-      return 'Бренд не принял эту работу. Попробуйте другой оффер.';
+      return application.rejectionReason
+        ? `Работу отклонили: ${application.rejectionReason}`
+        : 'Работу отклонили. Попробуйте другой оффер.';
     default:
       return '';
   }

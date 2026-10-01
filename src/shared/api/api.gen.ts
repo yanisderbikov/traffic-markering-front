@@ -580,6 +580,10 @@ export interface ApplicationDTO {
   accruedKopecks?: number;
   /** Когда просмотры обновлялись в последний раз, ISO-8601 */
   viewsSyncedAt?: string;
+  /** Когда отклик прошёл модерацию, ISO-8601; null — ещё не проверен */
+  moderatedAt?: string;
+  /** Причина отказа; есть только у REJECTED */
+  rejectionReason?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -615,6 +619,12 @@ export interface ApplicationStatusUpdateRequestDTO {
    * @example "APPROVED"
    */
   status: "IN_PROGRESS" | "PENDING" | "APPROVED" | "REJECTED" | "COMPLETED";
+  /**
+   * Причина отказа: обязательна для REJECTED, её видит криатор
+   * @maxLength 2000
+   * @example "Ролик не по брифу"
+   */
+  reason?: string;
 }
 
 /** Карточка объявления на публичной доске */
@@ -720,6 +730,27 @@ export interface PresignUploadResponseDTO {
 }
 
 /** Кошелёк заказчика: свободные деньги и сколько уже распределено по объявлениям */
+/** Курс USDT/RUB на бирже Rapira: сколько рублей стоит 1 USDT */
+export interface UsdtRateDTO {
+  /**
+   * Цена покупки 1 USDT в рублях
+   * @example 86.76
+   */
+  askPrice?: number;
+  /**
+   * Цена продажи 1 USDT в рублях
+   * @example 86.73
+   */
+  bidPrice?: number;
+  /** Когда курс получен с биржи, ISO-8601 */
+  fetchedAt?: string;
+  /**
+   * Источник курса
+   * @example "Rapira"
+   */
+  source?: string;
+}
+
 export interface WalletDTO {
   /**
    * ID пользователя-заказчика
@@ -931,6 +962,8 @@ export interface ProofDTO {
 export interface TransferDTO {
   /** Адрес кошелька TRON, куда ушли USDT; null для пополнения */
   tronAddress?: string;
+  /** Курс USDT/RUB, зафиксированный при создании заявки; null у заявок, созданных до фиксации курса */
+  usdtRate?: number;
   /** Номер (хеш) транзакции в сети TRON */
   txId?: string;
   /** Комментарий финансиста */
@@ -951,6 +984,8 @@ export interface TransferDTO {
   sentAt?: string;
   confirmedAt?: string;
   closedAt?: string;
+  /** До какого момента заявку на пополнение нужно оплатить, ISO-8601; null — срока нет */
+  expiresAt?: string;
 }
 
 /** Операция целиком: сама проводка и, если деньги ходили вне платформы, перевод со скриншотами и подтверждениями */
@@ -1665,6 +1700,21 @@ export class Api<
       }),
 
     /**
+     * @description Берётся с биржи Rapira и кешируется на минуту; если биржа недоступна — отдаётся последний полученный курс, без него 502
+     *
+     * @tags Rates
+     * @name Usdt
+     * @summary Курс USDT/RUB
+     * @request GET:/api/public/rates/usdt
+     */
+    usdt: (params: RequestParams = {}) =>
+      this.request<UsdtRateDTO, any>({
+        path: `/api/public/rates/usdt`,
+        method: "GET",
+        ...params,
+      }),
+
+    /**
      * @description Витрина креатора: отображаемое имя, «о себе» и соцсети — заказчик смотрит, кому отдаёт заказ
      *
      * @tags PublicBoard
@@ -2210,7 +2260,8 @@ export class Api<
           | "SENT"
           | "CONFIRMED"
           | "REJECTED"
-          | "CANCELLED";
+          | "CANCELLED"
+          | "EXPIRED";
       },
       params: RequestParams = {},
     ) =>

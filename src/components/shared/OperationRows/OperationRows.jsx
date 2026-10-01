@@ -16,6 +16,7 @@ const STATUS_CLASS = {
   CONFIRMED: styles.statusConfirmed,
   REJECTED: styles.statusRejected,
   CANCELLED: styles.statusCancelled,
+  EXPIRED: styles.statusCancelled,
 };
 
 const POINT_CLASS = {
@@ -113,7 +114,7 @@ const OperationRows = ({ rows, loading, error, linkFor, emptyText }) => {
     <div className={styles.table} role="table">
       <HeaderRow />
       {rows.map((row) => {
-        const closed = row.status === 'REJECTED' || row.status === 'CANCELLED';
+        const closed = ['REJECTED', 'CANCELLED', 'EXPIRED'].includes(row.status);
         return (
           <Link key={row.publicId} to={linkFor(row)} className={styles.row} role="row">
             <span className={styles.date} role="cell">

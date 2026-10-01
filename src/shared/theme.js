@@ -60,3 +60,9 @@ const subscribe = (listener) => {
 const getPreference = () => preference;
 
 export const useThemePreference = () => useSyncExternalStore(subscribe, getPreference);
+
+export const THEME_OPTIONS = [
+  { value: 'auto', label: 'Авто', icon: 'monitor' },
+  { value: 'light', label: 'Светлая', icon: 'sun' },
+  { value: 'dark', label: 'Тёмная', icon: 'moon' },
+];

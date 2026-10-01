@@ -10,6 +10,7 @@ import { errorMessage } from '../../shared/auth';
 import { formatRubInput, formatRubles, rubToKopecks } from '../../shared/money';
 import { formatDate } from '../../shared/dictionaries';
 import FitRubles from '../shared/FitRubles/FitRubles';
+import UsdtQuote from '../shared/UsdtQuote/UsdtQuote';
 import Skeleton from '../shared/Skeleton/Skeleton';
 import ui from '../../shared/ui.module.css';
 import styles from './CustomerWallet.module.css';
@@ -193,6 +194,9 @@ const CustomerWallet = () => {
               {creating ? 'Создаём…' : 'Создать заявку'}
             </button>
           </div>
+          {topUpAvailable && rubToKopecks(amountRub) > 0 && (
+            <UsdtQuote kopecks={rubToKopecks(amountRub)} className={styles.quote} />
+          )}
           {!loading && !topUpAvailable && (
             <p className={ui.hintWarn}>
               Адрес для пополнения ещё не настроен — напишите менеджеру финансов.

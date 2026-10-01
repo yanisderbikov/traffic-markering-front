@@ -24,7 +24,7 @@ export const CAMPAIGN_STATUS_LABELS = {
 
 export const APPLICATION_STATUS_LABELS = {
   IN_PROGRESS: 'в работе, ждёт ролик',
-  PENDING: 'на рассмотрении',
+  PENDING: 'на модерации',
   APPROVED: 'одобрен',
   REJECTED: 'отклонён',
   COMPLETED: 'завершён',
@@ -74,6 +74,7 @@ export const OPERATION_STATUS_LABELS = {
   CONFIRMED: 'подтверждена',
   REJECTED: 'отклонена',
   CANCELLED: 'отменена',
+  EXPIRED: 'просрочена',
 };
 
 const TOP_UP_STATUS_LABELS = {
@@ -95,7 +96,6 @@ export const formatDate = (value) => {
     year: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
-    timeZone: 'Europe/Moscow',
   });
 };
 

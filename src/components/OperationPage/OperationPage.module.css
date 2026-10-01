@@ -43,3 +43,40 @@
     width: 100%;
   }
 }
+
+.timer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--color-surface-alt);
+}
+
+.timerLabel {
+  font-size: 0.88rem;
+  color: var(--color-muted);
+}
+
+.timerValue {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink);
+}
+
+.timerWarn {
+  background: var(--color-warning-soft);
+}
+
+.timerWarn .timerValue {
+  color: var(--color-warning);
+}
+
+.actions > .timer {
+  flex-basis: 100%;
+}

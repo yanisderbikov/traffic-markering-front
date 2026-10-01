@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import FieldError from '../shared/FieldError/FieldError';
+import UsdtQuote from '../shared/UsdtQuote/UsdtQuote';
 import OperationRows from '../shared/OperationRows/OperationRows';
 import { errorMessage } from '../../shared/auth';
 import { formatRubInput, formatRubles, kopecksToRub, rubToKopecks } from '../../shared/money';
@@ -113,7 +114,7 @@ const CreatorEarnings = () => {
   }
 
   const balance = wallet?.balanceKopecks ?? 0;
-  const canPayout = Boolean(wallet?.payoutAvailable);
+  const canPayout = Boolean(wallet?.payoutAvailable) && balance > 0;
   const activeFilter = FILTERS.find((item) => item.value === filter) || FILTERS[0];
   const visibleRows = activeFilter.match ? rows.filter(activeFilter.match) : rows;
   const confirmedPayouts = rows.filter(
@@ -173,7 +174,7 @@ const CreatorEarnings = () => {
         <div className={ui.stat}>
           <span className={ui.statLabel}>Ожидает подтверждения</span>
           {amount(wallet?.pendingKopecks, ui.statValue)}
-          <span className={ui.statNote}>просмотры моложе 7 дней и ниже порога вывода</span>
+          <span className={ui.statNote}>просмотры моложе 7 дней и ниже порога вывода, без роликов на проверке антифрода</span>
         </div>
         <div className={ui.stat}>
           <span className={ui.statLabel}>Выплачено за всё время</span>
@@ -216,6 +217,13 @@ const CreatorEarnings = () => {
                 />
                 <FieldError>{errors.amountRub}</FieldError>
                 <span className={ui.hint}>До {formatRubles(balance)}.</span>
+                {rubToKopecks(amountRub) > 0 && (
+                  <UsdtQuote
+                    kopecks={rubToKopecks(amountRub)}
+                    label="Получите примерно"
+                    className={styles.quote}
+                  />
+                )}
               </div>
               <div className={`${styles.field} ${styles.fieldWide}`}>
                 <label className={ui.label} htmlFor="payout-address">

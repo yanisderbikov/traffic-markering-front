@@ -139,7 +139,7 @@ const CreatorHome = () => {
               {applications.loading ? (
                 <Skeleton width="70%" />
               ) : stats.pending > 0 ? (
-                `${stats.pending} ${plural(stats.pending, ['ждёт', 'ждут', 'ждут'])} решения бренда`
+                `${stats.pending} ${plural(stats.pending, ['ждёт', 'ждут', 'ждут'])} модерации`
               ) : (
                 'всё одобрено'
               )}

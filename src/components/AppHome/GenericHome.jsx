@@ -27,6 +27,7 @@ const PRIMARY_ACTIONS = [
   { section: SECTIONS.CAMPAIGNS, to: '/app/campaigns/new', label: '+ Создать кампанию' },
   { section: SECTIONS.APPLICATIONS, to: '/app/board', label: 'Офферы' },
   { section: SECTIONS.FINANCE, to: '/app/finance/payouts', label: 'Выплаты' },
+  { section: SECTIONS.MODERATION, to: '/app/admin/moderation', label: 'Модерация' },
   { section: SECTIONS.USERS, to: '/app/admin/users', label: 'Пользователи' },
 ];
 

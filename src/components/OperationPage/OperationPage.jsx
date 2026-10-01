@@ -7,8 +7,10 @@ import { SkeletonPageHead } from '../shared/Skeleton/Skeleton';
 import ProofUploader from '../shared/ProofUploader/ProofUploader';
 import Field from '../shared/Field/Field';
 import Icon from '../shared/Icon/Icon';
+import UsdtQuote from '../shared/UsdtQuote/UsdtQuote';
 import { errorMessage } from '../../shared/auth';
 import { formatRubles } from '../../shared/money';
+import useCountdown, { formatCountdown } from '../../shared/useCountdown';
 import ui from '../../shared/ui.module.css';
 import styles from './OperationPage.module.css';
 
@@ -45,6 +47,9 @@ const REJECT_PROMPT = {
   TOP_UP: 'Причина отклонения — её увидит рекламодатель. На баланс ничего не зачислится.',
 };
 
+const EXPIRY_SYNC_DELAY_MS = 35_000;
+const TIMER_WARN_MS = 5 * 60_000;
+
 const OperationPage = ({ scope = 'earnings' }) => {
   const { operationId } = useParams();
   const config = SCOPES[scope] || SCOPES.earnings;
@@ -71,6 +76,21 @@ const OperationPage = ({ scope = 'earnings' }) => {
     setLoading(true);
     load();
   }, [load]);
+
+  const awaitingPayment =
+    detail?.transaction?.type === 'TOP_UP' && detail?.transaction?.status === 'PENDING';
+  const awaitingConfirmation =
+    detail?.transaction?.type === 'WITHDRAWAL' && detail?.transaction?.status === 'SENT';
+  const remainingMs = useCountdown(
+    awaitingPayment || awaitingConfirmation ? detail?.transfer?.expiresAt : null
+  );
+  const timeIsUp = remainingMs === 0;
+
+  useEffect(() => {
+    if (!timeIsUp) return undefined;
+    const timer = setTimeout(load, EXPIRY_SYNC_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [timeIsUp, load]);
 
   const act = async (request, question, done) => {
     if (!window.confirm(question)) return;
@@ -165,6 +185,18 @@ const OperationPage = ({ scope = 'earnings' }) => {
   const isTopUp = transaction.type === 'TOP_UP';
   const isWithdrawal = transaction.type === 'WITHDRAWAL';
   const isOpen = transaction.status === 'PENDING' || transaction.status === 'SENT';
+  const isExpired = transaction.status === 'EXPIRED' || timeIsUp;
+  const timer = (label) =>
+    remainingMs != null && (
+      <div
+        className={`${styles.timer} ${remainingMs <= TIMER_WARN_MS ? styles.timerWarn : ''}`}
+        role="timer"
+        aria-live="off"
+      >
+        <span className={styles.timerLabel}>{label}</span>
+        <span className={styles.timerValue}>{formatCountdown(remainingMs)}</span>
+      </div>
+    );
 
   return (
     <div className={`${ui.page} ${styles.narrow}`}>
@@ -220,13 +252,15 @@ const OperationPage = ({ scope = 'earnings' }) => {
             </button>
           </div>
         )}
-        {config.customerActions && isTopUp && transaction.status === 'PENDING' && (
+        {config.customerActions && isTopUp && transaction.status === 'PENDING' && !timeIsUp && (
           <div className={styles.payment}>
+            {timer('Оплатите и приложите чек за')}
             <p className={styles.actionText}>
               Переведите USDT (TRC-20) на сумму {amount} на адрес для оплаты выше. Затем приложите
               скриншот или PDF перевода — заявка уйдёт на проверку, и после неё деньги появятся на
               балансе.
             </p>
+            <UsdtQuote kopecks={transaction.amountKopecks} fixedRate={detail.transfer?.usdtRate} />
             <ProofUploader proofs={proofs} onChange={setProofs} disabled={busy} />
             <Field label="Номер транзакции">
               <input
@@ -258,6 +292,26 @@ const OperationPage = ({ scope = 'earnings' }) => {
             </div>
           </div>
         )}
+        {config.customerActions && isTopUp && isExpired && (
+          <div className={styles.actions}>
+            <p className={styles.actionText}>
+              Время на оплату вышло — заявка просрочена. Если вы уже перевели деньги, напишите
+              менеджеру финансов. Иначе создайте новую заявку: курс и сумма к переводу пересчитаются.
+            </p>
+            <Link to="/app/wallet" className={ui.btnPrimary}>
+              Новая заявка
+            </Link>
+          </div>
+        )}
+        {config.customerActions && isWithdrawal && isExpired && (
+          <div className={styles.actions}>
+            <p className={styles.actionText}>
+              Время на подтверждение вышло — вывод просрочен. Если деньги не пришли на кошелёк,
+              напишите менеджеру финансов: он проверит перевод и при необходимости вернёт сумму на
+              баланс.
+            </p>
+          </div>
+        )}
         {config.customerActions && isTopUp && transaction.status === 'SENT' && (
           <div className={styles.actions}>
             <p className={styles.actionText}>
@@ -265,8 +319,9 @@ const OperationPage = ({ scope = 'earnings' }) => {
             </p>
           </div>
         )}
-        {config.customerActions && isWithdrawal && transaction.status === 'SENT' && (
+        {config.customerActions && isWithdrawal && transaction.status === 'SENT' && !timeIsUp && (
           <div className={styles.actions}>
+            {timer('Подтвердите получение за')}
             <p className={styles.actionText}>
               Финансист отправил {amount} в USDT на ваш кошелёк TRON. Проверьте поступление и
               подтвердите получение.
@@ -294,6 +349,11 @@ const OperationPage = ({ scope = 'earnings' }) => {
                 ? 'Рекламодатель отметил оплату. Сверьте поступление на адрес платформы: пришли деньги — зачислите, нет — отклоните с причиной.'
                 : 'Рекламодатель ещё не отметил оплату. Если перевод уже пришёл на адрес платформы, можно зачислить сразу.'}
             </p>
+            <UsdtQuote
+              kopecks={transaction.amountKopecks}
+              fixedRate={detail.transfer?.usdtRate}
+              label="Ожидаем на адресе платформы"
+            />
             <div className={styles.buttons}>
               <button type="button" className={ui.btnDanger} onClick={reject} disabled={busy}>
                 Отклонить
@@ -315,8 +375,47 @@ const OperationPage = ({ scope = 'earnings' }) => {
             </div>
           </div>
         )}
-        {config.financeActions && isWithdrawal && transaction.status === 'SENT' && (
+        {config.financeActions && isTopUp && transaction.status === 'EXPIRED' && (
           <div className={styles.actions}>
+            <p className={styles.actionText}>
+              Рекламодатель не оплатил заявку за час, она просрочена. Если перевод всё же пришёл на
+              адрес платформы — его можно зачислить.
+            </p>
+            <UsdtQuote
+              kopecks={transaction.amountKopecks}
+              fixedRate={detail.transfer?.usdtRate}
+              label="Ожидали на адресе платформы"
+            />
+            <button
+              type="button"
+              className={ui.btnPrimary}
+              disabled={busy}
+              onClick={() =>
+                act(
+                  apiClient.api.confirmTopUp,
+                  `Подтверждаете, что ${amount} пришли на адрес платформы? Сумма зачислится на баланс рекламодателя.`,
+                  'Поступление подтверждено, баланс пополнен'
+                )
+              }
+            >
+              {busy ? 'Зачисляем…' : 'Зачислить всё равно'}
+            </button>
+          </div>
+        )}
+        {config.financeActions && isWithdrawal && isExpired && (
+          <div className={styles.actions}>
+            <p className={styles.actionText}>
+              Рекламодатель не подтвердил получение за час, вывод просрочен. Деньги остаются
+              списанными. Если перевод не дошёл — отклоните, сумма вернётся на баланс.
+            </p>
+            <button type="button" className={ui.btnDanger} onClick={reject} disabled={busy}>
+              {busy ? 'Отклоняем…' : 'Отклонить'}
+            </button>
+          </div>
+        )}
+        {config.financeActions && isWithdrawal && transaction.status === 'SENT' && !timeIsUp && (
+          <div className={styles.actions}>
+            {timer('Рекламодатель подтверждает получение, осталось')}
             <p className={styles.actionText}>
               Ждём подтверждения рекламодателя. Если перевод не сошёлся — отклоните операцию,
               деньги вернутся туда, откуда ушли.

@@ -8,6 +8,7 @@ import ProofUploader from '../shared/ProofUploader/ProofUploader';
 import FieldError from '../shared/FieldError/FieldError';
 import Field from '../shared/Field/Field';
 import Icon from '../shared/Icon/Icon';
+import UsdtQuote from '../shared/UsdtQuote/UsdtQuote';
 import { errorMessage } from '../../shared/auth';
 import { formatRubles } from '../../shared/money';
 import ui from '../../shared/ui.module.css';
@@ -141,6 +142,10 @@ const FinancePayout = () => {
               Переведите {amount} в USDT (TRC-20) на адрес выше, укажите номер транзакции и
               приложите скриншот — заявка перейдёт в ожидание подтверждения от креатора.
             </p>
+            <UsdtQuote
+              kopecks={detail.transaction.amountKopecks}
+              fixedRate={detail.transfer?.usdtRate}
+            />
             <Field label="Номер транзакции *">
               <input
                 type="text"

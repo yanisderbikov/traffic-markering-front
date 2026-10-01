@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import FieldError from '../shared/FieldError/FieldError';
+import UsdtQuote from '../shared/UsdtQuote/UsdtQuote';
 import Field from '../shared/Field/Field';
 import Icon from '../shared/Icon/Icon';
 import WalletSummary from '../shared/WalletSummary/WalletSummary';
@@ -186,6 +187,9 @@ const FinanceCustomer = () => {
               disabled={locked}
             />
             <FieldError>{errors.amountRub}</FieldError>
+            {rubToKopecks(amountRub) > 0 && (
+              <UsdtQuote kopecks={rubToKopecks(amountRub)} className={styles.quote} />
+            )}
           </Field>
           <Field label="Номер транзакции *">
             <input

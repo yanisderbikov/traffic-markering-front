@@ -25,6 +25,7 @@ import FinanceCustomers from './components/FinanceCustomers/FinanceCustomers';
 import FinanceCustomer from './components/FinanceCustomer/FinanceCustomer';
 import AdminUsers from './components/AdminUsers/AdminUsers';
 import AdminFraud from './components/AdminFraud/AdminFraud';
+import AdminModeration from './components/AdminModeration/AdminModeration';
 import AdminCreators from './components/AdminFraud/AdminCreators';
 import CreatorEarnings from './components/CreatorEarnings/CreatorEarnings';
 import OperationPage from './components/OperationPage/OperationPage';
@@ -59,6 +60,7 @@ const KNOWN_PATHS = new Set([
   '/app/finance/payouts',
   '/app/finance/operations',
   '/app/admin/users',
+  '/app/admin/moderation',
   '/app/admin/fraud',
   '/app/admin/fraud/creators',
   '/app/profile',
@@ -220,6 +222,7 @@ function App() {
           />
           <Route path="/app/finance/:userId" element={<FinanceCustomer />} />
           <Route path="/app/admin/users" element={<AdminUsers />} />
+          <Route path="/app/admin/moderation" element={<AdminModeration />} />
           <Route path="/app/admin/fraud" element={<AdminFraud />} />
           <Route path="/app/admin/fraud/creators" element={<AdminCreators />} />
           <Route path="/app/profile" element={<Profile />} />

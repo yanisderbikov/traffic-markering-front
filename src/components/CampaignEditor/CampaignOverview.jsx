@@ -5,6 +5,7 @@ import apiClient from '../../apiClient';
 import BudgetBar from '../shared/BudgetBar/BudgetBar';
 import CreatorSocials from '../shared/CreatorSocials/CreatorSocials';
 import Icon from '../shared/Icon/Icon';
+import RejectDialog from '../shared/RejectDialog/RejectDialog';
 import { FraudBadge, FraudFlags, TrustBadge } from '../shared/FraudBadge/FraudBadge';
 import { errorMessage } from '../../shared/auth';
 import { DEFAULT_VIEW_REGION, viewRegionLabel } from '../../shared/viewRegion';
@@ -93,6 +94,7 @@ const CampaignOverview = ({ campaign, onReload }) => {
   const [applicationsLoading, setApplicationsLoading] = useState(true);
   const [applicationsError, setApplicationsError] = useState('');
   const [busyApplicationId, setBusyApplicationId] = useState(null);
+  const [rejecting, setRejecting] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -125,10 +127,15 @@ const CampaignOverview = ({ campaign, onReload }) => {
     }
   };
 
-  const handleApplicationStatus = async (application, status) => {
+  const handleApplicationStatus = async (application, status, reason) => {
+    if (status === 'REJECTED' && reason === undefined) {
+      setRejecting(application);
+      return;
+    }
     setBusyApplicationId(application.id);
     try {
-      await apiClient.api.updateApplicationStatus(application.id, { status });
+      await apiClient.api.updateApplicationStatus(application.id, { status, reason });
+      setRejecting(null);
       toast.success(`Отклик: ${APPLICATION_STATUS_LABELS[status] || status}`);
       await Promise.all([loadApplications(), onReload()]);
     } catch (err) {
@@ -345,6 +352,9 @@ const CampaignOverview = ({ campaign, onReload }) => {
                         <p className={styles.appMeta}>Telegram: {application.creatorTelegram}</p>
                       )}
                       {application.comment && <p className={styles.comment}>{application.comment}</p>}
+                      {application.status === 'REJECTED' && application.rejectionReason && (
+                        <p className={styles.appMeta}>Причина отказа: {application.rejectionReason}</p>
+                      )}
                       {application.campaignViewRegion && application.campaignViewRegion !== 'WORLD' && (
                         <p className={styles.appMeta}>
                           {application.viewsGeographyKnown === false ? (
@@ -394,6 +404,13 @@ const CampaignOverview = ({ campaign, onReload }) => {
           </ul>
         )}
       </section>
+
+      <RejectDialog
+        subject={rejecting && `${rejecting.creatorName} · ${rejecting.publicId}`}
+        busy={rejecting != null && busyApplicationId === rejecting.id}
+        onCancel={() => setRejecting(null)}
+        onConfirm={(reason) => handleApplicationStatus(rejecting, 'REJECTED', reason)}
+      />
     </div>
   );
 };

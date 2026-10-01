@@ -48,6 +48,11 @@ const ACTOR_LABEL = {
 
 const SETTLED_STATUSES = ['DONE', 'CONFIRMED'];
 
+const CLOSED_LABEL = {
+  CANCELLED: 'Отменена',
+  EXPIRED: 'Просрочена',
+};
+
 const OWNER_LABEL = {
   PAYOUT: 'Креатор',
   TOP_UP: 'Рекламодатель',
@@ -71,7 +76,7 @@ const TransferCard = ({ detail, showOwner = false, children }) => {
     },
     transfer?.closedAt &&
       !transfer?.confirmedAt && {
-        label: transaction.status === 'CANCELLED' ? 'Отменена' : 'Отклонена',
+        label: CLOSED_LABEL[transaction.status] || 'Отклонена',
         at: transfer.closedAt,
       },
   ].filter(Boolean);
@@ -138,6 +143,12 @@ const TransferCard = ({ detail, showOwner = false, children }) => {
                 Копировать
               </button>
             </dd>
+          </>
+        )}
+        {transfer?.expiresAt && (isTopUp ? transaction.status === 'PENDING' : transaction.status === 'SENT') && (
+          <>
+            <dt>{isTopUp ? 'Оплатить до' : 'Подтвердить до'}</dt>
+            <dd>{formatDate(transfer.expiresAt)}</dd>
           </>
         )}
         {transfer?.txId && (

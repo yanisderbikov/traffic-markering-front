@@ -131,7 +131,7 @@ const CreatorSocialAccounts = () => {
 
       {error && <p className={ui.errorBanner}>{error}</p>}
       {loading && (
-        <div className={ui.grid3} aria-busy="true">
+        <div className={styles.grid} aria-busy="true">
           {PLATFORMS.map((platform) => (
             <section key={platform.slug} className={`${ui.card} ${styles.platform}`}>
               <div className={styles.platformHead}>
@@ -159,7 +159,7 @@ const CreatorSocialAccounts = () => {
       )}
 
       {!loading && (
-        <div className={ui.grid3}>
+        <div className={styles.grid}>
           {PLATFORMS.map((platform) => {
             const connected = accounts.filter((account) => account.platform === platform.platform);
             return (
@@ -218,11 +218,12 @@ const CreatorSocialAccounts = () => {
                   className={`${connected.length ? ui.btnSecondary : ui.btnPrimary} ${ui.btnBlock} ${styles.connect}`}
                   onClick={() => connect(platform.slug)}
                   disabled={pendingSlug === platform.slug}
+                  aria-label={`Подключить ${platform.label}`}
                 >
                   <SocialIcon name={platform.slug} />
                   {pendingSlug === platform.slug
                     ? 'Открываем площадку…'
-                    : `Подключить ${platform.label}`}
+                    : connected.length ? 'Подключить ещё' : 'Подключить аккаунт'}
                 </button>
               </section>
             );

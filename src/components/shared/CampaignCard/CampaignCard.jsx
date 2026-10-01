@@ -8,8 +8,6 @@ import { formatDay, periodState } from '../../../shared/dates';
 import { DEFAULT_VIEW_REGION, isWorldRegion, viewRegionLabel } from '../../../shared/viewRegion';
 import styles from './CampaignCard.module.css';
 
-const TEETH = 'M0 0L10 8L0 16Z';
-
 export const budgetProgress = (campaign) => {
   const budget = Math.max(0, Number(campaign?.budgetKopecks) || 0);
   const spent = Math.min(budget, Math.max(0, Number(campaign?.spentKopecks) || 0));
@@ -34,18 +32,7 @@ export const campaignAvailability = (campaign) => {
   };
 };
 
-const TicketStub = ({ patternId }) => (
-  <div className={styles.stub} aria-hidden="true">
-    <svg className={styles.teeth} width="10" height="100%">
-      <defs>
-        <pattern id={patternId} width="10" height="16" patternUnits="userSpaceOnUse">
-          <path d={TEETH} fill="currentColor" />
-        </pattern>
-      </defs>
-      <rect width="10" height="100%" fill={`url(#${patternId})`} />
-    </svg>
-  </div>
-);
+const TicketStub = () => <div className={styles.stub} aria-hidden="true" />;
 
 const CampaignCard = ({ campaign, to, index }) => {
   if (!campaign) return null;
@@ -101,7 +88,7 @@ const CampaignCard = ({ campaign, to, index }) => {
         </p>
       </div>
 
-      <TicketStub patternId={`teeth-${campaign.publicId || campaign.id}`} />
+      <TicketStub />
     </Link>
   );
 };
@@ -134,7 +121,7 @@ export const CampaignCardSkeleton = ({ index }) => (
         <Skeleton width="12rem" />
       </p>
     </div>
-    <TicketStub patternId={`teeth-skeleton-${index}`} />
+    <TicketStub />
   </div>
 );
 

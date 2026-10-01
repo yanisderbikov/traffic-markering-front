@@ -3,6 +3,7 @@ import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-route
 import apiClient from '../../apiClient';
 import Logo from '../shared/Logo/Logo';
 import Icon from '../shared/Icon/Icon';
+import ThemeSwitch from '../shared/ThemeSwitch/ThemeSwitch';
 import { SECTIONS, getAllowedSections, sectionForPath } from '../../permissions';
 import { ROLE_LABELS } from '../../shared/dictionaries';
 import { CONTACT_EMAIL } from '../Info/legal';
@@ -19,6 +20,7 @@ const MENU = [
   { to: '/app/finance/top-ups', label: 'Пополнения', short: 'Пополнения', icon: 'plus', section: SECTIONS.FINANCE },
   { to: '/app/finance/payouts', label: 'Выплаты', short: 'Выплаты', icon: 'download', section: SECTIONS.FINANCE },
   { to: '/app/finance/operations', label: 'Все операции', short: 'Операции', icon: 'chart', section: SECTIONS.FINANCE },
+  { to: '/app/admin/moderation', label: 'Модерация', short: 'Модерация', icon: 'check', section: SECTIONS.MODERATION },
   { to: '/app/admin/fraud', label: 'Антифрод', short: 'Антифрод', icon: 'shield', section: SECTIONS.FRAUD, end: true },
   { to: '/app/admin/fraud/creators', label: 'Репутация креаторов', short: 'Репутация', icon: 'users', section: SECTIONS.FRAUD },
   { to: '/app/admin/users', label: 'Пользователи', short: 'Люди', icon: 'users', section: SECTIONS.USERS },
@@ -91,6 +93,7 @@ const AppLayout = () => {
 
   const sidebarFooter = (
     <div className={styles.sidebarFooter}>
+      <ThemeSwitch className={styles.themeSwitch} />
       <a className={styles.help} href={`mailto:${CONTACT_EMAIL}`}>
         <span className={styles.helpTitle}>Нужна помощь?</span>
         <span className={styles.helpText}>Напишите команде Offer</span>

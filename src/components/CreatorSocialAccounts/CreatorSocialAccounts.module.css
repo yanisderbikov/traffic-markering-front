@@ -1,13 +1,23 @@
+/* Cards never get narrower than 270px (the connect button fits on one line);
+   the shared grid3 forces three columns from 900px and squeezes them next to the sidebar. */
+.grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(270px, 100%), 1fr));
+}
+
 .platform {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
+/* Status always sits under the name, so every card has the same header
+   regardless of how long the platform name is. */
 .platformHead {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 10px;
 }
 
@@ -15,9 +25,11 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
   font-family: var(--font-display);
   font-size: 1.15rem;
   font-weight: 700;
+  line-height: 1.2;
   color: var(--color-ink);
 }
 

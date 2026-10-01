@@ -1,18 +1,14 @@
-const MOSCOW_TZ = 'Europe/Moscow';
-const MOSCOW_OFFSET = '+03:00';
-
+// Бэк отдаёт время в UTC (ISO с Z), показываем и вводим его в часовом поясе браузера.
 const DAY_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
   day: '2-digit',
   month: '2-digit',
   year: 'numeric',
-  timeZone: MOSCOW_TZ,
 });
 
 const INPUT_FORMATTER = new Intl.DateTimeFormat('en-CA', {
   day: '2-digit',
   month: '2-digit',
   year: 'numeric',
-  timeZone: MOSCOW_TZ,
 });
 
 const toDate = (value) => {
@@ -32,10 +28,10 @@ export const dateInputValue = (value) => {
 };
 
 export const startOfDayIso = (dateInput) =>
-  dateInput ? new Date(`${dateInput}T00:00:00.000${MOSCOW_OFFSET}`).toISOString() : null;
+  dateInput ? new Date(`${dateInput}T00:00:00.000`).toISOString() : null;
 
 export const endOfDayIso = (dateInput) =>
-  dateInput ? new Date(`${dateInput}T23:59:59.999${MOSCOW_OFFSET}`).toISOString() : null;
+  dateInput ? new Date(`${dateInput}T23:59:59.999`).toISOString() : null;
 
 export const describePeriod = (startsAt, endsAt) => {
   const from = formatDay(startsAt);
@@ -57,7 +53,6 @@ export const periodState = (startsAt, endsAt, now = new Date()) => {
 const SHORT_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
   day: 'numeric',
   month: 'short',
-  timeZone: MOSCOW_TZ,
 });
 
 export const formatShortDate = (value) => {
