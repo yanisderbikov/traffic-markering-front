@@ -65,6 +65,7 @@ export const WALLET_TRANSACTION_LABELS = {
   RELEASE: 'возврат из объявления',
   EARNING: 'начисление за просмотры',
   PAYOUT: 'выплата USDT',
+  REFERRAL_REWARD: 'партнёрское вознаграждение',
 };
 
 export const OPERATION_STATUS_LABELS = {

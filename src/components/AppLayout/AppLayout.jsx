@@ -3,47 +3,30 @@ import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-route
 import apiClient from '../../apiClient';
 import Logo from '../shared/Logo/Logo';
 import Icon from '../shared/Icon/Icon';
+import Skeleton, { SkeletonPageHead, SkeletonText } from '../shared/Skeleton/Skeleton';
 import ThemeSwitch from '../shared/ThemeSwitch/ThemeSwitch';
-import { SECTIONS, getAllowedSections, sectionForPath } from '../../permissions';
+import { useSession } from '../../shared/session';
+import { errorMessage } from '../../shared/auth';
 import { ROLE_LABELS } from '../../shared/dictionaries';
 import { CONTACT_EMAIL } from '../Info/legal';
+import ui from '../../shared/ui.module.css';
 import styles from './AppLayout.module.css';
 
-const MENU = [
-  { to: '/app', label: 'Обзор', short: 'Обзор', icon: 'chart', end: true },
-  { to: '/app/board', label: 'Офферы', short: 'Офферы', icon: 'grid', section: SECTIONS.APPLICATIONS },
-  { to: '/app/campaigns', label: 'Мои кампании', short: 'Кампании', icon: 'briefcase', section: SECTIONS.CAMPAIGNS },
-  { to: '/app/applications', label: 'Мои работы', short: 'Работы', icon: 'briefcase', section: SECTIONS.APPLICATIONS },
-  { to: '/app/wallet', label: 'Финансы', short: 'Финансы', icon: 'wallet', section: SECTIONS.WALLET },
-  { to: '/app/earnings', label: 'Финансы', short: 'Финансы', icon: 'wallet', section: SECTIONS.EARNINGS },
-  { to: '/app/finance', label: 'Кошельки заказчиков', short: 'Кошельки', icon: 'wallet', section: SECTIONS.FINANCE, end: true },
-  { to: '/app/finance/top-ups', label: 'Пополнения', short: 'Пополнения', icon: 'plus', section: SECTIONS.FINANCE },
-  { to: '/app/finance/payouts', label: 'Выплаты', short: 'Выплаты', icon: 'download', section: SECTIONS.FINANCE },
-  { to: '/app/finance/operations', label: 'Все операции', short: 'Операции', icon: 'chart', section: SECTIONS.FINANCE },
-  { to: '/app/admin/moderation', label: 'Модерация', short: 'Модерация', icon: 'check', section: SECTIONS.MODERATION },
-  { to: '/app/admin/fraud', label: 'Антифрод', short: 'Антифрод', icon: 'shield', section: SECTIONS.FRAUD, end: true },
-  { to: '/app/admin/fraud/creators', label: 'Репутация креаторов', short: 'Репутация', icon: 'users', section: SECTIONS.FRAUD },
-  { to: '/app/admin/users', label: 'Пользователи', short: 'Люди', icon: 'users', section: SECTIONS.USERS },
-  { to: '/app/profile', label: 'Профиль', short: 'Профиль', icon: 'user', section: SECTIONS.PROFILE, end: true },
-  { to: '/app/profile/socials', label: 'Соцсети', short: 'Соцсети', icon: 'link', section: SECTIONS.SOCIALS },
-];
-
 const TAB_LIMIT = 4;
+const NAV_PLACEHOLDERS = 5;
 
 const AppLayout = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const session = useSession();
 
-  const jwtMeta = apiClient.getJwtMetadata();
-  const role = jwtMeta?.role;
-  const userName = jwtMeta?.name || jwtMeta?.username || '';
+  const account = session.user || apiClient.getJwtMetadata();
+  const role = account?.role;
+  const userName = account?.name || account?.username || '';
   const roleLabel = ROLE_LABELS[role] || role || '';
-  const allowedSections = getAllowedSections(role);
-  const visibleMenu = MENU.filter(
-    (item) => !item.section || allowedSections.includes(item.section)
-  );
-  const tabs = visibleMenu.slice(0, TAB_LIMIT);
+  const profileTab = session.tabs.find((tab) => tab.key === 'PROFILE');
+  const quickTabs = session.tabs.slice(0, TAB_LIMIT);
 
   useEffect(() => {
     setMenuOpen(false);
@@ -66,30 +49,64 @@ const AppLayout = () => {
     return <Navigate to={`/login?from=${from}`} replace />;
   }
 
-  const currentSection = sectionForPath(location.pathname);
-  if (role && currentSection && !allowedSections.includes(currentSection)) {
-    return <Navigate to="/app" replace />;
-  }
-
   const initial = userName.trim().charAt(0).toUpperCase() || '·';
 
   const navList = (
-    <nav className={styles.nav} aria-label="Разделы кабинета">
-      {visibleMenu.map((item) => (
-        <NavLink
-          key={item.to}
-          to={item.to}
-          end={item.end ?? false}
-          className={({ isActive }) =>
-            `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`
-          }
-        >
-          <Icon name={item.icon} className={styles.navIcon} />
-          <span>{item.label}</span>
-        </NavLink>
-      ))}
+    <nav
+      className={styles.nav}
+      aria-label="Разделы кабинета"
+      aria-busy={session.status === 'loading' || undefined}
+    >
+      {session.status === 'loading'
+        ? Array.from({ length: NAV_PLACEHOLDERS }, (_, index) => (
+            <Skeleton key={index} block height={46} radius={12} />
+          ))
+        : session.tabs.map((tab) => (
+            <NavLink
+              key={tab.key}
+              to={tab.path}
+              end={tab.exact}
+              className={({ isActive }) =>
+                `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`
+              }
+            >
+              <Icon name={tab.icon} className={styles.navIcon} />
+              <span>{tab.label}</span>
+            </NavLink>
+          ))}
     </nav>
   );
+
+  const userCard = (
+    <>
+      <span className={styles.userAvatar} aria-hidden="true">
+        {initial}
+      </span>
+      <span className={styles.userText}>
+        <span className={styles.userName}>{userName || 'Профиль'}</span>
+        <span className={styles.userRole}>Личный кабинет</span>
+      </span>
+    </>
+  );
+
+  const content =
+    session.status === 'ready' ? (
+      <Outlet />
+    ) : session.status === 'error' ? (
+      <div className={ui.page}>
+        <p className={ui.errorBanner}>
+          {errorMessage(session.error, 'Не удалось загрузить разделы кабинета')}
+        </p>
+        <button type="button" className={ui.btnPrimary} onClick={session.reload}>
+          Попробовать ещё раз
+        </button>
+      </div>
+    ) : (
+      <div className={ui.page} aria-busy="true">
+        <SkeletonPageHead />
+        <SkeletonText lines={4} />
+      </div>
+    );
 
   const sidebarFooter = (
     <div className={styles.sidebarFooter}>
@@ -99,15 +116,15 @@ const AppLayout = () => {
         <span className={styles.helpText}>Напишите команде Offer</span>
       </a>
       <div className={styles.user}>
-        <NavLink to="/app/profile" className={styles.userLink} title={userName}>
-          <span className={styles.userAvatar} aria-hidden="true">
-            {initial}
+        {profileTab ? (
+          <NavLink to={profileTab.path} className={styles.userLink} title={userName}>
+            {userCard}
+          </NavLink>
+        ) : (
+          <span className={styles.userLink} title={userName}>
+            {userCard}
           </span>
-          <span className={styles.userText}>
-            <span className={styles.userName}>{userName || 'Профиль'}</span>
-            <span className={styles.userRole}>Личный кабинет</span>
-          </span>
-        </NavLink>
+        )}
         <button
           type="button"
           className={styles.logout}
@@ -141,9 +158,11 @@ const AppLayout = () => {
             Рабочее пространство{roleLabel ? ` / ${roleLabel}` : ''}
           </span>
           <div className={styles.topbarActions}>
-            <NavLink to="/app/profile" className={styles.topbarAvatar} title={userName}>
-              {initial}
-            </NavLink>
+            {profileTab && (
+              <NavLink to={profileTab.path} className={styles.topbarAvatar} title={userName}>
+                {initial}
+              </NavLink>
+            )}
             <button
               type="button"
               className={styles.burger}
@@ -156,9 +175,7 @@ const AppLayout = () => {
           </div>
         </header>
 
-        <main className={styles.content}>
-          <Outlet />
-        </main>
+        <main className={styles.content}>{content}</main>
       </div>
 
       <div
@@ -175,15 +192,15 @@ const AppLayout = () => {
       </aside>
 
       <nav className={styles.tabbar} aria-label="Быстрые разделы">
-        {tabs.map((item) => (
+        {quickTabs.map((tab) => (
           <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.end ?? false}
+            key={tab.key}
+            to={tab.path}
+            end={tab.exact}
             className={({ isActive }) => `${styles.tab} ${isActive ? styles.tabActive : ''}`}
           >
-            <Icon name={item.icon} size={22} />
-            <span>{item.short}</span>
+            <Icon name={tab.icon} size={22} />
+            <span>{tab.shortLabel}</span>
           </NavLink>
         ))}
       </nav>

@@ -25,6 +25,7 @@ const POINT_CLASS = {
   CAMPAIGN: styles.pointCampaign,
   CREATOR_WALLET: styles.pointCreator,
   TRON: styles.pointTron,
+  PARTNER_PROGRAM: styles.pointPartner,
 };
 
 export const StatusBadge = ({ type, status, description }) => (

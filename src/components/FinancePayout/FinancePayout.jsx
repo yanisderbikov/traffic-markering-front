@@ -43,7 +43,9 @@ const FinancePayout = () => {
     load();
   }, [load]);
 
-  const amount = formatRubles(Math.abs(detail?.transaction?.amountKopecks ?? 0));
+  const transferKopecks =
+    detail?.transfer?.transferKopecks ?? Math.abs(detail?.transaction?.amountKopecks ?? 0);
+  const amount = formatRubles(transferKopecks);
 
   const markSent = async () => {
     const nextErrors = {
@@ -142,10 +144,7 @@ const FinancePayout = () => {
               Переведите {amount} в USDT (TRC-20) на адрес выше, укажите номер транзакции и
               приложите скриншот — заявка перейдёт в ожидание подтверждения от креатора.
             </p>
-            <UsdtQuote
-              kopecks={detail.transaction.amountKopecks}
-              fixedRate={detail.transfer?.usdtRate}
-            />
+            <UsdtQuote kopecks={transferKopecks} fixedRate={detail.transfer?.usdtRate} />
             <Field label="Номер транзакции *">
               <input
                 type="text"

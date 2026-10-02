@@ -1,10 +1,15 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import apiClient from '../../apiClient';
 import PublicLayout from '../shared/PublicLayout/PublicLayout';
 import BudgetBar from '../shared/BudgetBar/BudgetBar';
 import SocialIcon from '../shared/SocialIcon/SocialIcon';
 import Icon from '../shared/Icon/Icon';
-import { REGISTER_CUSTOMER } from '../../shared/routes';
+import {
+  normalizeReferralCode,
+  registerWithReferral,
+  rememberReferralCode,
+} from '../../shared/referral';
 import ui from '../../shared/ui.module.css';
 import styles from './AdvLanding.module.css';
 
@@ -174,11 +179,49 @@ const FAQ = [
   },
 ];
 
-const CtaLink = ({ children = 'Запустить кампанию', className = styles.cta }) => (
-  <Link to={REGISTER_CUSTOMER} className={className}>
+const CtaLink = ({ to, children = 'Запустить кампанию', className = styles.cta }) => (
+  <Link to={to} className={className}>
     {children}
     <Icon name="arrowRight" size={18} />
   </Link>
+);
+
+const useInviter = () => {
+  const [searchParams] = useSearchParams();
+  const code = normalizeReferralCode(searchParams.get('ref'));
+  const [inviter, setInviter] = useState(null);
+
+  useEffect(() => {
+    if (!code) return undefined;
+    let alive = true;
+    apiClient.api
+      .partnerInvite(code)
+      .then((res) => {
+        if (!alive) return;
+        rememberReferralCode(res.data.code);
+        setInviter(res.data);
+      })
+      .catch(() => {
+        if (alive) setInviter(null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [code]);
+
+  return inviter;
+};
+
+const InviteBadge = ({ inviter }) => (
+  <p className={styles.invite}>
+    <span className={styles.inviteAvatar} aria-hidden="true">
+      {inviter.name?.trim().charAt(0).toUpperCase() || '·'}
+    </span>
+    <span>
+      Вас пригласил <strong>{inviter.name}</strong>
+      {inviter.company ? ` из ${inviter.company}` : ''}
+    </span>
+  </p>
 );
 
 const DemoCampaign = () => (
@@ -223,151 +266,168 @@ const DemoCampaign = () => (
   </div>
 );
 
-const AdvLanding = () => (
-  <PublicLayout startTo={REGISTER_CUSTOMER}>
-    <section className={styles.hero}>
-      <div className={styles.heroCopy}>
-        <span className={styles.eyebrow}>Для брендов и блогеров</span>
-        <h1 className={styles.heroTitle}>Платите за просмотры, а не за обещания</h1>
-        <p className={styles.heroText}>
-          Креаторы снимают ролики под ваш бриф и публикуют их в Shorts, TikTok и Reels. Бюджет
-          списывается только за просмотры, которые подтвердил API площадки.
-        </p>
-        <CtaLink />
-        <p className={styles.heroNote}>Регистрация за минуту. Без пароля, вход по коду из письма.</p>
-      </div>
-      <DemoCampaign />
-    </section>
+const AdvLanding = () => {
+  const inviter = useInviter();
+  const registerTo = registerWithReferral(inviter?.code);
 
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Знакомо?</h2>
-      <p className={styles.sectionLead}>
-        Так рекламодатели описывают работу с блогерами и биржами. Мы собрали offer вокруг этих
-        историй.
-      </p>
-      <div className={styles.pains}>
-        {PAINS.map((item) => (
-          <article key={item.pain} className={styles.pain}>
-            <p className={styles.painQuote}>«{item.pain}»</p>
-            <div className={styles.painAnswer}>
-              <span className={styles.painIcon}>
-                <Icon name={item.icon} size={18} />
-              </span>
-              <p className={styles.painText}>{item.answer}</p>
-            </div>
-          </article>
-        ))}
-      </div>
-      <div className={styles.sectionCta}>
-        <CtaLink>Хочу платить за результат</CtaLink>
-      </div>
-    </section>
-
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Как запустить кампанию</h2>
-      <div className={styles.steps}>
-        {STEPS.map((step) => (
-          <article key={step.num} className={styles.step}>
-            <span className={styles.num}>{step.num}</span>
-            <h3 className={styles.stepTitle}>{step.title}</h3>
-            <p className={styles.stepText}>{step.text}</p>
-          </article>
-        ))}
-      </div>
-    </section>
-
-    <section className={styles.section}>
-      <div className={styles.rulesCard}>
-        <div className={styles.rulesCopy}>
-          <h2 className={styles.sectionTitle}>Правила кампании задаёте вы</h2>
-          <p className={styles.sectionLead}>
-            Креатор видит все условия до того, как снимет ролик. Ролик не по правилам вы
-            отклоняете, и он не стоит вам ни рубля.
+  return (
+    <PublicLayout startTo={registerTo}>
+      <section className={styles.hero}>
+        <div className={styles.heroCopy}>
+          {inviter ? (
+            <InviteBadge inviter={inviter} />
+          ) : (
+            <span className={styles.eyebrow}>Для брендов и блогеров</span>
+          )}
+          <h1 className={styles.heroTitle}>Платите за просмотры, а не за обещания</h1>
+          <p className={styles.heroText}>
+            Креаторы снимают ролики под ваш бриф и публикуют их в Shorts, TikTok и Reels. Бюджет
+            списывается только за просмотры, которые подтвердил API площадки.
           </p>
-          <CtaLink>Настроить свою кампанию</CtaLink>
+          <CtaLink to={registerTo} />
+          <p className={styles.heroNote}>
+            {inviter
+              ? 'Регистрация по приглашению займёт минуту. Без пароля, вход по коду из письма.'
+              : 'Регистрация за минуту. Без пароля, вход по коду из письма.'}
+          </p>
         </div>
-        <dl className={styles.rules}>
-          {RULES.map((rule) => (
-            <div key={rule.label} className={styles.rule}>
-              <dt className={styles.ruleLabel}>{rule.label}</dt>
-              <dd className={styles.ruleValue}>{rule.value}</dd>
-            </div>
+        <DemoCampaign />
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Знакомо?</h2>
+        <p className={styles.sectionLead}>
+          Так рекламодатели описывают работу с блогерами и биржами. Мы собрали offer вокруг этих
+          историй.
+        </p>
+        <div className={styles.pains}>
+          {PAINS.map((item) => (
+            <article key={item.pain} className={styles.pain}>
+              <p className={styles.painQuote}>«{item.pain}»</p>
+              <div className={styles.painAnswer}>
+                <span className={styles.painIcon}>
+                  <Icon name={item.icon} size={18} />
+                </span>
+                <p className={styles.painText}>{item.answer}</p>
+              </div>
+            </article>
           ))}
-        </dl>
-      </div>
-    </section>
-
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Кому подходит</h2>
-      <div className={styles.audiences}>
-        {AUDIENCES.map((audience) => (
-          <article key={audience.id} id={audience.id} className={styles.audience}>
-            <h3 className={styles.audienceTitle}>{audience.title}</h3>
-            <p className={styles.audienceText}>{audience.text}</p>
-            <ul className={styles.audiencePoints}>
-              {audience.points.map((point) => (
-                <li key={point} className={styles.audiencePoint}>
-                  <Icon name="check" size={16} className={styles.audienceCheck} />
-                  {point}
-                </li>
-              ))}
-            </ul>
-            <CtaLink className={styles.audienceLink}>Запустить кампанию</CtaLink>
-          </article>
-        ))}
-      </div>
-    </section>
-
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Размещение у блогера и offer</h2>
-      <div className={styles.compare} role="table" aria-label="Сравнение размещения у блогера и offer">
-        <div className={`${styles.compareRow} ${styles.compareHead}`} role="row">
-          <span role="columnheader" className={styles.compareLabel} />
-          <span role="columnheader">Размещение у блогера</span>
-          <span role="columnheader" className={styles.compareAccent}>
-            offer
-          </span>
         </div>
-        {COMPARISON.map((row) => (
-          <div key={row.label} className={styles.compareRow} role="row">
-            <span role="rowheader" className={styles.compareLabel}>
-              {row.label}
-            </span>
-            <span role="cell" className={styles.compareBefore}>
-              {row.before}
-            </span>
-            <span role="cell" className={styles.compareAfter}>
-              <Icon name="check" size={16} className={styles.compareCheck} />
-              {row.after}
+        <div className={styles.sectionCta}>
+          <CtaLink to={registerTo}>Хочу платить за результат</CtaLink>
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Как запустить кампанию</h2>
+        <div className={styles.steps}>
+          {STEPS.map((step) => (
+            <article key={step.num} className={styles.step}>
+              <span className={styles.num}>{step.num}</span>
+              <h3 className={styles.stepTitle}>{step.title}</h3>
+              <p className={styles.stepText}>{step.text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <div className={styles.rulesCard}>
+          <div className={styles.rulesCopy}>
+            <h2 className={styles.sectionTitle}>Правила кампании задаёте вы</h2>
+            <p className={styles.sectionLead}>
+              Креатор видит все условия до того, как снимет ролик. Ролик не по правилам вы
+              отклоняете, и он не стоит вам ни рубля.
+            </p>
+            <CtaLink to={registerTo}>Настроить свою кампанию</CtaLink>
+          </div>
+          <dl className={styles.rules}>
+            {RULES.map((rule) => (
+              <div key={rule.label} className={styles.rule}>
+                <dt className={styles.ruleLabel}>{rule.label}</dt>
+                <dd className={styles.ruleValue}>{rule.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Кому подходит</h2>
+        <div className={styles.audiences}>
+          {AUDIENCES.map((audience) => (
+            <article key={audience.id} id={audience.id} className={styles.audience}>
+              <h3 className={styles.audienceTitle}>{audience.title}</h3>
+              <p className={styles.audienceText}>{audience.text}</p>
+              <ul className={styles.audiencePoints}>
+                {audience.points.map((point) => (
+                  <li key={point} className={styles.audiencePoint}>
+                    <Icon name="check" size={16} className={styles.audienceCheck} />
+                    {point}
+                  </li>
+                ))}
+              </ul>
+              <CtaLink to={registerTo} className={styles.audienceLink}>
+                Запустить кампанию
+              </CtaLink>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Размещение у блогера и offer</h2>
+        <div className={styles.compare} role="table" aria-label="Сравнение размещения у блогера и offer">
+          <div className={`${styles.compareRow} ${styles.compareHead}`} role="row">
+            <span role="columnheader" className={styles.compareLabel} />
+            <span role="columnheader">Размещение у блогера</span>
+            <span role="columnheader" className={styles.compareAccent}>
+              offer
             </span>
           </div>
-        ))}
-      </div>
-    </section>
+          {COMPARISON.map((row) => (
+            <div key={row.label} className={styles.compareRow} role="row">
+              <span role="rowheader" className={styles.compareLabel}>
+                {row.label}
+              </span>
+              <span role="cell" className={styles.compareBefore}>
+                {row.before}
+              </span>
+              <span role="cell" className={styles.compareAfter}>
+                <Icon name="check" size={16} className={styles.compareCheck} />
+                {row.after}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
 
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Частые вопросы</h2>
-      <div className={styles.faq}>
-        {FAQ.map((item) => (
-          <details key={item.question} className={styles.faqItem}>
-            <summary className={styles.faqQuestion}>
-              {item.question}
-              <Icon name="plus" size={18} className={styles.faqIcon} />
-            </summary>
-            <p className={styles.faqAnswer}>{item.answer}</p>
-          </details>
-        ))}
-      </div>
-    </section>
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Частые вопросы</h2>
+        <div className={styles.faq}>
+          {FAQ.map((item) => (
+            <details key={item.question} className={styles.faqItem}>
+              <summary className={styles.faqQuestion}>
+                {item.question}
+                <Icon name="plus" size={18} className={styles.faqIcon} />
+              </summary>
+              <p className={styles.faqAnswer}>{item.answer}</p>
+            </details>
+          ))}
+        </div>
+      </section>
 
-    <section className={styles.final}>
-      <h2 className={styles.finalTitle}>Запустите первую кампанию сегодня</h2>
-      <p className={styles.finalText}>
-        Регистрация займёт минуту. Бриф, ставку и правила настроите сразу после входа.
-      </p>
-      <CtaLink className={styles.finalCta}>Стать рекламодателем</CtaLink>
-    </section>
-  </PublicLayout>
-);
+      <section className={styles.final}>
+        <h2 className={styles.finalTitle}>Запустите первую кампанию сегодня</h2>
+        <p className={styles.finalText}>
+          Регистрация займёт минуту. Бриф, ставку и правила настроите сразу после входа.
+        </p>
+        <CtaLink to={registerTo} className={styles.finalCta}>
+          Стать рекламодателем
+        </CtaLink>
+      </section>
+    </PublicLayout>
+  );
+};
 
 export default AdvLanding;

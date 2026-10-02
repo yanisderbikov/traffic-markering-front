@@ -108,6 +108,17 @@ const TransferCard = ({ detail, showOwner = false, children }) => {
         <dd>
           <MoneyFlow source={transaction.source} destination={transaction.destination} />
         </dd>
+        {transfer?.commissionKopecks > 0 && (
+          <>
+            <dt>Комиссия платформы</dt>
+            <dd>{formatRubles(transfer.commissionKopecks)}</dd>
+            <dt>Сумма перевода</dt>
+            <dd>
+              {formatRubles(transfer.transferKopecks)}
+              {isTopUp ? ' — с комиссией' : ' — за вычетом комиссии'}
+            </dd>
+          </>
+        )}
         {transaction.ownerName && (
           <>
             <dt>Кошелёк</dt>

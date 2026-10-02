@@ -1,0 +1,20 @@
+.summary {
+  max-width: 420px;
+  margin-top: 14px;
+  padding: 4px 16px;
+  border-radius: var(--field-radius);
+  background: var(--color-surface-alt);
+}
+
+.commission {
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.total {
+  font-weight: 700;
+}
+
+.total > span:first-child {
+  color: var(--color-ink);
+}

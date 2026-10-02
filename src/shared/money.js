@@ -119,3 +119,13 @@ export const formatUsdt = (amount) => {
 };
 
 export const formatRate = (rubPerUsdt) => `${RATE_FORMATTER.format(rubPerUsdt)} ₽`;
+
+export const commissionOf = (kopecks, percent) => {
+  const amount = Number(kopecks) || 0;
+  const rate = Number(percent) || 0;
+  if (amount <= 0 || rate <= 0) return 0;
+  return Math.round((amount * rate) / 100);
+};
+
+export const formatPercent = (percent) =>
+  `${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(Number(percent) || 0)}%`;

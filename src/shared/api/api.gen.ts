@@ -532,7 +532,7 @@ export interface TopUpCreateRequestDTO {
 
 /** Одна сторона движения денег: откуда они ушли или куда пришли */
 export interface FlowPointDTO {
-  /** EXTERNAL, CUSTOMER_WALLET, CAMPAIGN, CREATOR_WALLET или TRON */
+  /** EXTERNAL, CUSTOMER_WALLET, CAMPAIGN, CREATOR_WALLET, TRON или PARTNER_PROGRAM */
   kind?: string;
   /**
    * Подпись для человека
@@ -572,6 +572,16 @@ export interface TransferDTO {
   tronAddress?: string;
   /** Курс USDT/RUB, зафиксированный при создании заявки; null у заявок, созданных до фиксации курса */
   usdtRate?: number;
+  /**
+   * Комиссия платформы, в копейках: у пополнения платится сверху, у выводов удерживается из суммы
+   * @format int64
+   */
+  commissionKopecks?: number;
+  /**
+   * Сколько в рублях уходит переводом USDT: у пополнения сумма с комиссией, у выводов — за вычетом комиссии
+   * @format int64
+   */
+  transferKopecks?: number;
   /** Номер (хеш) транзакции в сети TRON */
   txId?: string;
   /** Комментарий финансиста */
@@ -603,7 +613,7 @@ export interface WalletTransactionDTO {
    * @example "K7Q2M9XA"
    */
   publicId?: string;
-  /** Тип: TOP_UP, WITHDRAWAL, ALLOCATION, RELEASE, EARNING, PAYOUT */
+  /** Тип: TOP_UP, WITHDRAWAL, ALLOCATION, RELEASE, EARNING, PAYOUT, REFERRAL_REWARD */
   type?: string;
   /**
    * Человекочитаемый тип
@@ -881,6 +891,13 @@ export interface RegisterRequestDTO {
     | "ADMIN"
     | "SUPER_ADMIN"
     | "SERVICE";
+  /**
+   * Код приглашения партнёра из ссылки; неизвестный код не мешает регистрации
+   * @minLength 0
+   * @maxLength 64
+   * @example "K7Q2M9XA"
+   */
+  referralCode?: string;
 }
 
 /** Отклик криатора на объявление */
@@ -1101,6 +1118,11 @@ export interface WalletDTO {
   spentKopecks?: number;
   /** Адрес TRON платформы для пополнения USDT (TRC-20); null — не настроен */
   topUpTronAddress?: string;
+  /**
+   * Комиссия платформы, %: при пополнении платится сверху суммы, при выводе удерживается
+   * @example 10
+   */
+  commissionPercent?: number;
   updatedAt?: string;
 }
 
@@ -1111,7 +1133,7 @@ export interface OperationRowDTO {
    * @example "K7Q2M9XA"
    */
   publicId?: string;
-  /** Тип: TOP_UP, WITHDRAWAL, ALLOCATION, RELEASE, EARNING, PAYOUT */
+  /** Тип: TOP_UP, WITHDRAWAL, ALLOCATION, RELEASE, EARNING, PAYOUT, REFERRAL_REWARD */
   type?: string;
   /**
    * Что за операция
@@ -1371,6 +1393,11 @@ export interface CreatorWalletDTO {
   pendingKopecks?: number;
   /** Есть ли доступные деньги на заявку */
   payoutAvailable?: boolean;
+  /**
+   * Комиссия платформы с вывода, %: удерживается из суммы заявки
+   * @example 10
+   */
+  commissionPercent?: number;
   updatedAt?: string;
 }
 
@@ -1413,6 +1440,126 @@ export interface CurrentUserDTO {
   name?: string;
   /** Роль: CUSTOMER, CREATOR, FINANCE_MANAGER, ADMIN или SUPER_ADMIN */
   role?: string;
+  /** Вкладки кабинета в порядке меню */
+  tabs?: CabinetTabDTO[];
+}
+
+/** Партнёрская программа рекламодателя: условия, код приглашения и что принесли приглашённые */
+export interface PartnerDTO {
+  /** Подключена ли программа */
+  active?: boolean;
+  /**
+   * Код приглашения для ссылки на лендинг; null — программа не подключена
+   * @example "K7Q2M9XA"
+   */
+  code?: string;
+  /** Когда подключена, ISO-8601; null — не подключена */
+  joinedAt?: string;
+  /**
+   * Комиссия платформы с пополнений и выводов, %
+   * @example 10
+   */
+  commissionPercent?: number;
+  /**
+   * Доля партнёра от комиссии платформы с приглашённых, %
+   * @example 10
+   */
+  partnerSharePercent?: number;
+  /**
+   * Сколько рекламодателей зарегистрировалось по приглашению
+   * @format int32
+   */
+  invitedCount?: number;
+  /**
+   * Сколько из них уже принесли вознаграждение
+   * @format int32
+   */
+  activeCount?: number;
+  /**
+   * Заработано за всё время, в копейках
+   * @format int64
+   */
+  earnedKopecks?: number;
+  /** Приглашённые рекламодатели, новые сверху */
+  referrals?: PartnerReferralDTO[];
+  /** Последние начисления, новые сверху */
+  rewards?: PartnerRewardDTO[];
+}
+
+/** Рекламодатель, зарегистрированный по приглашению партнёра */
+export interface PartnerReferralDTO {
+  /** Имя рекламодателя */
+  name?: string;
+  /** Когда зарегистрировался, ISO-8601 */
+  joinedAt?: string;
+  /**
+   * Сколько партнёр заработал на нём, в копейках
+   * @format int64
+   */
+  earnedKopecks?: number;
+  /**
+   * Сколько начислений он принёс
+   * @format int32
+   */
+  rewardsCount?: number;
+}
+
+/** Начисление партнёру с комиссии платформы по операции приглашённого */
+export interface PartnerRewardDTO {
+  /**
+   * Публичный номер начисления в кошельке партнёра
+   * @example "K7Q2M9XA"
+   */
+  publicId?: string;
+  /** Кто из приглашённых принёс начисление */
+  referralName?: string;
+  /** Операция приглашённого: TOP_UP или WITHDRAWAL */
+  sourceType?: string;
+  /**
+   * Человекочитаемая операция
+   * @example "Пополнение"
+   */
+  sourceTypeDescription?: string;
+  /**
+   * Комиссия платформы с операции, в копейках
+   * @format int64
+   */
+  commissionKopecks?: number;
+  /**
+   * Доля партнёра, в копейках
+   * @format int64
+   */
+  rewardKopecks?: number;
+  createdAt?: string;
+}
+
+/** Кто пригласил: показывается на лендинге рекламодателя по коду из ссылки */
+export interface PartnerInviteDTO {
+  /**
+   * Код приглашения
+   * @example "K7Q2M9XA"
+   */
+  code?: string;
+  /** Имя партнёра */
+  name?: string;
+  /** Компания партнёра; null — не указана в профиле */
+  company?: string;
+}
+
+/** Вкладка левого меню личного кабинета */
+export interface CabinetTabDTO {
+  /** Код вкладки, по нему фронт закрывает страницы раздела */
+  key?: string;
+  /** Адрес раздела во фронте */
+  path?: string;
+  /** Название в боковом меню */
+  label?: string;
+  /** Короткое название для нижней панели на телефоне */
+  shortLabel?: string;
+  /** Имя иконки из набора фронта */
+  icon?: string;
+  /** Подсвечивать только на точном совпадении адреса, без вложенных страниц */
+  exact?: boolean;
 }
 
 import type {
@@ -2522,6 +2669,55 @@ export class Api<
       }),
 
     /**
+     * @description Условия программы, а если она подключена — код приглашения, приглашённые и начисления
+     *
+     * @tags Partner
+     * @name MyPartner
+     * @summary Моя партнёрская программа
+     * @request GET:/api/partner
+     * @secure
+     */
+    myPartner: (params: RequestParams = {}) =>
+      this.request<PartnerDTO, any>({
+        path: `/api/partner`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * @description Заводит партнёра с кодом приглашения и открывает вкладку «Рефералка»; повторный вызов ничего не меняет
+     *
+     * @tags Partner
+     * @name ActivatePartner
+     * @summary Стать партнёром
+     * @request POST:/api/partner
+     * @secure
+     */
+    activatePartner: (params: RequestParams = {}) =>
+      this.request<PartnerDTO, any>({
+        path: `/api/partner`,
+        method: "POST",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * @description Имя и компания партнёра по коду из ссылки-приглашения; 404 — код не найден
+     *
+     * @tags Partner
+     * @name PartnerInvite
+     * @summary Кто пригласил
+     * @request GET:/api/public/partners/{code}
+     */
+    partnerInvite: (code: string, params: RequestParams = {}) =>
+      this.request<PartnerInviteDTO, any>({
+        path: `/api/public/partners/${code}`,
+        method: "GET",
+        ...params,
+      }),
+
+    /**
      * @description Берётся с биржи Rapira и кешируется на минуту; если биржа недоступна — отдаётся последний полученный курс, без него 502
      *
      * @tags Rates
@@ -2806,7 +3002,7 @@ export class Api<
       }),
 
     /**
-     * @description Кто пришёл с токеном: id, логин, имя и роль
+     * @description Кто пришёл с токеном: id, логин, имя, роль и вкладки кабинета, доступные этой роли
      *
      * @tags Auth
      * @name Me

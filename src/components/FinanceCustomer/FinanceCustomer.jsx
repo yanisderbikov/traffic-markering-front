@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import FieldError from '../shared/FieldError/FieldError';
 import UsdtQuote from '../shared/UsdtQuote/UsdtQuote';
+import CommissionSummary, { totalWithCommission } from '../shared/CommissionSummary/CommissionSummary';
 import Field from '../shared/Field/Field';
 import Icon from '../shared/Icon/Icon';
 import WalletSummary from '../shared/WalletSummary/WalletSummary';
@@ -35,6 +36,7 @@ const FinanceCustomer = () => {
   const [errors, setErrors] = useState({});
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const commissionPercent = Number(wallet?.commissionPercent) || 0;
 
   const loadWallet = useCallback(async () => {
     try {
@@ -93,7 +95,12 @@ const FinanceCustomer = () => {
     if (Object.values(nextErrors).some(Boolean)) return;
 
     const who = wallet?.customerName || wallet?.customerEmail || 'рекламодателя';
-    if (!window.confirm(`Вывод ${formatRubles(amountKopecks)} для ${who}. Подтверждаете?`)) {
+    const sentKopecks = totalWithCommission(amountKopecks, commissionPercent, 'deducted');
+    if (
+      !window.confirm(
+        `Вывод ${formatRubles(amountKopecks)} для ${who}, в USDT уходит ${formatRubles(sentKopecks)}. Подтверждаете?`
+      )
+    ) {
       return;
     }
 
@@ -140,6 +147,7 @@ const FinanceCustomer = () => {
   }
 
   const locked = saving || loading;
+  const withdrawKopecks = rubToKopecks(amountRub);
 
   return (
     <div className={ui.page}>
@@ -187,8 +195,20 @@ const FinanceCustomer = () => {
               disabled={locked}
             />
             <FieldError>{errors.amountRub}</FieldError>
-            {rubToKopecks(amountRub) > 0 && (
-              <UsdtQuote kopecks={rubToKopecks(amountRub)} className={styles.quote} />
+            {withdrawKopecks > 0 && (
+              <>
+                <CommissionSummary
+                  kopecks={withdrawKopecks}
+                  percent={commissionPercent}
+                  mode="deducted"
+                  amountLabel="Спишем с кошелька"
+                  totalLabel="Отправить в USDT"
+                />
+                <UsdtQuote
+                  kopecks={totalWithCommission(withdrawKopecks, commissionPercent, 'deducted')}
+                  className={styles.quote}
+                />
+              </>
             )}
           </Field>
           <Field label="Номер транзакции *">

@@ -13,6 +13,7 @@ import Login from './components/Login/Login';
 import Register from './components/Register/Register';
 import NotFound from './components/NotFound/NotFound';
 import AppLayout from './components/AppLayout/AppLayout';
+import RequireTab from './components/AppLayout/RequireTab';
 import AppHome from './components/AppHome/AppHome';
 import CustomerCampaigns from './components/CustomerCampaigns/CustomerCampaigns';
 import CampaignEditor from './components/CampaignEditor/CampaignEditor';
@@ -33,6 +34,7 @@ import FinancePayouts from './components/FinancePayouts/FinancePayouts';
 import FinancePayout from './components/FinancePayout/FinancePayout';
 import FinanceOperations from './components/FinanceOperations/FinanceOperations';
 import FinanceTopUps from './components/FinanceTopUps/FinanceTopUps';
+import Referral from './components/Referral/Referral';
 import Info from './components/Info/Info';
 import Privacy from './components/Info/Privacy';
 import Terms from './components/Info/Terms';
@@ -65,6 +67,7 @@ const KNOWN_PATHS = new Set([
   '/app/admin/fraud/creators',
   '/app/profile',
   '/app/profile/socials',
+  '/app/referral',
 ]);
 
 // Динамические маршруты: карточка объявления и редактор объявления.
@@ -202,31 +205,62 @@ function App() {
         <Route element={<AppLayout />}>
           <Route path="/app" element={<AppHome />} />
           <Route path="/app/board" element={<Board embedded />} />
-          <Route path="/app/campaigns" element={<CustomerCampaigns />} />
-          {/* campaignId = "new" — создание объявления, uuid — правка и отклики. */}
-          <Route path="/app/campaigns/:campaignId" element={<CampaignEditor />} />
-          <Route path="/app/campaigns/:campaignId/edit" element={<CampaignEditPage />} />
-          <Route path="/app/wallet" element={<CustomerWallet />} />
-          <Route path="/app/wallet/:operationId" element={<OperationPage scope="wallet" />} />
-          <Route path="/app/applications" element={<CreatorApplications />} />
-          <Route path="/app/earnings" element={<CreatorEarnings />} />
-          <Route path="/app/earnings/:operationId" element={<OperationPage scope="earnings" />} />
-          <Route path="/app/finance" element={<FinanceCustomers />} />
-          <Route path="/app/finance/top-ups" element={<FinanceTopUps />} />
-          <Route path="/app/finance/payouts" element={<FinancePayouts />} />
-          <Route path="/app/finance/payouts/:payoutId" element={<FinancePayout />} />
-          <Route path="/app/finance/operations" element={<FinanceOperations />} />
-          <Route
-            path="/app/finance/operations/:operationId"
-            element={<OperationPage scope="finance" />}
-          />
-          <Route path="/app/finance/:userId" element={<FinanceCustomer />} />
-          <Route path="/app/admin/users" element={<AdminUsers />} />
-          <Route path="/app/admin/moderation" element={<AdminModeration />} />
-          <Route path="/app/admin/fraud" element={<AdminFraud />} />
-          <Route path="/app/admin/fraud/creators" element={<AdminCreators />} />
-          <Route path="/app/profile" element={<Profile />} />
-          <Route path="/app/profile/socials" element={<CreatorSocialAccounts />} />
+          <Route element={<RequireTab tab="CAMPAIGNS" />}>
+            <Route path="/app/campaigns" element={<CustomerCampaigns />} />
+            {/* campaignId = "new" — создание объявления, uuid — правка и отклики. */}
+            <Route path="/app/campaigns/:campaignId" element={<CampaignEditor />} />
+            <Route path="/app/campaigns/:campaignId/edit" element={<CampaignEditPage />} />
+          </Route>
+          <Route element={<RequireTab tab="WALLET" />}>
+            <Route path="/app/wallet" element={<CustomerWallet />} />
+            <Route path="/app/wallet/:operationId" element={<OperationPage scope="wallet" />} />
+          </Route>
+          <Route element={<RequireTab tab="APPLICATIONS" />}>
+            <Route path="/app/applications" element={<CreatorApplications />} />
+          </Route>
+          <Route element={<RequireTab tab="EARNINGS" />}>
+            <Route path="/app/earnings" element={<CreatorEarnings />} />
+            <Route path="/app/earnings/:operationId" element={<OperationPage scope="earnings" />} />
+          </Route>
+          <Route element={<RequireTab tab="CUSTOMER_WALLETS" />}>
+            <Route path="/app/finance" element={<FinanceCustomers />} />
+            <Route path="/app/finance/:userId" element={<FinanceCustomer />} />
+          </Route>
+          <Route element={<RequireTab tab="TOP_UPS" />}>
+            <Route path="/app/finance/top-ups" element={<FinanceTopUps />} />
+          </Route>
+          <Route element={<RequireTab tab="PAYOUTS" />}>
+            <Route path="/app/finance/payouts" element={<FinancePayouts />} />
+            <Route path="/app/finance/payouts/:payoutId" element={<FinancePayout />} />
+          </Route>
+          <Route element={<RequireTab tab="OPERATIONS" />}>
+            <Route path="/app/finance/operations" element={<FinanceOperations />} />
+            <Route
+              path="/app/finance/operations/:operationId"
+              element={<OperationPage scope="finance" />}
+            />
+          </Route>
+          <Route element={<RequireTab tab="MODERATION" />}>
+            <Route path="/app/admin/moderation" element={<AdminModeration />} />
+          </Route>
+          <Route element={<RequireTab tab="FRAUD" />}>
+            <Route path="/app/admin/fraud" element={<AdminFraud />} />
+          </Route>
+          <Route element={<RequireTab tab="CREATOR_TRUST" />}>
+            <Route path="/app/admin/fraud/creators" element={<AdminCreators />} />
+          </Route>
+          <Route element={<RequireTab tab="USERS" />}>
+            <Route path="/app/admin/users" element={<AdminUsers />} />
+          </Route>
+          <Route element={<RequireTab tab="PROFILE" />}>
+            <Route path="/app/profile" element={<Profile />} />
+          </Route>
+          <Route element={<RequireTab tab="SOCIALS" />}>
+            <Route path="/app/profile/socials" element={<CreatorSocialAccounts />} />
+          </Route>
+          <Route element={<RequireTab tab="REFERRAL" />}>
+            <Route path="/app/referral" element={<Referral />} />
+          </Route>
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

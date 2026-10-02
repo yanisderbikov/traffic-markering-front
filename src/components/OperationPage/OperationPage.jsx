@@ -41,6 +41,7 @@ const TITLES = {
   PAYOUT: 'Заявка на вывод',
   TOP_UP: 'Заявка на пополнение',
   WITHDRAWAL: 'Вывод',
+  REFERRAL_REWARD: 'Партнёрское вознаграждение',
 };
 
 const REJECT_PROMPT = {
@@ -181,6 +182,8 @@ const OperationPage = ({ scope = 'earnings' }) => {
 
   const transaction = detail.transaction;
   const amount = formatRubles(Math.abs(transaction.amountKopecks ?? 0));
+  const transferKopecks = detail.transfer?.transferKopecks ?? Math.abs(transaction.amountKopecks ?? 0);
+  const transferAmount = formatRubles(transferKopecks);
   const isPayout = transaction.type === 'PAYOUT';
   const isTopUp = transaction.type === 'TOP_UP';
   const isWithdrawal = transaction.type === 'WITHDRAWAL';
@@ -212,7 +215,7 @@ const OperationPage = ({ scope = 'earnings' }) => {
         {config.creatorActions && isPayout && transaction.status === 'SENT' && (
           <div className={styles.actions}>
             <p className={styles.actionText}>
-              Финансист отправил {amount} в USDT. Проверьте кошелёк и подтвердите получение.
+              Финансист отправил {transferAmount} в USDT. Проверьте кошелёк и подтвердите получение.
             </p>
             <button
               type="button"
@@ -221,7 +224,7 @@ const OperationPage = ({ scope = 'earnings' }) => {
               onClick={() =>
                 act(
                   apiClient.api.confirmPayout,
-                  `Подтверждаете, что получили ${amount} на свой кошелёк?`,
+                  `Подтверждаете, что получили ${transferAmount} на свой кошелёк?`,
                   'Получение подтверждено'
                 )
               }
@@ -256,11 +259,11 @@ const OperationPage = ({ scope = 'earnings' }) => {
           <div className={styles.payment}>
             {timer('Оплатите и приложите чек за')}
             <p className={styles.actionText}>
-              Переведите USDT (TRC-20) на сумму {amount} на адрес для оплаты выше. Затем приложите
-              скриншот или PDF перевода — заявка уйдёт на проверку, и после неё деньги появятся на
-              балансе.
+              Переведите USDT (TRC-20) на сумму {transferAmount} на адрес для оплаты выше. Затем
+              приложите скриншот или PDF перевода — заявка уйдёт на проверку, и после неё на баланс
+              поступит {amount}.
             </p>
-            <UsdtQuote kopecks={transaction.amountKopecks} fixedRate={detail.transfer?.usdtRate} />
+            <UsdtQuote kopecks={transferKopecks} fixedRate={detail.transfer?.usdtRate} />
             <ProofUploader proofs={proofs} onChange={setProofs} disabled={busy} />
             <Field label="Номер транзакции">
               <input
@@ -323,7 +326,7 @@ const OperationPage = ({ scope = 'earnings' }) => {
           <div className={styles.actions}>
             {timer('Подтвердите получение за')}
             <p className={styles.actionText}>
-              Финансист отправил {amount} в USDT на ваш кошелёк TRON. Проверьте поступление и
+              Финансист отправил {transferAmount} в USDT на ваш кошелёк TRON. Проверьте поступление и
               подтвердите получение.
             </p>
             <button
@@ -333,7 +336,7 @@ const OperationPage = ({ scope = 'earnings' }) => {
               onClick={() =>
                 act(
                   apiClient.api.confirmWalletOperation,
-                  `Подтверждаете вывод на ${amount}?`,
+                  `Подтверждаете, что получили ${transferAmount}?`,
                   'Операция подтверждена'
                 )
               }
@@ -350,7 +353,7 @@ const OperationPage = ({ scope = 'earnings' }) => {
                 : 'Рекламодатель ещё не отметил оплату. Если перевод уже пришёл на адрес платформы, можно зачислить сразу.'}
             </p>
             <UsdtQuote
-              kopecks={transaction.amountKopecks}
+              kopecks={transferKopecks}
               fixedRate={detail.transfer?.usdtRate}
               label="Ожидаем на адресе платформы"
             />
@@ -365,7 +368,7 @@ const OperationPage = ({ scope = 'earnings' }) => {
                 onClick={() =>
                   act(
                     apiClient.api.confirmTopUp,
-                    `Подтверждаете, что ${amount} пришли на адрес платформы? Сумма зачислится на баланс рекламодателя.`,
+                    `Подтверждаете, что ${transferAmount} пришли на адрес платформы? На баланс рекламодателя зачислится ${amount}.`,
                     'Поступление подтверждено, баланс пополнен'
                   )
                 }
@@ -382,7 +385,7 @@ const OperationPage = ({ scope = 'earnings' }) => {
               адрес платформы — его можно зачислить.
             </p>
             <UsdtQuote
-              kopecks={transaction.amountKopecks}
+              kopecks={transferKopecks}
               fixedRate={detail.transfer?.usdtRate}
               label="Ожидали на адресе платформы"
             />
@@ -393,7 +396,7 @@ const OperationPage = ({ scope = 'earnings' }) => {
               onClick={() =>
                 act(
                   apiClient.api.confirmTopUp,
-                  `Подтверждаете, что ${amount} пришли на адрес платформы? Сумма зачислится на баланс рекламодателя.`,
+                  `Подтверждаете, что ${transferAmount} пришли на адрес платформы? На баланс рекламодателя зачислится ${amount}.`,
                   'Поступление подтверждено, баланс пополнен'
                 )
               }

@@ -7,10 +7,11 @@ import Field from '../shared/Field/Field';
 import FieldError from '../shared/FieldError/FieldError';
 import Icon from '../shared/Icon/Icon';
 import { errorMessage } from '../../shared/auth';
-import { formatRubInput, formatRubles, rubToKopecks } from '../../shared/money';
+import { formatPercent, formatRubInput, formatRubles, rubToKopecks } from '../../shared/money';
 import { formatDate } from '../../shared/dictionaries';
 import FitRubles from '../shared/FitRubles/FitRubles';
 import UsdtQuote from '../shared/UsdtQuote/UsdtQuote';
+import CommissionSummary, { totalWithCommission } from '../shared/CommissionSummary/CommissionSummary';
 import Skeleton from '../shared/Skeleton/Skeleton';
 import ui from '../../shared/ui.module.css';
 import styles from './CustomerWallet.module.css';
@@ -92,6 +93,8 @@ const CustomerWallet = () => {
     .filter((row) => row.type === 'TOP_UP' && row.status === 'SENT')
     .reduce((sum, row) => sum + (row.amountKopecks || 0), 0);
   const topUpAvailable = Boolean(wallet?.topUpTronAddress);
+  const commissionPercent = Number(wallet?.commissionPercent) || 0;
+  const topUpKopecks = rubToKopecks(amountRub);
 
   const amount = (kopecks, className) =>
     loading ? (
@@ -164,7 +167,12 @@ const CustomerWallet = () => {
         <form className={styles.topUpMain} onSubmit={createTopUp} noValidate>
           <h2 className={ui.cardTitle}>Пополнить баланс</h2>
           <ol className={styles.steps}>
-            <li>Укажите сумму — заведём заявку на пополнение с адресом для оплаты.</li>
+            <li>
+              Укажите, сколько должно прийти на баланс
+              {commissionPercent > 0
+                ? ` — к сумме добавится комиссия платформы ${formatPercent(commissionPercent)}, и заявка выставится на итог с адресом для оплаты.`
+                : ' — заведём заявку на пополнение с адресом для оплаты.'}
+            </li>
             <li>Переведите USDT (TRC-20) на этот адрес и приложите к заявке скриншот или PDF перевода.</li>
             <li>Финансист сверит поступление и зачислит деньги на баланс.</li>
           </ol>
@@ -194,8 +202,14 @@ const CustomerWallet = () => {
               {creating ? 'Создаём…' : 'Создать заявку'}
             </button>
           </div>
-          {topUpAvailable && rubToKopecks(amountRub) > 0 && (
-            <UsdtQuote kopecks={rubToKopecks(amountRub)} className={styles.quote} />
+          {topUpAvailable && topUpKopecks > 0 && (
+            <>
+              <CommissionSummary kopecks={topUpKopecks} percent={commissionPercent} />
+              <UsdtQuote
+                kopecks={totalWithCommission(topUpKopecks, commissionPercent, 'onTop')}
+                className={styles.quote}
+              />
+            </>
           )}
           {!loading && !topUpAvailable && (
             <p className={ui.hintWarn}>
@@ -206,6 +220,8 @@ const CustomerWallet = () => {
         <p className={styles.topUpAside}>
           Деньги появятся на балансе после проверки перевода. Пока заявка не оплачена, её можно
           отменить. Если уменьшить бюджет кампании, разница вернётся в кошелёк.
+          {commissionPercent > 0 &&
+            ` Комиссия платформы ${formatPercent(commissionPercent)} берётся с пополнений сверху, а с выводов — из суммы.`}
         </p>
       </section>
 

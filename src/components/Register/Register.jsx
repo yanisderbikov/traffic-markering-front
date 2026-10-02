@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
@@ -15,6 +15,12 @@ import {
 } from '../../shared/validation';
 import { useCooldown } from '../../shared/useCooldown';
 import { errorMessage, verifyCode } from '../../shared/auth';
+import {
+  forgetReferralCode,
+  normalizeReferralCode,
+  rememberReferralCode,
+  storedReferralCode,
+} from '../../shared/referral';
 import ui from '../../shared/ui.module.css';
 import form from '../shared/AuthLayout/authForm.module.css';
 
@@ -70,6 +76,30 @@ const Register = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const cooldown = useCooldown();
+  const linkReferralCode = normalizeReferralCode(searchParams.get('ref'));
+  const [referralCode] = useState(() => linkReferralCode || storedReferralCode());
+  const [inviter, setInviter] = useState(null);
+  const invited = formState.role === 'CUSTOMER' && Boolean(inviter);
+
+  useEffect(() => {
+    if (linkReferralCode) rememberReferralCode(linkReferralCode);
+  }, [linkReferralCode]);
+
+  useEffect(() => {
+    if (!referralCode) return undefined;
+    let alive = true;
+    apiClient.api
+      .partnerInvite(referralCode)
+      .then((res) => {
+        if (alive) setInviter(res.data);
+      })
+      .catch(() => {
+        if (alive) setInviter(null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [referralCode]);
 
   const setField = (e) => {
     const { name, value } = e.target;
@@ -123,6 +153,7 @@ const Register = () => {
         email,
         name: formState.name.trim(),
         role: formState.role,
+        referralCode: invited ? inviter.code : undefined,
       });
       setFormState((prev) => ({ ...prev, code: '' }));
       cooldown.start();
@@ -148,6 +179,7 @@ const Register = () => {
     setError('');
     try {
       await verifyCode(formState.email.trim(), formState.code.trim());
+      if (invited) forgetReferralCode();
       const telegram = formState.telegram.trim();
       if (telegram) {
         try {
@@ -210,6 +242,12 @@ const Register = () => {
       <p className={form.stepLabel}>
         Шаг {step + 1} из {STEPS.length}
       </p>
+      {invited && (
+        <p className={form.invited}>
+          Регистрация по приглашению {inviter.name}
+          {inviter.company ? ` из ${inviter.company}` : ''}.
+        </p>
+      )}
 
       <form onSubmit={handleSubmit} className={form.form} noValidate>
         {step === STEP_ROLE && (

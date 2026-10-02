@@ -4,6 +4,9 @@ import apiClient from '../../apiClient';
 import CreatorProfile from '../CreatorProfile/CreatorProfile';
 import CustomerProfile from '../CustomerProfile/CustomerProfile';
 import ThemeSettings from './ThemeSettings';
+import PartnerOffer from './PartnerOffer';
+
+const PARTNER_ROLES = ['CUSTOMER', 'ADMIN'];
 
 /**
  * Один адрес /app/profile на обе роли: какой профиль показать, решает роль из JWT.
@@ -13,7 +16,7 @@ const RoleProfile = ({ role }) => {
   if (role === 'CREATOR') return <CreatorProfile />;
 
   // У админа на бэке есть доступ к обоим профилям — показываем оба, друг под другом.
-  if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
+  if (role === 'ADMIN') {
     return (
       <>
         <CustomerProfile />
@@ -38,7 +41,7 @@ const Profile = () => {
   return (
     <>
       <RoleProfile role={role} />
-      <ThemeSettings />
+      <ThemeSettings>{PARTNER_ROLES.includes(role) && <PartnerOffer />}</ThemeSettings>
     </>
   );
 };

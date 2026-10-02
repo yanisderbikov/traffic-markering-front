@@ -56,10 +56,18 @@ apiClient.instance.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
+const tokenListeners = new Set();
+
+apiClient.subscribeToken = (listener) => {
+    tokenListeners.add(listener);
+    return () => tokenListeners.delete(listener);
+};
+
 // Добавляем метод для установки JWT токена
 apiClient.setToken = (token) => {
     setStoredToken(token);
     apiClient.setSecurityData(token);
+    tokenListeners.forEach((listener) => listener());
 };
 
 // Добавляем метод для получения JWT токена
@@ -69,6 +77,7 @@ apiClient.getToken = () => getStoredToken();
 apiClient.clearToken = () => {
     setStoredToken(null);
     apiClient.setSecurityData(null);
+    tokenListeners.forEach((listener) => listener());
 };
 
 // Есть ли живой токен: существует, парсится и не истёк.

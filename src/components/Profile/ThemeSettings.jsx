@@ -4,7 +4,7 @@ import { THEME_OPTIONS, setThemePreference, useThemePreference } from '../../sha
 import ui from '../../shared/ui.module.css';
 import styles from './ThemeSettings.module.css';
 
-const ThemeSettings = () => {
+const ThemeSettings = ({ children }) => {
   const preference = useThemePreference();
 
   return (
@@ -29,6 +29,7 @@ const ThemeSettings = () => {
           «Авто» повторяет тему телефона или компьютера. Выбор сохраняется в этом браузере.
         </p>
       </div>
+      {children}
     </section>
   );
 };

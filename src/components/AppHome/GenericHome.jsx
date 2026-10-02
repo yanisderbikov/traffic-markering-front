@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../../apiClient';
-import { SECTIONS, getAllowedSections } from '../../permissions';
+import { useSession } from '../../shared/session';
 import { errorMessage } from '../../shared/auth';
 import { formatRubles, formatViews } from '../../shared/money';
 import { ROLE_LABELS } from '../../shared/dictionaries';
@@ -24,11 +24,11 @@ import ui from '../../shared/ui.module.css';
 import styles from './AppHome.module.css';
 
 const PRIMARY_ACTIONS = [
-  { section: SECTIONS.CAMPAIGNS, to: '/app/campaigns/new', label: '+ Создать кампанию' },
-  { section: SECTIONS.APPLICATIONS, to: '/app/board', label: 'Офферы' },
-  { section: SECTIONS.FINANCE, to: '/app/finance/payouts', label: 'Выплаты' },
-  { section: SECTIONS.MODERATION, to: '/app/admin/moderation', label: 'Модерация' },
-  { section: SECTIONS.USERS, to: '/app/admin/users', label: 'Пользователи' },
+  { tab: 'CAMPAIGNS', to: '/app/campaigns/new', label: '+ Создать кампанию' },
+  { tab: 'BOARD', to: '/app/board', label: 'Офферы' },
+  { tab: 'PAYOUTS', to: '/app/finance/payouts', label: 'Выплаты' },
+  { tab: 'MODERATION', to: '/app/admin/moderation', label: 'Модерация' },
+  { tab: 'USERS', to: '/app/admin/users', label: 'Пользователи' },
 ];
 
 const LOADERS = {
@@ -46,7 +46,7 @@ const LOADERS = {
 const STRIPS = [
   {
     key: 'campaigns',
-    section: SECTIONS.CAMPAIGNS,
+    tab: 'CAMPAIGNS',
     title: 'Кампании',
     to: '/app/campaigns',
     empty: 'Кампаний пока нет.',
@@ -62,7 +62,7 @@ const STRIPS = [
   },
   {
     key: 'wallet',
-    section: SECTIONS.WALLET,
+    tab: 'WALLET',
     title: 'Кошелёк',
     to: '/app/wallet',
     cells: (data) => [
@@ -73,7 +73,7 @@ const STRIPS = [
   },
   {
     key: 'applications',
-    section: SECTIONS.APPLICATIONS,
+    tab: 'APPLICATIONS',
     title: 'Работы',
     to: '/app/applications',
     empty: 'Работ пока нет.',
@@ -89,7 +89,7 @@ const STRIPS = [
   },
   {
     key: 'earnings',
-    section: SECTIONS.EARNINGS,
+    tab: 'EARNINGS',
     title: 'Заработок',
     to: '/app/earnings',
     cells: (data) => [
@@ -100,7 +100,7 @@ const STRIPS = [
   },
   {
     key: 'payouts',
-    section: SECTIONS.FINANCE,
+    tab: 'PAYOUTS',
     title: 'Выплаты',
     to: '/app/finance/payouts',
     empty: 'Заявок на вывод пока не было.',
@@ -116,7 +116,7 @@ const STRIPS = [
   },
   {
     key: 'customers',
-    section: SECTIONS.FINANCE,
+    tab: 'CUSTOMER_WALLETS',
     title: 'Кошельки заказчиков',
     to: '/app/finance',
     empty: 'Кошельков пока нет.',
@@ -164,22 +164,21 @@ const GenericHome = () => {
   const jwtMeta = apiClient.getJwtMetadata();
   const role = jwtMeta?.role;
   const userName = jwtMeta?.name;
-  const allowed = getAllowedSections(role);
-  const has = (section) => allowed.includes(section);
+  const { hasTab } = useSession();
 
-  const campaigns = useRequest(has(SECTIONS.CAMPAIGNS), LOADERS.campaigns);
-  const wallet = useRequest(has(SECTIONS.WALLET), LOADERS.wallet);
-  const walletOperations = useRequest(has(SECTIONS.WALLET), LOADERS.walletOperations);
-  const applications = useRequest(has(SECTIONS.APPLICATIONS), LOADERS.applications);
-  const earnings = useRequest(has(SECTIONS.EARNINGS), LOADERS.earnings);
-  const operations = useRequest(has(SECTIONS.EARNINGS), LOADERS.operations);
-  const payouts = useRequest(has(SECTIONS.FINANCE), LOADERS.payouts);
-  const topUps = useRequest(has(SECTIONS.FINANCE), LOADERS.topUps);
-  const customers = useRequest(has(SECTIONS.FINANCE), LOADERS.customers);
+  const campaigns = useRequest(hasTab('CAMPAIGNS'), LOADERS.campaigns);
+  const wallet = useRequest(hasTab('WALLET'), LOADERS.wallet);
+  const walletOperations = useRequest(hasTab('WALLET'), LOADERS.walletOperations);
+  const applications = useRequest(hasTab('APPLICATIONS'), LOADERS.applications);
+  const earnings = useRequest(hasTab('EARNINGS'), LOADERS.earnings);
+  const operations = useRequest(hasTab('EARNINGS'), LOADERS.operations);
+  const payouts = useRequest(hasTab('PAYOUTS'), LOADERS.payouts);
+  const topUps = useRequest(hasTab('TOP_UPS'), LOADERS.topUps);
+  const customers = useRequest(hasTab('CUSTOMER_WALLETS'), LOADERS.customers);
 
   const states = { campaigns, wallet, applications, earnings, payouts, customers };
-  const strips = STRIPS.filter((strip) => has(strip.section));
-  const primary = PRIMARY_ACTIONS.find((action) => has(action.section));
+  const strips = STRIPS.filter((strip) => hasTab(strip.tab));
+  const primary = PRIMARY_ACTIONS.find((action) => hasTab(action.tab));
 
   const attention = [];
   const settled = [walletOperations, campaigns, operations, payouts, topUps].every((s) => !s.loading);
