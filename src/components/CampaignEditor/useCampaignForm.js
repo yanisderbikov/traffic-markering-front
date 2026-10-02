@@ -273,6 +273,8 @@ const useCampaignForm = (initialCampaign) => {
     return '';
   };
 
+  const maxPayoutPercent = benchmarks?.maxPayoutBudgetPercent ?? null;
+
   const applySaved = (saved) => {
     const filled = formFromCampaign(saved);
     setCampaign(saved);
@@ -314,7 +316,7 @@ const useCampaignForm = (initialCampaign) => {
   };
 
   const save = async ({ fields = FORM_FIELDS, requireFilled = false, status } = {}) => {
-    const nextErrors = validateCampaign(form, fields, { requireFilled, budgetError });
+    const nextErrors = validateCampaign(form, fields, { requireFilled, budgetError, maxPayoutPercent });
     setErrors((prev) => ({ ...prev, ...nextErrors }));
     if (hasErrors(nextErrors)) {
       setError('Проверьте выделенные поля');
@@ -324,7 +326,11 @@ const useCampaignForm = (initialCampaign) => {
   };
 
   const saveValidFields = async () => {
-    const fieldErrors = validateCampaign(form, FORM_FIELDS, { requireFilled: false, budgetError });
+    const fieldErrors = validateCampaign(form, FORM_FIELDS, {
+      requireFilled: false,
+      budgetError,
+      maxPayoutPercent,
+    });
     const skippedFields = FORM_FIELDS.filter((field) => fieldErrors[field]);
     const validForm = Object.fromEntries(
       FORM_FIELDS.map((field) => [field, skippedFields.includes(field) ? savedForm[field] : form[field]])

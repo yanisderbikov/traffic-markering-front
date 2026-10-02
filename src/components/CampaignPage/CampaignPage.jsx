@@ -394,13 +394,6 @@ const CampaignPage = () => {
           </section>
 
           <SegmentComparison publicId={publicId} />
-
-          <section className={ui.cardSuccess}>
-            <p className={styles.successTitle}>
-              <Icon name="check" size={18} /> Прозрачные условия
-            </p>
-            <p>Ставка, лимит и правила подсчёта доступны до начала работы.</p>
-          </section>
         </aside>
       </div>
 

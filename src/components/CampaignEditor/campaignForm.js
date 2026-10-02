@@ -2,6 +2,7 @@ import { DEFAULT_VIEW_REGION, VIEW_REGIONS } from '../../shared/viewRegion';
 import {
   formatIntInput,
   formatRubInput,
+  formatRubles,
   formatViews,
   kopecksToRub,
   parseIntInput,
@@ -142,7 +143,22 @@ export const firstIncompleteStep = (form) => {
 
 const positiveOrEmpty = (value, message) => (value != null && value <= 0 ? message : '');
 
-const formatError = (form, field, budgetError) => {
+export const maxMinPayoutKopecks = (budgetRub, percent) => {
+  const budget = rubToKopecks(budgetRub);
+  return budget && percent ? Math.floor((budget * percent) / 100) : null;
+};
+
+const payoutError = (form, maxPayoutPercent) => {
+  const payout = rubToKopecks(form.minPayoutRub);
+  if (payout == null) return '';
+  if (payout <= 0) return 'Порог вывода должен быть больше нуля';
+  const max = maxMinPayoutKopecks(form.budgetRub, maxPayoutPercent);
+  return max != null && payout > max
+    ? `Не больше ${maxPayoutPercent}% бюджета — до ${formatRubles(max)}`
+    : '';
+};
+
+const formatError = (form, field, { budgetError, maxPayoutPercent }) => {
   switch (field) {
     case 'rateRub':
       return positiveOrEmpty(rubToKopecks(form.rateRub), 'Ставка должна быть больше нуля');
@@ -151,7 +167,7 @@ const formatError = (form, field, budgetError) => {
       return budget == null ? '' : budgetError(budget);
     }
     case 'minPayoutRub':
-      return positiveOrEmpty(rubToKopecks(form.minPayoutRub), 'Порог вывода должен быть больше нуля');
+      return payoutError(form, maxPayoutPercent);
     case 'minVideoSeconds':
       return positiveOrEmpty(parseIntInput(form.minVideoSeconds), 'Длина ролика — целое число секунд');
     case 'minPaidRub': {
@@ -175,12 +191,12 @@ const formatError = (form, field, budgetError) => {
   }
 };
 
-export const validateCampaign = (form, fields, { requireFilled, budgetError }) =>
+export const validateCampaign = (form, fields, { requireFilled, ...checks }) =>
   Object.fromEntries(
     fields.map((field) => {
       const rule = REQUIRED[field];
       if (requireFilled && rule && !rule.filled(form)) return [field, rule.message];
-      return [field, formatError(form, field, budgetError)];
+      return [field, formatError(form, field, checks)];
     })
   );
 

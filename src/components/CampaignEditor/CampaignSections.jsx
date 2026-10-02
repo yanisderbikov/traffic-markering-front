@@ -23,6 +23,7 @@ import {
   compareToTopicAverage,
   findTopic,
   isRequired,
+  maxMinPayoutKopecks,
   minPaidViewsFor,
   missingFields,
 } from './campaignForm';
@@ -550,6 +551,8 @@ export const BudgetFields = ({ editor, onOpenWallet }) => {
   } = editor;
   const launched = campaign.status !== 'DRAFT';
   const minPaidViews = minPaidViewsFor(form.minPaidRub, form.rateRub);
+  const maxPayoutPercent = benchmarks?.maxPayoutBudgetPercent;
+  const maxPayoutKopecks = maxMinPayoutKopecks(form.budgetRub, maxPayoutPercent);
 
   useEffect(() => {
     prefillRate();
@@ -634,6 +637,9 @@ export const BudgetFields = ({ editor, onOpenWallet }) => {
         <FieldError>{errors.minPayoutRub}</FieldError>
         <span className={ui.hint}>
           Заработанное по кампании уходит в кошелёк креатора, когда накопится эта сумма.
+          {maxPayoutPercent ? ` Не больше ${maxPayoutPercent}% бюджета` : ''}
+          {maxPayoutKopecks != null ? ` — до ${formatRubles(maxPayoutKopecks)}` : ''}
+          {maxPayoutPercent ? '.' : ''}
         </span>
       </div>
       <div className={styles.field}>

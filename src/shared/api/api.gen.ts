@@ -1394,6 +1394,12 @@ export interface CampaignBenchmarkDTO {
    * @example 1000000
    */
   minBudgetKopecks?: number;
+  /**
+   * Порог вывода объявления — не больше этого процента от его бюджета
+   * @format int32
+   * @example 10
+   */
+  maxPayoutBudgetPercent?: number;
   /** Самые популярные тематики, до 10, со средними ставками за 1000 просмотров, в порядке показа; остальные — поиском в /api/campaigns/topics */
   topics?: CampaignTopicDTO[];
 }
