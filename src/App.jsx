@@ -25,6 +25,7 @@ import CustomerWallet from './components/CustomerWallet/CustomerWallet';
 import FinanceCustomers from './components/FinanceCustomers/FinanceCustomers';
 import FinanceCustomer from './components/FinanceCustomer/FinanceCustomer';
 import AdminUsers from './components/AdminUsers/AdminUsers';
+import AdminDashboard from './components/AdminDashboard/AdminDashboard';
 import AdminFraud from './components/AdminFraud/AdminFraud';
 import AdminModeration from './components/AdminModeration/AdminModeration';
 import AdminCreators from './components/AdminFraud/AdminCreators';
@@ -61,6 +62,7 @@ const KNOWN_PATHS = new Set([
   '/app/finance/top-ups',
   '/app/finance/payouts',
   '/app/finance/operations',
+  '/app/admin/dashboard',
   '/app/admin/users',
   '/app/admin/moderation',
   '/app/admin/fraud',
@@ -248,6 +250,9 @@ function App() {
           </Route>
           <Route element={<RequireTab tab="CREATOR_TRUST" />}>
             <Route path="/app/admin/fraud/creators" element={<AdminCreators />} />
+          </Route>
+          <Route element={<RequireTab tab="DASHBOARD" />}>
+            <Route path="/app/admin/dashboard" element={<AdminDashboard />} />
           </Route>
           <Route element={<RequireTab tab="USERS" />}>
             <Route path="/app/admin/users" element={<AdminUsers />} />

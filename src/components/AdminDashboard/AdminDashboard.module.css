@@ -1,0 +1,45 @@
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  transition: opacity 0.15s ease;
+}
+
+.refreshing {
+  opacity: 0.55;
+}
+
+.footnote {
+  margin: 12px 0 0;
+  font-size: 0.82rem;
+  color: var(--color-muted);
+}
+
+.glossary {
+  display: grid;
+  grid-template-columns: minmax(0, 14rem) minmax(0, 1fr);
+  gap: 10px 20px;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.glossary dt {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.glossary dd {
+  margin: 0;
+  color: var(--color-ink-soft);
+}
+
+@media (max-width: 640px) {
+  .glossary {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+
+  .glossary dd + dt {
+    margin-top: 10px;
+  }
+}
