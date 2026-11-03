@@ -1,0 +1,113 @@
+.box {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.svg {
+  display: block;
+  overflow: visible;
+  touch-action: pan-y;
+}
+
+.svg:focus {
+  outline: none;
+}
+
+.svg:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+.grid {
+  stroke: var(--color-border);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.baseline {
+  stroke: var(--color-border-strong);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.tick {
+  fill: var(--color-faint);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.bar {
+  fill: var(--color-accent);
+  transition: opacity 0.12s ease;
+}
+
+.dim {
+  opacity: 0.4;
+}
+
+.line {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.area {
+  fill: var(--color-accent);
+  opacity: 0.1;
+}
+
+.dot {
+  fill: var(--color-accent);
+  stroke: var(--color-surface);
+  stroke-width: 2;
+}
+
+.crosshair {
+  stroke: var(--color-faint);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.tip {
+  position: absolute;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 9rem;
+  max-width: 16rem;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+  font-size: 0.8rem;
+}
+
+.tipDate {
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.tipRow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.tipValue {
+  font-weight: 700;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.tipLabel {
+  color: var(--color-muted);
+}
