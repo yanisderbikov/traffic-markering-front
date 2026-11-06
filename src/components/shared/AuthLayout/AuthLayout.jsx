@@ -19,11 +19,11 @@ const AuthLayout = ({ title, caption, children, footer }) => (
         <p className={styles.legal}>
           Продолжая, вы соглашаетесь с{' '}
           <Link to="/info/terms" className={styles.legalLink}>
-            условиями сервиса
+            пользовательским соглашением
           </Link>{' '}
           и{' '}
           <Link to="/info/privacy" className={styles.legalLink}>
-            политикой конфиденциальности
+            политикой обработки персональных данных
           </Link>
           .
         </p>

@@ -97,11 +97,17 @@ const PublicLayout = ({
             <NavLink to="/info" className={styles.footerLink}>
               О сервисе
             </NavLink>
-            <NavLink to="/info/privacy" className={styles.footerLink}>
-              Конфиденциальность
+            <NavLink to="/info/docs" className={styles.footerLink}>
+              Документация
             </NavLink>
             <NavLink to="/info/terms" className={styles.footerLink}>
-              Условия
+              Соглашение
+            </NavLink>
+            <NavLink to="/info/privacy" className={styles.footerLink}>
+              Персональные данные
+            </NavLink>
+            <NavLink to="/info/consent" className={styles.footerLink}>
+              Согласие
             </NavLink>
           </nav>
           <span className={styles.copy}>© Offer, {YEAR}</span>

@@ -37,8 +37,7 @@ import FinanceOperations from './components/FinanceOperations/FinanceOperations'
 import FinanceTopUps from './components/FinanceTopUps/FinanceTopUps';
 import Referral from './components/Referral/Referral';
 import Info from './components/Info/Info';
-import Privacy from './components/Info/Privacy';
-import Terms from './components/Info/Terms';
+import DocumentPage from './components/Info/DocumentPage';
 
 // Статические пути приложения. Всё, чего здесь нет и что не подошло под
 // динамические шаблоны ниже, — 404 (и такие страницы закрываем от индексации).
@@ -52,6 +51,8 @@ const KNOWN_PATHS = new Set([
   '/info',
   '/info/privacy',
   '/info/terms',
+  '/info/consent',
+  '/info/docs',
   '/app',
   '/app/board',
   '/app/campaigns',
@@ -120,14 +121,24 @@ const PAGE_SEO = {
       'Как работает offer: объявления со ставкой за 1000 просмотров, подключение аккаунтов соцсетей и подсчёт просмотров по официальным API площадок.',
   },
   '/info/privacy': {
-    title: 'политика конфиденциальности — offer',
+    title: 'политика обработки персональных данных — offer',
     description:
-      'Какие данные собирает offer, зачем, как они хранятся и как отозвать доступ или удалить учётную запись.',
+      'Какие данные обрабатывает offer, зачем и как долго, кому они передаются и как отозвать доступ или удалить аккаунт.',
   },
   '/info/terms': {
-    title: 'условия использования — offer',
+    title: 'пользовательское соглашение — offer',
     description:
-      'Правила работы на площадке offer: подключение аккаунтов, расчёт просмотров и выплат, запреты и ответственность.',
+      'Условия использования offer: кампании, приёмка материалов и просмотров, комиссии, выплаты и ответственность сторон.',
+  },
+  '/info/consent': {
+    title: 'согласие на обработку персональных данных — offer',
+    description:
+      'Согласие на обработку персональных данных для рассылок, веб-аналитики и публичного портфолио offer.',
+  },
+  '/info/docs': {
+    title: 'документация — offer',
+    description:
+      'Как устроена платформа offer: роли, сценарии рекламодателя и креатора, финансовая модель и учёт просмотров.',
   },
 };
 
@@ -202,8 +213,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/info" element={<Info />} />
-        <Route path="/info/privacy" element={<Privacy />} />
-        <Route path="/info/terms" element={<Terms />} />
+        <Route path="/info/:slug" element={<DocumentPage />} />
         <Route element={<AppLayout />}>
           <Route path="/app" element={<AppHome />} />
           <Route path="/app/board" element={<Board embedded />} />

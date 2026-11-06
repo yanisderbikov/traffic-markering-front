@@ -8,7 +8,6 @@ const Info = () => (
   <InfoLayout
     title="О сервисе"
     lead="offer — площадка рекламных интеграций: рекламодатель публикует кампанию со ставкой за 1000 просмотров, креатор берёт её в работу и снимает ролик, а выплата считается по реальным просмотрам этого ролика."
-    showUpdated={false}
   >
     <section className={styles.section}>
       <h2 className={styles.heading}>Как это работает</h2>
@@ -72,16 +71,28 @@ const Info = () => (
       <h2 className={styles.heading}>Документы</h2>
       <ul className={styles.list}>
         <li>
+          <Link className={styles.link} to="/info/terms">
+            Пользовательское соглашение
+          </Link>{' '}
+          — правила работы на площадке и порядок выплат
+        </li>
+        <li>
           <Link className={styles.link} to="/info/privacy">
-            Политика конфиденциальности
+            Политика обработки персональных данных
           </Link>{' '}
           — какие данные мы собираем, зачем и как их удалить
         </li>
         <li>
-          <Link className={styles.link} to="/info/terms">
-            Условия использования
+          <Link className={styles.link} to="/info/consent">
+            Согласие на обработку персональных данных
           </Link>{' '}
-          — правила работы на площадке и порядок выплат
+          — рассылки, аналитика и публичное портфолио
+        </li>
+        <li>
+          <Link className={styles.link} to="/info/docs">
+            Документация платформы
+          </Link>{' '}
+          — как устроен продукт, сценарии и финансовая модель
         </li>
       </ul>
       <p className={styles.text}>Адрес сервиса: {SITE_URL}</p>

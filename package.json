@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
+    "marked": "^14",
     "swagger-typescript-api": "^13.0.3"
   },
   "scripts": {

@@ -8,17 +8,24 @@
   margin-bottom: 36px;
 }
 
-.updated {
-  margin: 12px 0 0;
-  font-size: 0.78rem;
-  color: var(--color-faint);
-}
-
 .section {
   margin-bottom: 36px;
 }
 
-.heading {
+/* .document — HTML из md-файлов: классы туда не поставить, поэтому те же стили по тегам. */
+.document h1 {
+  margin: 0 0 36px;
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 3.4vw, 2.15rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: var(--title-tracking);
+  color: var(--color-ink);
+  overflow-wrap: anywhere;
+}
+
+.heading,
+.document h2 {
   margin: 0 0 12px;
   font-family: var(--font-display);
   font-size: 1.35rem;
@@ -27,21 +34,33 @@
   color: var(--color-ink);
 }
 
-.subheading {
+.document * + h2 {
+  margin-top: 36px;
+}
+
+.subheading,
+.document h3 {
   margin: 20px 0 8px;
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--color-ink);
 }
 
-.text {
+.text,
+.document p {
   margin: 0 0 12px;
   font-size: 0.95rem;
   line-height: 1.65;
   color: var(--color-ink-soft);
 }
 
-.list {
+.document strong {
+  color: var(--color-ink);
+}
+
+.list,
+.document ul,
+.document ol {
   margin: 0 0 12px;
   padding-left: 22px;
   font-size: 0.95rem;
@@ -49,25 +68,30 @@
   color: var(--color-ink-soft);
 }
 
-.list li {
+.list li,
+.document li {
   margin-bottom: 8px;
 }
 
-.list li::marker {
+.list li::marker,
+.document li::marker {
   color: var(--color-accent);
   font-weight: 700;
 }
 
-.link {
+.link,
+.document a {
   color: var(--color-accent);
   text-decoration: none;
 }
 
-.link:hover {
+.link:hover,
+.document a:hover {
   color: var(--color-accent-hover);
 }
 
-.tableWrap {
+.tableWrap,
+.document :global(.table-wrap) {
   margin: 16px 0;
   padding: 4px 20px;
   border: 1px solid var(--color-border-strong);
@@ -77,14 +101,16 @@
   -webkit-overflow-scrolling: touch;
 }
 
-.table {
+.table,
+.document table {
   width: 100%;
   min-width: 560px;
   border-collapse: collapse;
   font-size: 0.86rem;
 }
 
-.table th {
+.table th,
+.document th {
   padding: 14px 12px;
   border-bottom: 1px solid var(--color-border-strong);
   font-size: 0.78rem;
@@ -94,7 +120,8 @@
   white-space: nowrap;
 }
 
-.table td {
+.table td,
+.document td {
   padding: 14px 12px;
   border-bottom: 1px solid var(--color-border);
   vertical-align: top;
@@ -102,19 +129,24 @@
   color: var(--color-ink-soft);
 }
 
-.table tr:last-child td {
+.table tr:last-child td,
+.document tr:last-child td {
   border-bottom: none;
 }
 
 .table th:first-child,
-.table td:first-child {
+.table td:first-child,
+.document th:first-child,
+.document td:first-child {
   padding-left: 0;
   font-weight: 700;
   color: var(--color-ink);
 }
 
 .table th:last-child,
-.table td:last-child {
+.table td:last-child,
+.document th:last-child,
+.document td:last-child {
   padding-right: 0;
 }
 
@@ -138,11 +170,13 @@
     padding-top: 28px;
   }
 
-  .head {
+  .head,
+  .document h1 {
     margin-bottom: 28px;
   }
 
-  .tableWrap {
+  .tableWrap,
+  .document :global(.table-wrap) {
     padding: 4px 16px;
   }
 }
