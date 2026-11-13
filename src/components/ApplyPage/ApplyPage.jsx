@@ -162,6 +162,10 @@ const ApplyPage = () => {
     !worldRegion &&
     activeYoutubeAccounts.length > 0 &&
     !activeYoutubeAccounts.some((account) => account.reportsViewGeography === true);
+  // Привязка по коду в описании географию не даёт — переподключение не поможет, ссылку не показываем.
+  const youtubeLinkedByCode =
+    activeYoutubeAccounts.length > 0 &&
+    activeYoutubeAccounts.every((account) => account.linkMethod === 'SCRAPE');
 
   const setField = (e) => {
     const { name, value } = e.target;
@@ -299,17 +303,23 @@ const ApplyPage = () => {
                 )}
                 {platform && platformAccepted && hasAccount && youtubeWithoutAnalytics && (
                   <span className={ui.hintWarn}>
-                    YouTube подключён без доступа к аналитике — география просмотров не учтётся
-                    и ролик по этому региону не оплатится.{' '}
-                    <Link to="/app/profile" className={styles.inlineLink}>
-                      Переподключить YouTube
-                    </Link>
+                    {youtubeLinkedByCode ? (
+                      'YouTube не отдаёт нам географию просмотров — ролик по этому региону не оплатится.'
+                    ) : (
+                      <>
+                        YouTube подключён без доступа к аналитике — география просмотров не учтётся
+                        и ролик по этому региону не оплатится.{' '}
+                        <Link to="/app/profile#socials" className={styles.inlineLink}>
+                          Переподключить YouTube
+                        </Link>
+                      </>
+                    )}
                   </span>
                 )}
                 {platform && platformAccepted && !hasAccount && (
                   <span className={ui.hintWarn}>
                     {PLATFORM_LABELS[platform]} не привязан в профиле, отклик не примется.{' '}
-                    <Link to="/app/profile" className={styles.inlineLink}>
+                    <Link to="/app/profile#socials" className={styles.inlineLink}>
                       Привязать аккаунт
                     </Link>
                   </span>

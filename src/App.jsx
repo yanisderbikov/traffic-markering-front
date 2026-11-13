@@ -20,7 +20,6 @@ import CampaignEditor from './components/CampaignEditor/CampaignEditor';
 import CampaignEditPage from './components/CampaignEditor/CampaignEditPage';
 import CreatorApplications from './components/CreatorApplications/CreatorApplications';
 import Profile from './components/Profile/Profile';
-import CreatorSocialAccounts from './components/CreatorSocialAccounts/CreatorSocialAccounts';
 import CustomerWallet from './components/CustomerWallet/CustomerWallet';
 import FinanceCustomers from './components/FinanceCustomers/FinanceCustomers';
 import FinanceCustomer from './components/FinanceCustomer/FinanceCustomer';
@@ -269,9 +268,16 @@ function App() {
           </Route>
           <Route element={<RequireTab tab="PROFILE" />}>
             <Route path="/app/profile" element={<Profile />} />
-          </Route>
-          <Route element={<RequireTab tab="SOCIALS" />}>
-            <Route path="/app/profile/socials" element={<CreatorSocialAccounts />} />
+            {/* Старый адрес вкладки: закладки и возврат с площадки при подключении аккаунта. */}
+            <Route
+              path="/app/profile/socials"
+              element={
+                <Navigate
+                  to={{ pathname: '/app/profile', search: location.search, hash: '#socials' }}
+                  replace
+                />
+              }
+            />
           </Route>
           <Route element={<RequireTab tab="REFERRAL" />}>
             <Route path="/app/referral" element={<Referral />} />

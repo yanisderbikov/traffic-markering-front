@@ -155,7 +155,7 @@ const CreatorHome = () => {
                 'Соцсети не подключены'
               )}
             </span>
-            <Link to="/app/profile/socials" className={ui.linkAccent}>
+            <Link to="/app/profile#socials" className={ui.linkAccent}>
               Управлять →
             </Link>
           </div>

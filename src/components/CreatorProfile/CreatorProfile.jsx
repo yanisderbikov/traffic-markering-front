@@ -1,22 +1,15 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
-import SocialIcon from '../shared/SocialIcon/SocialIcon';
-import FieldError from '../shared/FieldError/FieldError';
 import Field from '../shared/Field/Field';
 import Skeleton, { SkeletonPageHead } from '../shared/Skeleton/Skeleton';
 import { formatDate } from '../../shared/dictionaries';
-import { clearFieldError, hasErrors, validateTelegram } from '../../shared/validation';
 import ui from '../../shared/ui.module.css';
 import styles from './CreatorProfile.module.css';
 
 const emptyForm = {
   displayName: '',
   bio: '',
-  telegram: '',
-  instagram: '',
-  tiktok: '',
-  youtubeShorts: '',
 };
 
 const orNull = (value) => {
@@ -27,18 +20,7 @@ const orNull = (value) => {
 const formFromProfile = (profile) => ({
   displayName: profile.displayName || '',
   bio: profile.bio || '',
-  telegram: profile.telegram || '',
-  instagram: profile.instagram || '',
-  tiktok: profile.tiktok || '',
-  youtubeShorts: profile.youtubeShorts || '',
 });
-
-const SocialLabel = ({ name, children }) => (
-  <span className={styles.labelText}>
-    <SocialIcon name={name} />
-    {children}
-  </span>
-);
 
 const CreatorProfile = () => {
   const [profile, setProfile] = useState(null);
@@ -48,7 +30,6 @@ const CreatorProfile = () => {
   const [saving, setSaving] = useState(false);
   const [pageError, setPageError] = useState('');
   const [error, setError] = useState('');
-  const [errors, setErrors] = useState({});
 
   const loadProfile = useCallback(async () => {
     try {
@@ -74,7 +55,6 @@ const CreatorProfile = () => {
   const setField = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-    clearFieldError(setErrors, name);
     setError('');
   };
 
@@ -82,20 +62,12 @@ const CreatorProfile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const nextErrors = { telegram: validateTelegram(form.telegram) };
-    setErrors(nextErrors);
-    if (hasErrors(nextErrors)) return;
-
     setSaving(true);
     setError('');
     try {
       const res = await apiClient.api.updateCreatorProfile({
         displayName: orNull(form.displayName),
         bio: orNull(form.bio),
-        telegram: orNull(form.telegram),
-        instagram: orNull(form.instagram),
-        tiktok: orNull(form.tiktok),
-        youtubeShorts: orNull(form.youtubeShorts),
       });
       setProfile(res.data);
       const savedFields = formFromProfile(res.data);
@@ -119,9 +91,6 @@ const CreatorProfile = () => {
           <div className={styles.formGrid}>
             <Skeleton className={styles.wide} block height={48} radius="var(--field-radius)" />
             <Skeleton className={styles.wide} block height={138} radius="var(--field-radius)" />
-            {Array.from({ length: 4 }, (_, index) => (
-              <Skeleton key={index} block height={48} radius="var(--field-radius)" />
-            ))}
           </div>
           <div className={styles.formActions}>
             <Skeleton width="8rem" height={44} radius="var(--button-radius)" />
@@ -173,54 +142,7 @@ const CreatorProfile = () => {
               rows={5}
             />
           </Field>
-          <Field label={<SocialLabel name="telegram">Telegram</SocialLabel>}>
-            <input
-              type="text"
-              name="telegram"
-              value={form.telegram}
-              onChange={setField}
-              className={ui.input}
-              aria-invalid={errors.telegram ? 'true' : undefined}
-              autoComplete="off"
-            />
-            <FieldError>{errors.telegram}</FieldError>
-          </Field>
-          <Field label={<SocialLabel name="instagram">Instagram</SocialLabel>}>
-            <input
-              type="text"
-              name="instagram"
-              value={form.instagram}
-              onChange={setField}
-              className={ui.input}
-              autoComplete="off"
-            />
-          </Field>
-          <Field label={<SocialLabel name="tiktok">TikTok</SocialLabel>}>
-            <input
-              type="text"
-              name="tiktok"
-              value={form.tiktok}
-              onChange={setField}
-              className={ui.input}
-              autoComplete="off"
-            />
-          </Field>
-          <Field label={<SocialLabel name="youtube">YouTube Shorts</SocialLabel>}>
-            <input
-              type="text"
-              name="youtubeShorts"
-              value={form.youtubeShorts}
-              onChange={setField}
-              className={ui.input}
-              autoComplete="off"
-            />
-          </Field>
         </div>
-
-        <p className={`${ui.hint} ${styles.note}`}>
-          Соцсети и Telegram видит рекламодатель, когда вы откликаетесь на его кампанию, — по ним он
-          свяжется с вами.
-        </p>
 
         {error && <p className={`${ui.errorText} ${styles.formError}`}>{error}</p>}
 

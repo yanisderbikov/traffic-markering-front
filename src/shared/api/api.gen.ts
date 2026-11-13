@@ -68,30 +68,12 @@ export interface CreatorProfileRequestDTO {
   /** О себе: формат роликов, аудитория, чем берёшь */
   bio?: string;
   /**
-   * Telegram для связи
+   * Telegram для связи; null — оставить как есть
    * @minLength 0
    * @maxLength 255
    * @example "@anya"
    */
   telegram?: string;
-  /**
-   * Ссылка или ник в Instagram
-   * @minLength 0
-   * @maxLength 255
-   */
-  instagram?: string;
-  /**
-   * Ссылка или ник в TikTok
-   * @minLength 0
-   * @maxLength 255
-   */
-  tiktok?: string;
-  /**
-   * Ссылка на канал YouTube Shorts
-   * @minLength 0
-   * @maxLength 255
-   */
-  youtubeShorts?: string;
 }
 
 /** Профиль криатора */

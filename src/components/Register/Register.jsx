@@ -185,7 +185,11 @@ const Register = () => {
         try {
           await saveTelegram(formState.role, telegram);
         } catch {
-          toast.error('Аккаунт создан, но Telegram не сохранился. Добавьте его в профиле.');
+          toast.error(
+            formState.role === 'CUSTOMER'
+              ? 'Аккаунт создан, но Telegram не сохранился. Добавьте его в профиле.'
+              : 'Аккаунт создан, но Telegram не сохранился.'
+          );
         }
       }
       navigate('/app', { replace: true });
