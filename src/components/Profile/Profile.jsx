@@ -3,6 +3,7 @@ import apiClient from '../../apiClient';
 import CreatorProfile from '../CreatorProfile/CreatorProfile';
 import CustomerProfile from '../CustomerProfile/CustomerProfile';
 import CreatorSocialAccounts from '../CreatorSocialAccounts/CreatorSocialAccounts';
+import AvatarSettings from './AvatarSettings';
 import ThemeSettings from './ThemeSettings';
 import PartnerOffer from './PartnerOffer';
 
@@ -43,6 +44,7 @@ const Profile = () => {
 
   return (
     <>
+      <AvatarSettings />
       <RoleProfile role={role} />
       <ThemeSettings>{PARTNER_ROLES.includes(role) && <PartnerOffer />}</ThemeSettings>
     </>

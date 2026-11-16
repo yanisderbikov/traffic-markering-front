@@ -13,7 +13,6 @@ import { campaignRequirements } from '../../shared/requirements';
 import {
   DEFAULT_VIEW_REGION,
   isWorldRegion,
-  platformGeographyWarning,
   viewRegionHint,
   viewRegionLabel,
 } from '../../shared/viewRegion';
@@ -150,22 +149,7 @@ const ApplyPage = () => {
     accounts === null ||
     accounts.some((account) => account.platform === platform && account.status === 'ACTIVE');
   const worldRegion = isWorldRegion(campaign?.viewRegion);
-  const regionHint = viewRegionHint(campaign?.viewRegion, campaign?.platforms);
-  const geographyWarning = platformGeographyWarning(campaign?.viewRegion, platform);
-  const activeYoutubeAccounts = Array.isArray(accounts)
-    ? accounts.filter(
-        (account) => account.platform === 'YOUTUBE_SHORTS' && account.status === 'ACTIVE'
-      )
-    : [];
-  const youtubeWithoutAnalytics =
-    platform === 'YOUTUBE_SHORTS' &&
-    !worldRegion &&
-    activeYoutubeAccounts.length > 0 &&
-    !activeYoutubeAccounts.some((account) => account.reportsViewGeography === true);
-  // Привязка по коду в описании географию не даёт — переподключение не поможет, ссылку не показываем.
-  const youtubeLinkedByCode =
-    activeYoutubeAccounts.length > 0 &&
-    activeYoutubeAccounts.every((account) => account.linkMethod === 'SCRAPE');
+  const regionHint = viewRegionHint(campaign?.viewRegion);
 
   const setField = (e) => {
     const { name, value } = e.target;
@@ -297,24 +281,6 @@ const ApplyPage = () => {
                 )}
                 {platform && platformAccepted && hasAccount && (
                   <span className={ui.hintOk}>Площадка: {PLATFORM_LABELS[platform]}</span>
-                )}
-                {platform && platformAccepted && geographyWarning && (
-                  <span className={ui.hintWarn}>{geographyWarning}</span>
-                )}
-                {platform && platformAccepted && hasAccount && youtubeWithoutAnalytics && (
-                  <span className={ui.hintWarn}>
-                    {youtubeLinkedByCode ? (
-                      'YouTube не отдаёт нам географию просмотров — ролик по этому региону не оплатится.'
-                    ) : (
-                      <>
-                        YouTube подключён без доступа к аналитике — география просмотров не учтётся
-                        и ролик по этому региону не оплатится.{' '}
-                        <Link to="/app/profile#socials" className={styles.inlineLink}>
-                          Переподключить YouTube
-                        </Link>
-                      </>
-                    )}
-                  </span>
                 )}
                 {platform && platformAccepted && !hasAccount && (
                   <span className={ui.hintWarn}>

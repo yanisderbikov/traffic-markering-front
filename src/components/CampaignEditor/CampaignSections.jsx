@@ -8,8 +8,6 @@ import Skeleton from '../shared/Skeleton/Skeleton';
 import { VIDEO_PLATFORMS } from '../../shared/video';
 import {
   VIEW_REGIONS,
-  platformLabels,
-  platformsWithoutGeography,
   viewRegionLabel,
 } from '../../shared/viewRegion';
 import { formatRubles, formatViews, rubToKopecks } from '../../shared/money';
@@ -420,8 +418,6 @@ export const BriefFields = ({ editor }) => {
 
 export const TermsFields = ({ editor }) => {
   const { form, errors } = editor;
-  const blindPlatforms = platformsWithoutGeography(form.platforms);
-  const regionBlindWarning = form.viewRegion !== 'WORLD' && blindPlatforms.length > 0;
 
   return (
     <>
@@ -475,13 +471,6 @@ export const TermsFields = ({ editor }) => {
         <span className={ui.hint}>
           Оплачиваются только просмотры из выбранного региона; «весь мир» — все просмотры.
         </span>
-        {regionBlindWarning && (
-          <span className={ui.hintWarn}>
-            {platformLabels(blindPlatforms)} географию просмотров{' '}
-            {blindPlatforms.length > 1 ? 'не отдают' : 'не отдаёт'}: ролики оттуда по такому
-            региону не оплатятся. Географию отдаёт только YouTube с доступом к аналитике.
-          </span>
-        )}
       </div>
 
       <div className={styles.fieldGrid}>

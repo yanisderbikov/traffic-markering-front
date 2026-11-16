@@ -1424,6 +1424,20 @@ export interface CurrentUserDTO {
   role?: string;
   /** Вкладки кабинета в порядке меню */
   tabs?: CabinetTabDTO[];
+  /** Временная ссылка на аватарку; null — аватарки нет */
+  avatarUrl?: string;
+}
+
+/** Аватарка текущего пользователя */
+export interface AvatarDTO {
+  /** Временная ссылка на картинку; null — аватарки нет */
+  avatarUrl?: string;
+}
+
+/** Сохранение аватарки */
+export interface AvatarRequestDTO {
+  /** key из ответа POST /api/profile/avatar/presign */
+  key: string;
 }
 
 /** Партнёрская программа рекламодателя: условия, код приглашения и что принесли приглашённые */
@@ -1766,6 +1780,61 @@ export class Api<
         body: data,
         secure: true,
         type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description Presigned PUT-ссылка: картинка отправляется в хранилище напрямую, с тем же Content-Type. Полученный key передаётся в PUT /api/profile/avatar
+     *
+     * @tags Profile
+     * @name PresignAvatar
+     * @summary Ссылка на загрузку аватарки
+     * @request POST:/api/profile/avatar/presign
+     * @secure
+     */
+    presignAvatar: (data: PresignUploadRequestDTO, params: RequestParams = {}) =>
+      this.request<PresignUploadResponseDTO, any>({
+        path: `/api/profile/avatar/presign`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description Привязывает загруженную картинку к учётной записи; прежняя аватарка заменяется
+     *
+     * @tags Profile
+     * @name SetAvatar
+     * @summary Сохранить аватарку
+     * @request PUT:/api/profile/avatar
+     * @secure
+     */
+    setAvatar: (data: AvatarRequestDTO, params: RequestParams = {}) =>
+      this.request<AvatarDTO, any>({
+        path: `/api/profile/avatar`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description В кабинете снова показывается первая буква имени
+     *
+     * @tags Profile
+     * @name RemoveAvatar
+     * @summary Убрать аватарку
+     * @request DELETE:/api/profile/avatar
+     * @secure
+     */
+    removeAvatar: (params: RequestParams = {}) =>
+      this.request<AvatarDTO, any>({
+        path: `/api/profile/avatar`,
+        method: "DELETE",
+        secure: true,
         ...params,
       }),
 
