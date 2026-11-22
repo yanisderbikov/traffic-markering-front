@@ -35,6 +35,7 @@ import FinancePayout from './components/FinancePayout/FinancePayout';
 import FinanceOperations from './components/FinanceOperations/FinanceOperations';
 import FinanceTopUps from './components/FinanceTopUps/FinanceTopUps';
 import Referral from './components/Referral/Referral';
+import Studio from './components/Studio/Studio';
 import Info from './components/Info/Info';
 import DocumentPage from './components/Info/DocumentPage';
 
@@ -265,6 +266,9 @@ function App() {
           </Route>
           <Route element={<RequireTab tab="USERS" />}>
             <Route path="/app/admin/users" element={<AdminUsers />} />
+          </Route>
+          <Route element={<RequireTab tab="STUDIO" />}>
+            <Route path="/app/studio" element={<Studio />} />
           </Route>
           <Route element={<RequireTab tab="PROFILE" />}>
             <Route path="/app/profile" element={<Profile />} />
