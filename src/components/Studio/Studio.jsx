@@ -77,7 +77,8 @@ const Studio = () => {
   const [busy, setBusy] = useState('');
   const [uploadProgress, setUploadProgress] = useState(null);
   const [dragOver, setDragOver] = useState(false);
-  const [linking, setLinking] = useState(null);
+  const [linkUrl, setLinkUrl] = useState(null);
+  const [linking, setLinking] = useState(false);
   const videoRef = useRef(null);
   const fileRef = useRef(null);
 
@@ -135,22 +136,55 @@ const Studio = () => {
     return () => clearInterval(timer);
   }, [hasActive, loadJobs, reloadOverview]);
 
-  // После привязки в боте пользователь возвращается на вкладку — подтягиваем статус
+  // Ссылку в бота получаем заранее: кнопка — обычная ссылка, браузер не блокирует её как всплывающее окно
+  const needsLink = Boolean(overview?.telegram?.botEnabled && !overview?.telegram?.linked);
+  useEffect(() => {
+    if (!needsLink) {
+      setLinkUrl(null);
+      return undefined;
+    }
+    let timer;
+    let cancelled = false;
+    const load = () =>
+      studioApi
+        .linkTelegram()
+        .then((link) => {
+          if (cancelled) return;
+          setLinkUrl(link.url);
+          // Обновляем за пару минут до истечения кода
+          const left = new Date(link.expiresAt).getTime() - Date.now() - 2 * 60 * 1000;
+          timer = setTimeout(load, Math.max(left, 30 * 1000));
+        })
+        .catch(() => {
+          if (!cancelled) timer = setTimeout(load, 30 * 1000);
+        });
+    load();
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [needsLink]);
+
+  // После нажатия Start в боте статус подтягивается сам
   useEffect(() => {
     if (!linking) return undefined;
-    const timer = setInterval(() => {
+    const check = () =>
       studioApi
         .overview()
         .then((o) => {
           setOverview(o);
           if (o.telegram.linked) {
-            setLinking(null);
+            setLinking(false);
             toast.success('Telegram привязан');
           }
         })
         .catch(() => {});
-    }, 4000);
-    return () => clearInterval(timer);
+    const timer = setInterval(check, 3000);
+    window.addEventListener('focus', check);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', check);
+    };
   }, [linking]);
 
   useEffect(() => {
@@ -374,12 +408,6 @@ const Studio = () => {
     );
   };
 
-  const startLinking = () =>
-    run('link', async () => {
-      const link = await studioApi.linkTelegram();
-      setLinking(link);
-      window.open(link.url, '_blank', 'noopener');
-    });
 
   if (loading) {
     return (
@@ -441,9 +469,21 @@ const Studio = () => {
         </div>
         <div className={styles.telegramActions}>
           {telegram.botEnabled && !telegram.linked && (
-            <button type="button" className={ui.btnPrimary} disabled={busy === 'link'} onClick={startLinking}>
-              {linking ? 'Открыть ссылку ещё раз' : 'Привязать Telegram'}
-            </button>
+            linkUrl ? (
+              <a
+                className={ui.btnPrimary}
+                href={linkUrl}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => setLinking(true)}
+              >
+                {linking ? 'Открыть бота ещё раз' : 'Привязать Telegram'}
+              </a>
+            ) : (
+              <button type="button" className={ui.btnPrimary} disabled>
+                Привязать Telegram
+              </button>
+            )
           )}
           {telegram.botEnabled && telegram.linked && (
             <>
