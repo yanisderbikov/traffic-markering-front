@@ -6,6 +6,7 @@ import CreatorSocialAccounts from '../CreatorSocialAccounts/CreatorSocialAccount
 import AvatarSettings from './AvatarSettings';
 import ThemeSettings from './ThemeSettings';
 import PartnerOffer from './PartnerOffer';
+import LoginSettings from './LoginSettings';
 
 const PARTNER_ROLES = ['CUSTOMER', 'ADMIN'];
 
@@ -46,6 +47,7 @@ const Profile = () => {
     <>
       <AvatarSettings />
       <RoleProfile role={role} />
+      <LoginSettings />
       <ThemeSettings>{PARTNER_ROLES.includes(role) && <PartnerOffer />}</ThemeSettings>
     </>
   );

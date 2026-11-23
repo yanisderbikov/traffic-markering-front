@@ -11,6 +11,7 @@ import CampaignPage from './components/CampaignPage/CampaignPage';
 import ApplyPage from './components/ApplyPage/ApplyPage';
 import Login from './components/Login/Login';
 import Register from './components/Register/Register';
+import TelegramAuthPage from './components/TelegramAuth/TelegramAuthPage';
 import NotFound from './components/NotFound/NotFound';
 import AppLayout from './components/AppLayout/AppLayout';
 import RequireTab from './components/AppLayout/RequireTab';
@@ -212,6 +213,7 @@ function App() {
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/auth/telegram" element={<TelegramAuthPage />} />
         <Route path="/info" element={<Info />} />
         <Route path="/info/:slug" element={<DocumentPage />} />
         <Route element={<AppLayout />}>

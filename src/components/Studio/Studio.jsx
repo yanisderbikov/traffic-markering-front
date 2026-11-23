@@ -5,6 +5,7 @@ import Skeleton, { SkeletonPageHead } from '../shared/Skeleton/Skeleton';
 import { errorMessage } from '../../shared/auth';
 import ui from '../../shared/ui.module.css';
 import styles from './Studio.module.css';
+import { useSession } from '../../shared/session';
 import {
   DEFAULT_SETTINGS,
   FORMAT_LABELS,
@@ -77,6 +78,7 @@ const Studio = () => {
   const [busy, setBusy] = useState('');
   const [uploadProgress, setUploadProgress] = useState(null);
   const [dragOver, setDragOver] = useState(false);
+  const session = useSession();
   const [linkUrl, setLinkUrl] = useState(null);
   const [linking, setLinking] = useState(false);
   const videoRef = useRef(null);
@@ -513,22 +515,24 @@ const Studio = () => {
                   Открыть бота
                 </a>
               )}
-              <button
-                type="button"
-                className={ui.btnGhost}
-                onClick={() =>
-                  run(
-                    'unlink',
-                    async () => {
-                      await studioApi.unlinkTelegram();
-                      await reloadOverview();
-                    },
-                    'Telegram отвязан'
-                  )
-                }
-              >
-                Отвязать
-              </button>
+              {!session.user?.telegramOnly && (
+                <button
+                  type="button"
+                  className={ui.btnGhost}
+                  onClick={() =>
+                    run(
+                      'unlink',
+                      async () => {
+                        await studioApi.unlinkTelegram();
+                        await reloadOverview();
+                      },
+                      'Telegram отвязан'
+                    )
+                  }
+                >
+                  Отвязать
+                </button>
+              )}
             </>
           )}
         </div>
