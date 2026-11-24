@@ -11,6 +11,12 @@ const CampaignPreview = ({ editor, hideOnMobile = false }) => {
   const { form } = editor;
   const customerName = apiClient.getJwtMetadata()?.name || '';
   const rateKopecks = rubToKopecks(form.rateRub) || 0;
+  // «Ссылка и промокод»: на доске креаторы видят ставку со всеми надбавками
+  const bonusKopecks =
+    form.paymentModel === 'SNAPSHOT'
+      ? (form.promoUrl.trim() ? rubToKopecks(form.linkBonusRub) || 0 : 0) +
+        (form.promoCode.trim() ? rubToKopecks(form.promoBonusRub) || 0 : 0)
+      : 0;
   const budgetKopecks = rubToKopecks(form.budgetRub) || 0;
   const minPayoutKopecks = rubToKopecks(form.minPayoutRub) || 0;
   const reachViews = rateKopecks > 0 ? Math.floor((budgetKopecks / rateKopecks) * 1000) : 0;
@@ -38,7 +44,9 @@ const CampaignPreview = ({ editor, hideOnMobile = false }) => {
           {form.viewRegion !== 'WORLD' ? ` · ${viewRegionLabel(form.viewRegion)}` : ''}
         </p>
         <p className={styles.previewRate}>
-          {rateKopecks > 0 ? formatRubles(rateKopecks) : '— ₽'}{' '}
+          {rateKopecks > 0
+            ? `${bonusKopecks > 0 ? 'до ' : ''}${formatRubles(rateKopecks + bonusKopecks)}`
+            : '— ₽'}{' '}
           <span className={styles.previewRateUnit}>/ 1 000</span>
         </p>
         <div className={ui.divider} />

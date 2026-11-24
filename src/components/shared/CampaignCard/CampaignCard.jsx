@@ -35,7 +35,14 @@ export const campaignAvailability = (campaign) => {
 
 const TicketStub = () => <div className={styles.stub} aria-hidden="true" />;
 
+// «Ссылка и промокод»: на доске показываем полную ставку — с обеими надбавками
+const bonusOf = (campaign, offered, value) =>
+  campaign.paymentModel === 'SNAPSHOT' && offered !== false ? value ?? 0 : 0;
+
 const CampaignCard = ({ campaign, application, to, index }) => {
+  const bonusRate =
+    bonusOf(campaign, campaign.offersLink, campaign.linkBonusPerThousandKopecks) +
+    bonusOf(campaign, campaign.offersPromo, campaign.promoBonusPerThousandKopecks);
   if (!campaign) return null;
 
   const customer = campaign.customerCompany || campaign.customerName || 'Заказчик';
@@ -73,8 +80,13 @@ const CampaignCard = ({ campaign, application, to, index }) => {
         </ul>
 
         <p className={styles.rate}>
-          <span className={styles.rateValue}>{formatRubles(campaign.ratePerThousandKopecks)}</span>
-          <span className={styles.rateUnit}>за 1 000 просмотров</span>
+          <span className={styles.rateValue}>
+            {bonusRate > 0 ? 'до ' : ''}
+            {formatRubles((campaign.ratePerThousandKopecks ?? 0) + bonusRate)}
+          </span>
+          <span className={styles.rateUnit}>
+            за 1 000 просмотров{bonusRate > 0 ? ' · со ссылкой и промокодом' : ''}
+          </span>
         </p>
 
         <div className={styles.budget}>

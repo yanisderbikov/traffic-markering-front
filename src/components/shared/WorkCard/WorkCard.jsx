@@ -6,6 +6,7 @@ import { formatRubles, formatViews } from '../../../shared/money';
 import { PLATFORM_LABELS, formatDate } from '../../../shared/dictionaries';
 import { isWorldRegion } from '../../../shared/viewRegion';
 import { isAwaitingVideo, videoReminder } from '../../../shared/workReminder';
+import PlacementWork from '../Placement/PlacementWork';
 import ui from '../../../shared/ui.module.css';
 import styles from './WorkCard.module.css';
 
@@ -34,6 +35,16 @@ const STATUS_CHIP = {
 };
 
 const hintOf = (application) => {
+  if (application.placement) {
+    switch (application.status) {
+      case 'PENDING':
+        return 'Работа подана: просмотры зафиксированы на момент подачи. Ролик и надбавки проверяют.';
+      case 'APPROVED':
+        return 'Ролик принят. База начислена по снимку при подаче, надбавки засчитываются после срока размещения.';
+      default:
+        break;
+    }
+  }
   switch (application.status) {
     case 'PENDING':
       return 'Ролик проверяют. Деньги за просмотры начнут капать сразу после одобрения.';
@@ -50,7 +61,8 @@ const hintOf = (application) => {
   }
 };
 
-const WorkCard = ({ application, onWithdraw, busy = false }) => {
+const WorkCard = ({ application, onWithdraw, onChanged, busy = false }) => {
+  const snapshot = Boolean(application.placement);
   const stage = stageOf(application);
   const percent = Math.round((stage / STAGES.length) * 100);
   const chip = STATUS_CHIP[application.status] || {
@@ -110,7 +122,13 @@ const WorkCard = ({ application, onWithdraw, busy = false }) => {
       <div className={styles.numbers}>
         <span>
           <span className={ui.muted}>Ставка </span>
-          <b>{formatRubles(application.ratePerThousandKopecks)}</b>
+          <b>
+            {formatRubles(
+              snapshot
+                ? application.placement.selectedRatePerThousandKopecks
+                : application.ratePerThousandKopecks
+            )}
+          </b>
           <span className={ui.muted}> / 1 000</span>
         </span>
         {!awaitingVideo && (
@@ -119,7 +137,13 @@ const WorkCard = ({ application, onWithdraw, busy = false }) => {
             <b>{formatViews(application.views ?? 0)}</b>
           </span>
         )}
-        {!awaitingVideo && !isWorldRegion(application.campaignViewRegion) && !geographyMissing && (
+        {!awaitingVideo && snapshot && application.placement.billingViews != null && (
+          <span>
+            <span className={ui.muted}>Оплачивается </span>
+            <b>{formatViews(application.placement.billingViews)}</b>
+          </span>
+        )}
+        {!awaitingVideo && !snapshot && !isWorldRegion(application.campaignViewRegion) && !geographyMissing && (
           <span>
             <span className={ui.muted}>В расчёт </span>
             <b>{formatViews(application.payableViews ?? 0)}</b>
@@ -140,7 +164,8 @@ const WorkCard = ({ application, onWithdraw, busy = false }) => {
       ) : (
         <p className={styles.hint}>{hintOf(application)}</p>
       )}
-      {geographyMissing && (
+      {snapshot && <PlacementWork application={application} onChanged={onChanged} />}
+      {geographyMissing && !snapshot && (
         <p className={styles.warn}>
           География просмотров недоступна: просмотры по этой работе не оплачиваются.
         </p>
@@ -180,7 +205,7 @@ const WorkCard = ({ application, onWithdraw, busy = false }) => {
               to={`/campaigns/${application.campaignPublicId}/apply`}
               className={`${ui.btnPrimary} ${ui.btnSmall}`}
             >
-              Прикрепить ролик
+              {snapshot ? 'Подать работу' : 'Прикрепить ролик'}
             </Link>
           )}
         </div>

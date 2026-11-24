@@ -31,7 +31,29 @@ export const emptyForm = {
   startsOn: '',
   endsOn: '',
   materials: [],
+  paymentModel: 'CONTINUOUS',
+  promoUrl: '',
+  promoCode: '',
+  promoBenefit: '',
+  linkBonusRub: '',
+  promoBonusRub: '',
+  retentionDays: '',
+  maxRewardRub: '',
 };
+
+export const SNAPSHOT_FIELDS = [
+  'promoUrl',
+  'promoCode',
+  'promoBenefit',
+  'linkBonusRub',
+  'promoBonusRub',
+  'retentionDays',
+  'maxRewardRub',
+];
+
+export const isSnapshotForm = (form) => form.paymentModel === 'SNAPSHOT';
+export const DEFAULT_RETENTION_DAYS = 7;
+const PROMO_CODE_PATTERN = /^[\p{L}\p{N}_-]{2,64}$/u;
 
 export const FORM_FIELDS = Object.keys(emptyForm);
 
@@ -55,7 +77,7 @@ export const CAMPAIGN_STEPS = [
     id: 'budget',
     title: 'Бюджет',
     heading: 'Сколько платите',
-    fields: ['rateRub', 'budgetRub', 'minPayoutRub', 'minPaidRub'],
+    fields: ['rateRub', 'budgetRub', 'minPayoutRub', 'minPaidRub', 'paymentModel', ...SNAPSHOT_FIELDS],
   },
   {
     id: 'launch',
@@ -115,7 +137,20 @@ const REQUIRED = {
     message: 'Укажите порог вывода',
     filled: (form) => moneyFilled(form.minPayoutRub),
   },
+  // «Ссылка и промокод»: ссылка и код обязательны, только если за них есть надбавка
+  promoUrl: {
+    label: 'рекламная ссылка',
+    message: 'Укажите рекламную ссылку — за неё платится надбавка',
+    filled: (form) => !isSnapshotForm(form) || !(rubToKopecks(form.linkBonusRub) > 0) || Boolean(form.promoUrl.trim()),
+  },
+  promoCode: {
+    label: 'промокод',
+    message: 'Укажите промокод — за него платится надбавка',
+    filled: (form) => !isSnapshotForm(form) || !(rubToKopecks(form.promoBonusRub) > 0) || Boolean(form.promoCode.trim()),
+  },
 };
+
+const CONDITIONAL = new Set(['promoUrl', 'promoCode']);
 
 const OPTIONAL_LABELS = {
   materials: 'материалы',
@@ -124,11 +159,17 @@ const OPTIONAL_LABELS = {
   minVideoSeconds: 'длина ролика',
   maxVideosPerCreator: 'лимит роликов',
   minPaidRub: 'порог оплаты',
+  paymentModel: 'способ оплаты',
+  promoBenefit: 'выгода промокода',
+  linkBonusRub: 'надбавка за ссылку',
+  promoBonusRub: 'надбавка за промокод',
+  retentionDays: 'срок размещения',
+  maxRewardRub: 'потолок за ролик',
 };
 
 export const fieldLabel = (field) => REQUIRED[field]?.label ?? OPTIONAL_LABELS[field];
 
-export const isRequired = (field) => Boolean(REQUIRED[field]);
+export const isRequired = (field) => Boolean(REQUIRED[field]) && !CONDITIONAL.has(field);
 
 export const missingFields = (form, fields = FORM_FIELDS) =>
   fields.filter((field) => REQUIRED[field] && !REQUIRED[field].filled(form));
@@ -181,6 +222,36 @@ const formatError = (form, field, { budgetError, maxPayoutPercent }) => {
         parseIntInput(form.maxVideosPerCreator),
         'Лимит роликов должен быть больше нуля'
       );
+    case 'promoUrl': {
+      const url = form.promoUrl.trim();
+      if (!isSnapshotForm(form) || !url) return '';
+      if (!/^https:\/\//i.test(url)) return 'Ссылка должна начинаться с https://';
+      try {
+        return new URL(url).hostname.includes('.') ? '' : 'В ссылке нет адреса сайта';
+      } catch {
+        return 'Ссылка не похожа на адрес страницы';
+      }
+    }
+    case 'promoCode': {
+      const code = form.promoCode.trim();
+      if (!isSnapshotForm(form) || !code) return '';
+      return PROMO_CODE_PATTERN.test(code)
+        ? ''
+        : 'От 2 до 64 букв и цифр, можно дефис и подчёркивание, без пробелов';
+    }
+    case 'linkBonusRub':
+    case 'promoBonusRub': {
+      const bonus = rubToKopecks(form[field]);
+      return isSnapshotForm(form) && bonus != null && bonus < 0 ? 'Надбавка не может быть отрицательной' : '';
+    }
+    case 'retentionDays': {
+      const days = parseIntInput(form.retentionDays);
+      return isSnapshotForm(form) && days != null && (days < 1 || days > 90) ? 'От 1 до 90 дней' : '';
+    }
+    case 'maxRewardRub':
+      return isSnapshotForm(form)
+        ? positiveOrEmpty(rubToKopecks(form.maxRewardRub), 'Потолок должен быть больше нуля')
+        : '';
     case 'endsOn': {
       const startsAt = startOfDayIso(form.startsOn);
       const endsAt = endOfDayIso(form.endsOn);
@@ -252,6 +323,15 @@ export const formFromCampaign = (campaign) => ({
   startsOn: dateInputValue(campaign.startsAt),
   endsOn: dateInputValue(campaign.endsAt),
   materials: Array.isArray(campaign.materials) ? campaign.materials.map(materialFromDto) : [],
+  paymentModel: campaign.paymentModel || 'CONTINUOUS',
+  promoUrl: campaign.promoUrl || '',
+  promoCode: campaign.promoCode || '',
+  promoBenefit: campaign.promoBenefit || '',
+  linkBonusRub: kopecksToInput(campaign.linkBonusPerThousandKopecks),
+  promoBonusRub: kopecksToInput(campaign.promoBonusPerThousandKopecks),
+  retentionDays:
+    campaign.paymentModel === 'SNAPSHOT' ? intToInput(campaign.placementRetentionDays) : '',
+  maxRewardRub: kopecksToInput(campaign.maxRewardPerVideoKopecks),
 });
 
 export const formToRequest = (form) => ({
@@ -270,12 +350,26 @@ export const formToRequest = (form) => ({
   startsAt: startOfDayIso(form.startsOn),
   endsAt: endOfDayIso(form.endsOn),
   materials: form.materials.map(materialToRequest),
+  paymentModel: form.paymentModel,
+  ...(isSnapshotForm(form)
+    ? {
+        promoUrl: form.promoUrl.trim() || null,
+        promoCode: form.promoCode.trim() || null,
+        promoBenefit: form.promoBenefit.trim() || null,
+        linkBonusPerThousandKopecks: rubToKopecks(form.linkBonusRub),
+        promoBonusPerThousandKopecks: rubToKopecks(form.promoBonusRub),
+        placementRetentionDays: parseIntInput(form.retentionDays),
+        maxRewardPerVideoKopecks: rubToKopecks(form.maxRewardRub),
+      }
+    : {}),
 });
 
 export const isUnfinishedDraft = (campaign) =>
   campaign.status === 'DRAFT' && !(campaign.applicationsCount > 0);
 
-const CONTENT_FIELDS = FORM_FIELDS.filter((field) => field !== 'platforms' && field !== 'viewRegion');
+const CONTENT_FIELDS = FORM_FIELDS.filter(
+  (field) => field !== 'platforms' && field !== 'viewRegion' && field !== 'paymentModel'
+);
 
 export const isBlankDraft = (campaign) => {
   const form = formFromCampaign(campaign);

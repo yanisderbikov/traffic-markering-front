@@ -17,6 +17,8 @@ import {
   viewRegionLabel,
 } from '../../shared/viewRegion';
 import { detectPlatform } from '../../shared/video';
+import { campaignRates, isSnapshot, rateRange, workRates } from '../../shared/placement';
+import SnapshotApply from './SnapshotApply';
 import ui from '../../shared/ui.module.css';
 import styles from './ApplyPage.module.css';
 
@@ -237,7 +239,7 @@ const ApplyPage = () => {
           <header className={ui.pageHead}>
             <div className={ui.pageHeadMain}>
               <span className={ui.eyebrow}>Креатор</span>
-              <h1 className={ui.title}>Ролик по офферу</h1>
+              <h1 className={ui.title}>{isSnapshot(campaign) ? 'Работа по офферу' : 'Ролик по офферу'}</h1>
               <p className={ui.subtitle}>
                 {campaign.title} · {customer}
               </p>
@@ -247,6 +249,15 @@ const ApplyPage = () => {
           {inactive && <p className={styles.notice}>{renderInactiveNotice()}</p>}
 
           <div className={styles.columns}>
+            {isSnapshot(campaign) ? (
+              <SnapshotApply
+                campaign={campaign}
+                workInProgress={workInProgress}
+                onWorkChange={setWorkInProgress}
+                inactive={inactive}
+                accounts={accounts}
+              />
+            ) : (
             <form className={`${ui.card} ${styles.form}`} onSubmit={handleSubmit} noValidate>
               <div className={styles.field}>
                 <label htmlFor="apply-video-url" className={ui.label}>
@@ -328,12 +339,21 @@ const ApplyPage = () => {
                 </Link>
               </div>
             </form>
+            )}
 
             <aside className={styles.aside}>
               <section className={ui.card}>
                 <span className={ui.eyebrow}>Ставка за результат</span>
-                <p className={styles.rate}>{formatRubles(campaign.ratePerThousandKopecks)}</p>
-                <p className={styles.rateUnit}>за 1 000 подтверждённых просмотров</p>
+                <p className={styles.rate}>
+                  {isSnapshot(campaign)
+                    ? rateRange(workInProgress?.placement ? workRates(workInProgress.placement) : campaignRates(campaign))
+                    : formatRubles(campaign.ratePerThousandKopecks)}
+                </p>
+                <p className={styles.rateUnit}>
+                  {isSnapshot(campaign)
+                    ? 'за 1 000 просмотров на момент подачи, по варианту участия'
+                    : 'за 1 000 подтверждённых просмотров'}
+                </p>
 
                 {acceptedPlatforms.length > 0 && (
                   <>

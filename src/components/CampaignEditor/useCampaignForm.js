@@ -108,6 +108,7 @@ const useCampaignForm = (initialCampaign) => {
   };
 
   const setViewRegion = (region) => updateField('viewRegion', region);
+  const setPaymentModel = (model) => updateField('paymentModel', model);
   const setTopic = (code) => updateField('topic', code);
 
   // Найденная поиском или только что добавленная тематика в топ не входит — запоминаем её
@@ -369,6 +370,7 @@ const useCampaignForm = (initialCampaign) => {
     setIntField,
     togglePlatform,
     setViewRegion,
+    setPaymentModel,
     setTopic,
     selectTopic,
     prefillRate,

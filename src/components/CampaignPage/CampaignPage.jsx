@@ -13,6 +13,8 @@ import { PLATFORM_LABELS } from '../../shared/dictionaries';
 import { formatDay } from '../../shared/dates';
 import { campaignRequirements, formatSeconds } from '../../shared/requirements';
 import { DEFAULT_VIEW_REGION, isWorldRegion, viewRegionHint, viewRegionLabel } from '../../shared/viewRegion';
+import PlacementRates from '../shared/Placement/PlacementRates';
+import { campaignRates, fullRate, isSnapshot, rateVariants } from '../../shared/placement';
 import ui from '../../shared/ui.module.css';
 import styles from './CampaignPage.module.css';
 
@@ -102,6 +104,7 @@ const CampaignPage = () => {
   const [pageError, setPageError] = useState('');
   const [workInProgress, setWorkInProgress] = useState(null);
   const [taking, setTaking] = useState(false);
+  const [variantKey, setVariantKey] = useState(null);
 
   const authorized = apiClient.hasLiveToken();
   const role = authorized ? apiClient.getJwtMetadata()?.role : null;
@@ -145,6 +148,18 @@ const CampaignPage = () => {
   const handleTake = async () => {
     setTaking(true);
     try {
+      if (isSnapshot(campaign)) {
+        const variants = rateVariants(campaignRates(campaign));
+        const variant = variants.find((item) => item.key === variantKey) || variants[0];
+        await apiClient.api.apply({
+          campaignId: campaign.id,
+          withLink: Boolean(variant?.withLink),
+          withPromo: Boolean(variant?.withPromo),
+        });
+        toast.success('Оффер в работе — ссылка и промокод ждут вас на странице подачи');
+        navigate(`/campaigns/${publicId}/apply`);
+        return;
+      }
       await apiClient.api.apply({ campaignId: campaign.id });
       toast.success('Оффер в работе — снимите ролик и пришлите ссылку в «Моих работах»');
       navigate('/app/applications');
@@ -186,7 +201,36 @@ const CampaignPage = () => {
   const applyPath = `/campaigns/${publicId}/apply`;
   const boardPath = authorized ? '/app/board' : '/board';
 
-  const steps = [
+  const snapshot = isSnapshot(campaign);
+  const rates = campaignRates(campaign);
+  const variants = snapshot ? rateVariants(rates) : [];
+  const selectedVariant = variants.find((item) => item.key === variantKey) || variants[0];
+  const retentionDays = campaign.placementRetentionDays;
+
+  const snapshotSteps = [
+    {
+      title: 'Выбрать вариант и взять оффер',
+      text: 'Без ссылки в профиле или закрепа можно участвовать по меньшей ставке — вариант видно заранее. После взятия оффера вы получите общую рекламную ссылку, промокод и готовый текст комментария.',
+    },
+    {
+      title: 'Опубликовать новый ролик и разместить элементы',
+      text: [
+        campaign.minVideoSeconds ? `Длина от ${formatSeconds(campaign.minVideoSeconds)}.` : '',
+        rates.link > 0 ? 'Ссылку — в ссылки профиля или канала, не текстом в описании.' : '',
+        rates.promo > 0 ? 'Комментарий с промокодом — под роликом, от вашего аккаунта, закрепить.' : '',
+      ]
+        .filter(Boolean)
+        .join(' '),
+    },
+    {
+      title: 'Подать работу, когда ролик наберёт просмотры',
+      text: `Нажмите «Рассчитать»: просмотры зафиксируются на момент подачи, рост после неё работу не меняет. ${
+        retentionDays ? `Держите ссылку и закреп ${retentionDays} дн. после подачи — тогда засчитаются надбавки.` : ''
+      } ${viewRegionHint(region)}.`,
+    },
+  ];
+
+  const steps = snapshot ? snapshotSteps : [
     {
       title: 'Снять ролик по брифу',
       text: [
@@ -236,7 +280,7 @@ const CampaignPage = () => {
     if (workInProgress) {
       return (
         <Link to={applyPath} className={size}>
-          Прикрепить ролик
+          {isSnapshot(campaign) ? 'Подать работу' : 'Прикрепить ролик'}
         </Link>
       );
     }
@@ -276,7 +320,9 @@ const CampaignPage = () => {
         <div className={styles.heroBody}>
           <span className={styles.heroKicker}>{customer} / оффер</span>
           <h2 className={styles.heroTitle}>
-            {formatRubles(campaign.ratePerThousandKopecks)} за 1 000 просмотров
+            {snapshot && fullRate(rates) > rates.base
+              ? `До ${formatRubles(fullRate(rates))} за 1 000 просмотров`
+              : `${formatRubles(campaign.ratePerThousandKopecks)} за 1 000 просмотров`}
           </h2>
           <p className={styles.heroText}>
             {availability.open
@@ -350,8 +396,30 @@ const CampaignPage = () => {
         <aside className={styles.aside}>
           <section className={ui.card}>
             <span className={ui.eyebrow}>Ставка за результат</span>
-            <p className={styles.rate}>{formatRubles(campaign.ratePerThousandKopecks)}</p>
-            <p className={styles.rateUnit}>за 1 000 подтверждённых просмотров</p>
+            <p className={styles.rate}>
+              {formatRubles(snapshot && selectedVariant ? selectedVariant.rate : campaign.ratePerThousandKopecks)}
+            </p>
+            <p className={styles.rateUnit}>
+              за 1 000 {snapshot ? 'просмотров на момент подачи' : 'подтверждённых просмотров'}
+            </p>
+            {snapshot && variants.length > 1 && (
+              <>
+                <div className={ui.divider} />
+                <PlacementRates
+                  rates={rates}
+                  selected={selectedVariant?.key}
+                  onSelect={
+                    isCreator && availability.open && !workInProgress
+                      ? (variant) => setVariantKey(variant.key)
+                      : undefined
+                  }
+                />
+                <p className={styles.ctaNote}>
+                  Нет возможности поставить ссылку или закрепить комментарий — выберите вариант без этого:
+                  ставка меньше, участие не запрещено. Ставки до комиссии платформы.
+                </p>
+              </>
+            )}
             <div className={ui.divider} />
             <div className={ui.kv}>
               <span className={ui.kvKey}>Осталось в бюджете</span>

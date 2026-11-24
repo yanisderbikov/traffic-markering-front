@@ -14,8 +14,12 @@ import { formatRubles, formatViews, rubToKopecks } from '../../shared/money';
 import { useDebouncedValue } from '../../shared/useDebouncedValue';
 import { PLATFORM_LABELS } from '../../shared/dictionaries';
 import { pluralize } from '../../shared/requirements';
+import PlacementRates from '../shared/Placement/PlacementRates';
+import { commentTemplate } from '../../shared/placement';
 import {
+  DEFAULT_RETENTION_DAYS,
   MATERIALS_MAX,
+  isSnapshotForm,
   TOPIC_NAME_MAX,
   compareToMedian,
   compareToTopicAverage,
@@ -553,11 +557,41 @@ export const BudgetFields = ({ editor, onOpenWallet }) => {
     onOpenWallet();
   };
 
+  const snapshot = isSnapshotForm(form);
+
   return (
+    <>
+    <div className={styles.field}>
+      <span className={ui.label}>Как платить за просмотры</span>
+      <div className={ui.chips} role="radiogroup" aria-label="Как платить за просмотры">
+        {PAYMENT_MODELS.map((model) => {
+          const selected = form.paymentModel === model.value;
+          return (
+            <button
+              key={model.value}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              className={selected ? ui.chipActive : ui.chip}
+              onClick={() => editor.setPaymentModel(model.value)}
+              disabled={launched && campaign.applicationsCount > 0 && !selected}
+            >
+              {model.label}
+            </button>
+          );
+        })}
+      </div>
+      <span className={ui.hint}>
+        {snapshot
+          ? 'Креатор подаёт ролик, когда он набрал просмотры: они фиксируются на момент подачи. К базовой ставке — надбавки за вашу ссылку в профиле и промокод в закреплённом комментарии; без них креатор участвует по базе.'
+          : 'Деньги начисляются по мере роста просмотров одобренного ролика.'}
+        {launched && campaign.applicationsCount > 0 ? ' Способ оплаты не поменять: по кампании уже есть отклики.' : ''}
+      </span>
+    </div>
     <div className={styles.fieldGrid}>
       <div className={styles.field}>
         <FieldLabel field="rateRub" htmlFor="campaign-rate">
-          Ставка за 1 000 просмотров
+          {snapshot ? 'Базовая ставка за 1 000 просмотров' : 'Ставка за 1 000 просмотров'}
         </FieldLabel>
         <MoneyInput editor={editor} id="campaign-rate" name="rateRub" />
         <FieldError>{errors.rateRub}</FieldError>
@@ -644,6 +678,144 @@ export const BudgetFields = ({ editor, onOpenWallet }) => {
           Ролик, заработавший меньше, не оплачивается. Пусто — платите за все.
         </span>
       </div>
+    </div>
+    {snapshot && <SnapshotFields editor={editor} />}
+    </>
+  );
+};
+
+const PAYMENT_MODELS = [
+  { value: 'CONTINUOUS', label: 'По мере роста просмотров' },
+  { value: 'SNAPSHOT', label: 'Ссылка и промокод' },
+];
+
+const ConditionalLabel = ({ htmlFor, required, children }) => (
+  <label className={ui.label} htmlFor={htmlFor}>
+    {children}
+    {required && (
+      <span className={styles.required} aria-hidden="true">
+        *
+      </span>
+    )}
+  </label>
+);
+
+const SnapshotFields = ({ editor }) => {
+  const { form, errors, campaign } = editor;
+  const linkBonus = rubToKopecks(form.linkBonusRub) ?? 0;
+  const promoBonus = rubToKopecks(form.promoBonusRub) ?? 0;
+  const base = rubToKopecks(form.rateRub) ?? 0;
+  // Ссылку и код тем, кто уже взял оффер, не поменять: они разместили прежние
+  const locked = campaign.status !== 'DRAFT' && campaign.applicationsCount > 0;
+  const code = form.promoCode.trim();
+
+  return (
+    <div className={styles.field}>
+      <div className={ui.divider} />
+      <span className={ui.label}>Ссылка в профиле и промокод в закрепе</span>
+      <div className={styles.fieldGrid}>
+        <div className={styles.field}>
+          <label className={ui.label} htmlFor="campaign-link-bonus">
+            Надбавка за ссылку в профиле
+          </label>
+          <MoneyInput editor={editor} id="campaign-link-bonus" name="linkBonusRub" />
+          <FieldError>{errors.linkBonusRub}</FieldError>
+          <span className={ui.hint}>За 1 000 просмотров сверх базы. Пусто или 0 — не платите.</span>
+        </div>
+        <div className={styles.field}>
+          <label className={ui.label} htmlFor="campaign-promo-bonus">
+            Надбавка за промокод в закрепе
+          </label>
+          <MoneyInput editor={editor} id="campaign-promo-bonus" name="promoBonusRub" />
+          <FieldError>{errors.promoBonusRub}</FieldError>
+          <span className={ui.hint}>За 1 000 просмотров сверх базы. Пример: база 50%, ссылка 30%, код 20%.</span>
+        </div>
+        <div className={styles.field}>
+          <ConditionalLabel htmlFor="campaign-promo-url" required={linkBonus > 0}>
+            Рекламная ссылка
+          </ConditionalLabel>
+          <input
+            id="campaign-promo-url"
+            type="url"
+            placeholder="https://example.com/?utm_source=offer"
+            maxLength={1024}
+            onChange={editor.setField}
+            disabled={locked}
+            {...inputProps(editor, 'promoUrl')}
+          />
+          <FieldError>{errors.promoUrl}</FieldError>
+          <span className={ui.hint}>
+            Одна на всех креаторов: её ставят в ссылки профиля или канала. Проверяем адрес целиком,
+            вместе с параметрами.{locked ? ' Креаторы уже взяли оффер — ссылку не поменять.' : ''}
+          </span>
+        </div>
+        <div className={styles.field}>
+          <ConditionalLabel htmlFor="campaign-promo-code" required={promoBonus > 0}>
+            Промокод
+          </ConditionalLabel>
+          <input
+            id="campaign-promo-code"
+            type="text"
+            placeholder="OFFER20"
+            maxLength={64}
+            onChange={editor.setField}
+            disabled={locked}
+            {...inputProps(editor, 'promoCode')}
+          />
+          <FieldError>{errors.promoCode}</FieldError>
+          <span className={ui.hint}>
+            Многоразовый и общий для всех. Проверьте, что он действительно работает у вас на сайте.
+          </span>
+        </div>
+        <div className={styles.field}>
+          <label className={ui.label} htmlFor="campaign-retention">
+            Держать ссылку и закреп, дней
+          </label>
+          <IntInput editor={editor} id="campaign-retention" name="retentionDays" />
+          <FieldError>{errors.retentionDays}</FieldError>
+          <span className={ui.hint}>
+            После подачи работы. Пусто — {DEFAULT_RETENTION_DAYS} дней. Надбавки засчитываются в конце срока.
+          </span>
+        </div>
+        <div className={styles.field}>
+          <label className={ui.label} htmlFor="campaign-max-reward">
+            Не больше за один ролик
+          </label>
+          <MoneyInput editor={editor} id="campaign-max-reward" name="maxRewardRub" />
+          <FieldError>{errors.maxRewardRub}</FieldError>
+          <span className={ui.hint}>Пусто — без потолка.</span>
+        </div>
+      </div>
+      <div className={styles.field}>
+        <label className={ui.label} htmlFor="campaign-promo-benefit">
+          Что даёт промокод
+        </label>
+        <input
+          id="campaign-promo-benefit"
+          type="text"
+          placeholder="−20% на первый месяц, до 31 декабря"
+          maxLength={2000}
+          onChange={editor.setField}
+          {...inputProps(editor, 'promoBenefit')}
+        />
+        <span className={ui.hint}>
+          {code
+            ? `Креатор получит готовый комментарий: «${commentTemplate({ code, benefit: form.promoBenefit.trim(), withLink: linkBonus > 0 })}»`
+            : 'Попадёт в готовый текст комментария для креатора.'}
+        </span>
+      </div>
+      {base > 0 && (linkBonus > 0 || promoBonus > 0) && (
+        <div className={styles.field}>
+          <span className={ui.label}>Что увидят креаторы — за 1 000 просмотров</span>
+          <PlacementRates
+            rates={{
+              base,
+              link: form.promoUrl.trim() ? linkBonus : 0,
+              promo: code ? promoBonus : 0,
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };

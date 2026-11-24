@@ -6,6 +6,7 @@ import BudgetBar from '../shared/BudgetBar/BudgetBar';
 import CreatorSocials from '../shared/CreatorSocials/CreatorSocials';
 import Icon from '../shared/Icon/Icon';
 import RejectDialog from '../shared/RejectDialog/RejectDialog';
+import PlacementReview from '../shared/Placement/PlacementReview';
 import SegmentComparison from '../shared/SegmentComparison/SegmentComparison';
 import { FraudBadge, FraudFlags, TrustBadge } from '../shared/FraudBadge/FraudBadge';
 import { errorMessage } from '../../shared/auth';
@@ -20,6 +21,7 @@ import {
   formatDate,
 } from '../../shared/dictionaries';
 import { formatCompactViews } from './campaignForm';
+import { campaignRates, isSnapshot, rateRange } from '../../shared/placement';
 import FitRubles from '../shared/FitRubles/FitRubles';
 import Skeleton from '../shared/Skeleton/Skeleton';
 import ui from '../../shared/ui.module.css';
@@ -82,6 +84,11 @@ const ApplicationRowSkeleton = () => (
     </div>
   </li>
 );
+
+const placementPending = (application) =>
+  application.placement &&
+  application.status !== 'REJECTED' &&
+  [application.placement.link, application.placement.promo].some((part) => part?.state === 'PENDING');
 
 const isPublished = (application) =>
   application.status === 'APPROVED' || application.status === 'COMPLETED';
@@ -222,7 +229,7 @@ const CampaignOverview = ({ campaign, onReload }) => {
           <span className={ui.statLabel}>Средняя цена просмотра</span>
           <span className={ui.statValue}>{cpv > 0 ? formatRubles(Math.round(cpv)) : '—'}</span>
           <span className={ui.statNote}>
-            ставка {formatRubles(campaign.ratePerThousandKopecks)} / 1 000
+            ставка {isSnapshot(campaign) ? rateRange(campaignRates(campaign)) : formatRubles(campaign.ratePerThousandKopecks)} / 1 000
           </span>
         </div>
       </div>
@@ -332,6 +339,9 @@ const CampaignOverview = ({ campaign, onReload }) => {
                       </span>
                     </span>
                     <span className={styles.appStatus}>
+                      {placementPending(application) && (
+                        <span className={ui.chipWarning}>Надбавка ждёт проверки</span>
+                      )}
                       <FraudBadge status={application.fraudStatus} />
                       <span className={APPLICATION_CHIP[application.status] || ui.chipOutline}>
                         {application.statusDescription ||
@@ -370,6 +380,12 @@ const CampaignOverview = ({ campaign, onReload }) => {
                             </>
                           )}
                         </p>
+                      )}
+                      {application.placement && (
+                        <PlacementReview
+                          application={application}
+                          onChanged={() => Promise.all([loadApplications(), onReload()])}
+                        />
                       )}
                       <CreatorSocials userId={application.creatorId} />
                       {application.fraudStatus === 'SUSPICIOUS' && (
