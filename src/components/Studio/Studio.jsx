@@ -5,6 +5,7 @@ import Skeleton, { SkeletonPageHead } from '../shared/Skeleton/Skeleton';
 import { errorMessage } from '../../shared/auth';
 import ui from '../../shared/ui.module.css';
 import styles from './Studio.module.css';
+import BannerStage from './BannerStage';
 import { useSession } from '../../shared/session';
 import {
   DEFAULT_SETTINGS,
@@ -200,6 +201,14 @@ const Studio = () => {
   }, [source]);
 
   const bannerAssets = useMemo(() => assets.filter((a) => a.kind === 'BANNER'), [assets]);
+  const bannerFileUrl = useMemo(() => (banner.file ? URL.createObjectURL(banner.file) : ''), [banner.file]);
+  useEffect(() => () => bannerFileUrl && URL.revokeObjectURL(bannerFileUrl), [bannerFileUrl]);
+  const bannerAsset = banner.assetId ? assets.find((a) => a.id === banner.assetId) : null;
+  const bannerPreview = banner.file
+    ? { url: bannerFileUrl, video: banner.file.type.startsWith('video/') }
+    : bannerAsset?.url
+      ? { url: bannerAsset.url, video: bannerAsset.video }
+      : null;
   const backgroundAssets = useMemo(
     () => assets.filter((a) => a.kind === 'BACKGROUND' || (settings.splitPlace !== 'off' && a.video)),
     [assets, settings.splitPlace]
@@ -308,7 +317,12 @@ const Studio = () => {
         backgroundKey: bg.key || null,
         backgroundAssetId: bg.assetId || null,
       });
-      toast.success(created.length > 1 ? `Пакет из ${created.length} MP4 в очереди` : 'Видео в очереди');
+      const queued = created.length > 1 ? `Пакет из ${created.length} MP4 в очереди` : 'Видео в очереди';
+      if (needsLink) {
+        toast(`${queued}. Привяжите Telegram — готовый ролик придёт в чат.`, { icon: '📲', duration: 6000 });
+      } else {
+        toast.success(overview?.telegram?.linked ? `${queued} — готовый ролик придёт в Telegram` : queued);
+      }
       if (b.assetId) setBanner({ file: null, assetId: b.assetId });
       if (bg.assetId) setBackground({ file: null, assetId: bg.assetId });
       setFilter('all');
@@ -457,14 +471,14 @@ const Studio = () => {
           {!telegram.botEnabled && <p className={ui.muted}>Бот ещё не подключён — пока монтаж доступен только на сайте.</p>}
           {telegram.botEnabled && telegram.linked && (
             <p className={ui.muted}>
-              Привязан{telegram.telegramUsername ? ` @${telegram.telegramUsername}` : ''}. Пришлите боту видео до 20 МБ —
-              он смонтирует его {activeTemplate ? `по шаблону «${activeTemplate.name}»` : 'в выбранном режиме'}. Ролики общие с
-              сайтом.
+              Привязан{telegram.telegramUsername ? ` @${telegram.telegramUsername}` : ''}. Готовые ролики с сайта приходят в чат.
+              Пришлите боту видео до 20 МБ — он смонтирует его{' '}
+              {activeTemplate ? `по шаблону «${activeTemplate.name}»` : 'в выбранном режиме'}.
             </p>
           )}
           {telegram.botEnabled && !telegram.linked && (
             <p className={ui.muted}>
-              Привяжите Telegram, чтобы монтировать видео прямо из чата и видеть их здесь.
+              Привяжите Telegram — готовые ролики будут сразу приходить вам в чат, а монтировать можно будет прямо оттуда.
               {linking && ' Нажмите «Start» в боте — статус обновится сам.'}
             </p>
           )}
@@ -803,6 +817,8 @@ const Studio = () => {
                   set({
                     mode,
                     size: null,
+                    bannerX: null,
+                    bannerY: null,
                     place: mode === 'strip' && settings.place === 'center' ? 'bottom' : settings.place,
                   })
                 }
@@ -821,13 +837,13 @@ const Studio = () => {
                   <div className={styles.grid2}>
                     <Row label="Положение">
                       <Choice
-                        value={settings.place}
+                        value={settings.mode === 'overlay' && settings.bannerX != null ? '' : settings.place}
                         options={
                           settings.mode === 'strip'
                             ? [['top', 'Сверху'], ['bottom', 'Снизу']]
                             : [['top', 'Сверху'], ['center', 'По центру'], ['bottom', 'Снизу']]
                         }
-                        onChange={(place) => set({ place })}
+                        onChange={(place) => set({ place, bannerX: null, bannerY: null })}
                       />
                     </Row>
                     <Row label={settings.mode === 'strip' ? 'Высота полосы' : 'Ширина баннера'}>
@@ -840,12 +856,21 @@ const Studio = () => {
                     </Row>
                   </div>
                 )}
+                {settings.mode === 'overlay' && bannerPreview && (
+                  <BannerStage
+                    videoUrl={sourceUrl}
+                    bannerUrl={bannerPreview.url}
+                    bannerIsVideo={bannerPreview.video}
+                    settings={settings}
+                    onChange={set}
+                  />
+                )}
                 {settings.mode === 'overlay' && (
                   <Row label="Выравнивание">
                     <Choice
-                      value={settings.align}
+                      value={settings.bannerX != null ? '' : settings.align}
                       options={[['left', 'Слева'], ['center', 'По центру'], ['right', 'Справа']]}
-                      onChange={(align) => set({ align })}
+                      onChange={(align) => set({ align, bannerX: null, bannerY: null })}
                     />
                   </Row>
                 )}

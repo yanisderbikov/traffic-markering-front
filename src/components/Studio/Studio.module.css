@@ -260,13 +260,16 @@
 
 .templateSave {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   flex: 1 1 280px;
+  min-width: 0;
   justify-content: flex-end;
 }
 
 .templateSave input {
   flex: 1 1 160px;
+  min-width: 0;
   max-width: 260px;
   width: auto;
 }
@@ -393,5 +396,9 @@
 
   .templateSave input {
     max-width: none;
+  }
+
+  .templateSave button {
+    flex: 1 1 100%;
   }
 }

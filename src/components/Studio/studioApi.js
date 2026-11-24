@@ -70,6 +70,8 @@ export const DEFAULT_SETTINGS = {
   mode: 'none',
   place: 'bottom',
   align: 'center',
+  bannerX: null,
+  bannerY: null,
   start: null,
   duration: null,
   size: null,
