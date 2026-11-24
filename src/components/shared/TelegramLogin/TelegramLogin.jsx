@@ -3,6 +3,7 @@ import { applyAuth, rememberPendingTelegram, telegramAuthApi } from '../../../sh
 import { errorMessage } from '../../../shared/auth';
 import ui from '../../../shared/ui.module.css';
 import styles from './TelegramLogin.module.css';
+import { isMiniApp } from '../../../shared/miniApp';
 
 const POLL_MS = 2000;
 
@@ -13,7 +14,7 @@ const POLL_MS = 2000;
  * role — для страницы регистрации: новая учётка сразу получит эту роль.
  * onDone() — вход выполнен; onNeedEmail(telegram) — Telegram подтверждён, человек войдёт по почте.
  */
-const TelegramLogin = ({ role, referralCode, label = 'Войти через Telegram', onDone, onNeedEmail }) => {
+const TelegramLoginButton = ({ role, referralCode, label = 'Войти через Telegram', onDone, onNeedEmail }) => {
   const [attempt, setAttempt] = useState(null);
   const [waiting, setWaiting] = useState(false);
   const [message, setMessage] = useState('');
@@ -129,5 +130,8 @@ const TelegramIcon = () => (
     />
   </svg>
 );
+
+// Внутри мини-приложения Telegram уже вошли по initData — кнопка «в бота» там лишняя
+const TelegramLogin = (props) => (isMiniApp() ? null : <TelegramLoginButton {...props} />);
 
 export default TelegramLogin;
