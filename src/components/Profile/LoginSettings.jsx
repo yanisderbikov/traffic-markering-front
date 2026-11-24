@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useSession } from '../../shared/session';
 import { errorMessage } from '../../shared/auth';
@@ -7,6 +6,7 @@ import { applyAuth, telegramAuthApi } from '../../shared/telegramAuth';
 import { validateEmail } from '../../shared/validation';
 import ui from '../../shared/ui.module.css';
 import styles from './LoginSettings.module.css';
+import TelegramConnect from './TelegramConnect';
 
 /**
  * Способы входа. Учётка из Telegram живёт без почты — здесь к ней добавляют почту,
@@ -59,7 +59,7 @@ const LoginSettings = () => {
   return (
     <section className={ui.page}>
       <div className={`${ui.card} ${styles.card}`}>
-        <h2 className={ui.cardTitle}>Вход в аккаунт</h2>
+        <h2 className={ui.cardTitle}>Вход и уведомления</h2>
         {user.telegramOnly ? (
           <>
             <p className={ui.muted}>
@@ -125,10 +125,10 @@ const LoginSettings = () => {
           </>
         ) : (
           <p className={ui.muted}>
-            Почта: <b>{user.email || user.username}</b>. Входить можно по коду из письма или через Telegram — привяжите
-            его в разделе <Link to="/app/studio">«Видео-студия»</Link>, если он ещё не привязан.
+            Почта: <b>{user.email || user.username}</b>. Входить можно по коду из письма или через Telegram.
           </p>
         )}
+        <TelegramConnect telegramOnly={user.telegramOnly} />
       </div>
     </section>
   );
