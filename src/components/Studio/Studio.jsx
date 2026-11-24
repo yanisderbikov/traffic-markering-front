@@ -472,7 +472,7 @@ const Studio = () => {
           {telegram.botEnabled && telegram.linked && (
             <p className={ui.muted}>
               Привязан{telegram.telegramUsername ? ` @${telegram.telegramUsername}` : ''}. Готовые ролики с сайта приходят в чат.
-              Пришлите боту видео до 20 МБ — он смонтирует его{' '}
+              Пришлите боту видео — он смонтирует его{' '}
               {activeTemplate ? `по шаблону «${activeTemplate.name}»` : 'в выбранном режиме'}.
             </p>
           )}
