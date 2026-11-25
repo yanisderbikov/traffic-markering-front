@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import InfoLayout from './InfoLayout';
-import { PLATFORMS, SITE_URL } from './legal';
+import { SITE_URL } from './legal';
 import styles from './Info.module.css';
 
 const Info = () => (
@@ -32,29 +32,6 @@ const Info = () => (
         Мы запрашиваем только доступ на чтение. Публиковать, удалять или редактировать что-либо
         от вашего имени сервис не может и не запрашивает таких прав.
       </p>
-
-      <div className={styles.tableWrap}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Площадка</th>
-              <th>Запрашиваемые разрешения</th>
-              <th>Зачем</th>
-            </tr>
-          </thead>
-          <tbody>
-            {PLATFORMS.map((platform) => (
-              <tr key={platform.name}>
-                <td>{platform.name}</td>
-                <td>
-                  <code className={styles.code}>{platform.scopes}</code>
-                </td>
-                <td>{platform.purpose}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
     </section>
 
     <section className={styles.section}>
