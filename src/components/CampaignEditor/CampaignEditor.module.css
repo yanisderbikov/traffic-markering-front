@@ -805,3 +805,32 @@
     width: 100%;
   }
 }
+
+.contentRates {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 4px 0;
+}
+
+.contentRateRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(96px, 140px) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.contentRates + button {
+  align-self: flex-start;
+}
+
+@media (max-width: 520px) {
+  .contentRateRow {
+    grid-template-columns: minmax(0, 1fr) minmax(100px, 130px);
+  }
+
+  .contentRateRow > button {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}

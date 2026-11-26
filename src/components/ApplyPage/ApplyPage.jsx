@@ -17,7 +17,9 @@ import {
   viewRegionLabel,
 } from '../../shared/viewRegion';
 import { detectPlatform } from '../../shared/video';
-import { campaignRates, isSnapshot, rateRange, workRates } from '../../shared/placement';
+import { isSnapshot, rateRange, workRates } from '../../shared/placement';
+import { campaignRateLabel, hasContentRates } from '../../shared/contentRates';
+import ContentTopicPicker from '../shared/ContentTopicPicker/ContentTopicPicker';
 import SnapshotApply from './SnapshotApply';
 import ui from '../../shared/ui.module.css';
 import styles from './ApplyPage.module.css';
@@ -68,6 +70,7 @@ const ApplySkeleton = () => (
 const emptyForm = {
   videoUrl: '',
   comment: '',
+  contentTopic: '',
 };
 
 const ApplyPage = () => {
@@ -81,6 +84,7 @@ const ApplyPage = () => {
   const [form, setForm] = useState(emptyForm);
   const [formError, setFormError] = useState('');
   const [videoUrlError, setVideoUrlError] = useState('');
+  const [topicError, setTopicError] = useState('');
   const [sending, setSending] = useState(false);
   const [accounts, setAccounts] = useState(null);
   const [workInProgress, setWorkInProgress] = useState(null);
@@ -177,15 +181,20 @@ const ApplyPage = () => {
       );
       return;
     }
+    if (hasContentRates(campaign) && !form.contentTopic) {
+      setTopicError('Выберите тематику ролика — от неё зависит ставка');
+      return;
+    }
 
     setSending(true);
     setFormError('');
     try {
       const comment = form.comment.trim() || null;
+      const contentTopic = form.contentTopic || null;
       if (workInProgress) {
-        await apiClient.api.attachVideo(workInProgress.id, { videoUrl, comment });
+        await apiClient.api.attachVideo(workInProgress.id, { videoUrl, comment, contentTopic });
       } else {
-        await apiClient.api.apply({ campaignId: campaign.id, videoUrl, comment });
+        await apiClient.api.apply({ campaignId: campaign.id, videoUrl, comment, contentTopic });
       }
       toast.success('Ролик отправлен — ждём решения заказчика');
       navigate('/app/applications');
@@ -303,6 +312,18 @@ const ApplyPage = () => {
                 )}
               </div>
 
+              <ContentTopicPicker
+                campaign={campaign}
+                value={form.contentTopic}
+                onChange={(contentTopic) => {
+                  setForm((prev) => ({ ...prev, contentTopic }));
+                  setTopicError('');
+                  setFormError('');
+                }}
+                disabled={sending || inactive}
+                error={topicError}
+              />
+
               <div className={styles.field}>
                 <label htmlFor="apply-comment" className={ui.label}>
                   Комментарий заказчику
@@ -345,15 +366,27 @@ const ApplyPage = () => {
               <section className={ui.card}>
                 <span className={ui.eyebrow}>Ставка за результат</span>
                 <p className={styles.rate}>
-                  {isSnapshot(campaign)
-                    ? rateRange(workInProgress?.placement ? workRates(workInProgress.placement) : campaignRates(campaign))
-                    : formatRubles(campaign.ratePerThousandKopecks)}
+                  {isSnapshot(campaign) && workInProgress?.placement && !hasContentRates(campaign)
+                    ? rateRange(workRates(workInProgress.placement))
+                    : campaignRateLabel(campaign)}
                 </p>
                 <p className={styles.rateUnit}>
                   {isSnapshot(campaign)
                     ? 'за 1 000 просмотров на момент подачи, по варианту участия'
                     : 'за 1 000 подтверждённых просмотров'}
                 </p>
+                {hasContentRates(campaign) && (
+                  <>
+                    <div className={ui.divider} />
+                    <span className={styles.blockLabel}>Ставки по тематикам</span>
+                    {campaign.contentRates.map((rate) => (
+                      <div key={rate.name} className={ui.kv}>
+                        <span className={ui.kvKey}>{rate.name}</span>
+                        <span className={ui.kvValue}>{formatRubles(rate.ratePerThousandKopecks)}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
 
                 {acceptedPlatforms.length > 0 && (
                   <>

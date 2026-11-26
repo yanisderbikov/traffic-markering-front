@@ -10,6 +10,7 @@ import { DEFAULT_VIEW_REGION, viewRegionLabel } from '../../shared/viewRegion';
 import { formFromCampaign, missingLabels } from '../CampaignEditor/campaignForm';
 import ui from '../../shared/ui.module.css';
 import styles from './CustomerCampaigns.module.css';
+import { campaignRateLabel, hasContentRates } from '../../shared/contentRates';
 
 const STATUS_CHIP = {
   ACTIVE: ui.chipSuccess,
@@ -179,7 +180,9 @@ const CustomerCampaigns = () => {
 
                   <div className={styles.rateRow}>
                     <span className={styles.rate}>
-                      {formatRubles(campaign.ratePerThousandKopecks)}
+                      {hasContentRates(campaign)
+                        ? campaignRateLabel(campaign)
+                        : formatRubles(campaign.ratePerThousandKopecks)}
                       <span className={styles.rateUnit}> / 1 000 просмотров</span>
                     </span>
                     <PlatformList platforms={campaign.platforms} compact />

@@ -121,6 +121,7 @@ const AdminModeration = () => {
                         0
                     )}{' '}
                     за 1000
+                    {application.contentTopic ? ` · ${application.contentTopic}` : ''}
                     {' · подан '}
                     {formatDate(application.updatedAt || application.createdAt)}
                   </p>

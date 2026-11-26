@@ -60,7 +60,14 @@ const reviewRows = (form, topic) => ({
     ['Роликов от креатора', form.maxVideosPerCreator || 'без ограничения'],
   ],
   budget: [
-    ['Ставка за 1 000 просмотров', moneyOrDash(form.rateRub)],
+    form.contentRates.length > 0
+      ? [
+          'Ставки по тематикам',
+          form.contentRates
+            .map((rate) => `${rate.name.trim() || '—'}: ${moneyOrDash(rate.rateRub)}`)
+            .join(' · '),
+        ]
+      : ['Ставка за 1 000 просмотров', moneyOrDash(form.rateRub)],
     ['Общий бюджет', moneyOrDash(form.budgetRub)],
     ['Порог вывода', moneyOrDash(form.minPayoutRub)],
     ['Оплата', form.minPaidRub ? `от ${form.minPaidRub} ₽ за ролик` : 'с первого просмотра'],

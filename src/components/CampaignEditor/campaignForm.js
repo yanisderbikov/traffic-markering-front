@@ -21,6 +21,7 @@ export const emptyForm = {
   photoKey: '',
   topic: '',
   rateRub: '',
+  contentRates: [],
   budgetRub: '',
   minPayoutRub: '',
   platforms: [],
@@ -77,7 +78,7 @@ export const CAMPAIGN_STEPS = [
     id: 'budget',
     title: 'Бюджет',
     heading: 'Сколько платите',
-    fields: ['rateRub', 'budgetRub', 'minPayoutRub', 'minPaidRub', 'paymentModel', ...SNAPSHOT_FIELDS],
+    fields: ['rateRub', 'contentRates', 'budgetRub', 'minPayoutRub', 'minPaidRub', 'paymentModel', ...SNAPSHOT_FIELDS],
   },
   {
     id: 'launch',
@@ -160,6 +161,7 @@ const OPTIONAL_LABELS = {
   maxVideosPerCreator: 'лимит роликов',
   minPaidRub: 'порог оплаты',
   paymentModel: 'способ оплаты',
+  contentRates: 'ставки по тематикам',
   promoBenefit: 'выгода промокода',
   linkBonusRub: 'надбавка за ссылку',
   promoBonusRub: 'надбавка за промокод',
@@ -203,6 +205,8 @@ const formatError = (form, field, { budgetError, maxPayoutPercent }) => {
   switch (field) {
     case 'rateRub':
       return positiveOrEmpty(rubToKopecks(form.rateRub), 'Ставка должна быть больше нуля');
+    case 'contentRates':
+      return contentRatesError(form.contentRates);
     case 'budgetRub': {
       const budget = rubToKopecks(form.budgetRub);
       return budget == null ? '' : budgetError(budget);
@@ -274,6 +278,35 @@ export const validateCampaign = (form, fields, { requireFilled, ...checks }) =>
 const kopecksToInput = (kopecks) =>
   kopecks == null ? '' : formatRubInput(String(kopecksToRub(kopecks)));
 
+export const CONTENT_RATES_MAX = 20;
+export const CONTENT_TOPIC_NAME_MAX = 64;
+
+export const hasContentRates = (form) => form.contentRates.length > 0;
+
+const contentRatesError = (rates) => {
+  const seen = new Set();
+  for (const rate of rates) {
+    const name = rate.name.trim();
+    if (!name) return 'Назовите каждую тематику';
+    const key = normalizeTopicName(name);
+    if (seen.has(key)) return `Тематика «${name}» указана дважды`;
+    seen.add(key);
+    const kopecks = rubToKopecks(rate.rateRub);
+    if (!(kopecks > 0)) return `Укажите ставку для «${name}»`;
+  }
+  return '';
+};
+
+// Общая ставка при тематиках — наибольшая из них: её видно на доске как «до», от неё считаются охват и порог
+export const withContentRates = (form, contentRates) => {
+  const rates = contentRates.map((rate) => rubToKopecks(rate.rateRub)).filter((kopecks) => kopecks > 0);
+  return {
+    ...form,
+    contentRates,
+    rateRub: contentRates.length > 0 ? (rates.length ? kopecksToInput(Math.max(...rates)) : '') : form.rateRub,
+  };
+};
+
 export const minPaidViewsFor = (minPaidRub, rateRub) => {
   const minPaid = rubToKopecks(minPaidRub);
   const rate = rubToKopecks(rateRub);
@@ -313,6 +346,12 @@ export const formFromCampaign = (campaign) => ({
   photoKey: campaign.photoKey || '',
   topic: campaign.topic || '',
   rateRub: kopecksToInput(campaign.ratePerThousandKopecks),
+  contentRates: Array.isArray(campaign.contentRates)
+    ? campaign.contentRates.map((rate) => ({
+        name: rate.name || '',
+        rateRub: kopecksToInput(rate.ratePerThousandKopecks),
+      }))
+    : [],
   budgetRub: kopecksToInput(campaign.budgetKopecks),
   minPayoutRub: kopecksToInput(campaign.minPayoutKopecks),
   platforms: Array.isArray(campaign.platforms) ? campaign.platforms : [],
@@ -340,6 +379,10 @@ export const formToRequest = (form) => ({
   photoKey: form.photoKey || null,
   topic: form.topic || null,
   ratePerThousandKopecks: rubToKopecks(form.rateRub),
+  contentRates: form.contentRates.map((rate) => ({
+    name: rate.name.trim(),
+    ratePerThousandKopecks: rubToKopecks(rate.rateRub),
+  })),
   budgetKopecks: rubToKopecks(form.budgetRub),
   minPayoutKopecks: rubToKopecks(form.minPayoutRub),
   platforms: form.platforms,

@@ -8,6 +8,7 @@ import { APPLICATION_STATUS_LABELS, PLATFORM_LABELS } from '../../../shared/dict
 import { formatDay, periodState } from '../../../shared/dates';
 import { DEFAULT_VIEW_REGION, isWorldRegion, viewRegionLabel } from '../../../shared/viewRegion';
 import styles from './CampaignCard.module.css';
+import { campaignRateLabel, hasContentRates } from '../../../shared/contentRates';
 
 export const budgetProgress = (campaign) => {
   const budget = Math.max(0, Number(campaign?.budgetKopecks) || 0);
@@ -81,11 +82,19 @@ const CampaignCard = ({ campaign, application, to, index }) => {
 
         <p className={styles.rate}>
           <span className={styles.rateValue}>
-            {bonusRate > 0 ? 'до ' : ''}
-            {formatRubles((campaign.ratePerThousandKopecks ?? 0) + bonusRate)}
+            {hasContentRates(campaign) ? (
+              campaignRateLabel(campaign)
+            ) : (
+              <>
+                {bonusRate > 0 ? 'до ' : ''}
+                {formatRubles((campaign.ratePerThousandKopecks ?? 0) + bonusRate)}
+              </>
+            )}
           </span>
           <span className={styles.rateUnit}>
-            за 1 000 просмотров{bonusRate > 0 ? ' · со ссылкой и промокодом' : ''}
+            за 1 000 просмотров
+            {hasContentRates(campaign) ? ' · по тематике ролика' : ''}
+            {bonusRate > 0 ? ' · со ссылкой и промокодом' : ''}
           </span>
         </p>
 
