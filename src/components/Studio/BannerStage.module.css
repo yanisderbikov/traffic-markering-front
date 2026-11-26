@@ -1,0 +1,84 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 8px;
+}
+
+.stage {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: var(--field-radius);
+  background: #000;
+  user-select: none;
+  touch-action: none;
+}
+
+/* вертикальный кадр не растягиваем на всю ширину — ограничиваем высотой */
+@supports (aspect-ratio: 1) {
+  .stage {
+    width: min(100%, calc(420px * var(--ratio, 10)));
+  }
+}
+
+.video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.dim {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  pointer-events: none;
+}
+
+.banner {
+  position: absolute;
+  cursor: grab;
+  outline: 1px dashed rgba(255, 255, 255, 0.85);
+  outline-offset: 0;
+  touch-action: none;
+}
+
+.banner:active {
+  cursor: grabbing;
+}
+
+.banner img,
+.banner video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+}
+
+.handle {
+  position: absolute;
+  right: -9px;
+  bottom: -9px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--accent, #4f7cff);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  cursor: nwse-resize;
+  touch-action: none;
+}
+
+.hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted, #8a8f98);
+  text-align: center;
+}

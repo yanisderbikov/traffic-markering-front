@@ -10,6 +10,91 @@
  * ---------------------------------------------------------------
  */
 
+export interface StudioSettings {
+  mode?: string;
+  place?: string;
+  align?: string;
+  /** @format double */
+  bannerX?: number;
+  /** @format double */
+  bannerY?: number;
+  /** @format double */
+  start?: number;
+  /** @format double */
+  duration?: number;
+  /** @format double */
+  size?: number;
+  /** @format double */
+  opacity?: number;
+  /** @format double */
+  overlayDim?: number;
+  /** @format double */
+  overlayDuck?: number;
+  green?: boolean;
+  bannerAudio?: boolean;
+  bannerLoop?: boolean;
+  stripColor?: string;
+  background?: string;
+  preset?: string;
+  color?: string;
+  shape?: string;
+  /** @format double */
+  scale?: number;
+  splitPlace?: string;
+  /** @format double */
+  splitShare?: number;
+  splitFit?: string;
+  format?: string;
+  quality?: string;
+  /** @format int32 */
+  sizeLimit?: number;
+  exportProfile?: string;
+  captionPosition?: string;
+  captionScope?: string;
+  captionClock?: string;
+  captionStyle?: string;
+  captionSize?: string;
+  /** @format double */
+  sourceStart?: number;
+  /** @format double */
+  sourceEnd?: number;
+  /** @format double */
+  sourceVolume?: number;
+  keepSource?: boolean;
+}
+
+export interface StudioTemplateRequestDTO {
+  /**
+   * @minLength 0
+   * @maxLength 80
+   */
+  name: string;
+  settings: StudioSettings;
+  captions?: string;
+  /** @format uuid */
+  bannerAssetId?: string;
+  /** @format uuid */
+  backgroundAssetId?: string;
+}
+
+export interface StudioTemplateDTO {
+  /** @format uuid */
+  id?: string;
+  name?: string;
+  settings?: StudioSettings;
+  captions?: string;
+  /** @format uuid */
+  bannerAssetId?: string;
+  bannerName?: string;
+  /** @format uuid */
+  backgroundAssetId?: string;
+  backgroundName?: string;
+  active?: boolean;
+  favorite?: boolean;
+  /** @format date-time */
+  updatedAt?: string;
+}
+
 /** Сохранение профиля заказчика */
 export interface CustomerProfileRequestDTO {
   /**
@@ -68,30 +153,12 @@ export interface CreatorProfileRequestDTO {
   /** О себе: формат роликов, аудитория, чем берёшь */
   bio?: string;
   /**
-   * Telegram для связи
+   * Telegram для связи; null — оставить как есть
    * @minLength 0
    * @maxLength 255
    * @example "@anya"
    */
   telegram?: string;
-  /**
-   * Ссылка или ник в Instagram
-   * @minLength 0
-   * @maxLength 255
-   */
-  instagram?: string;
-  /**
-   * Ссылка или ник в TikTok
-   * @minLength 0
-   * @maxLength 255
-   */
-  tiktok?: string;
-  /**
-   * Ссылка на канал YouTube Shorts
-   * @minLength 0
-   * @maxLength 255
-   */
-  youtubeShorts?: string;
 }
 
 /** Профиль криатора */
@@ -114,6 +181,22 @@ export interface CreatorProfileDTO {
   youtubeShorts?: string;
   /** Когда профиль правили в последний раз, ISO-8601 */
   updatedAt?: string;
+}
+
+/** Сохранение аватарки */
+export interface AvatarRequestDTO {
+  /**
+   * key из ответа POST /api/profile/avatar/presign
+   * @minLength 0
+   * @maxLength 255
+   */
+  key: string;
+}
+
+/** Аватарка текущего пользователя */
+export interface AvatarDTO {
+  /** Временная ссылка на картинку; null — аватарки нет */
+  avatarUrl?: string;
 }
 
 /** Создание/обновление объявления. Черновик можно сохранять частично: пустые поля остаются незаполненными. Запустить объявление можно, только когда заполнены заголовок, описание, фотография, тематика, площадки, ставка, бюджет и порог вывода */
@@ -197,6 +280,58 @@ export interface CampaignCreateUpdateRequestDTO {
    * @example "2026-10-20T20:59:59.999Z"
    */
   endsAt?: string;
+  /**
+   * Как платить за просмотры: CONTINUOUS — по мере роста (по умолчанию), SNAPSHOT — «ссылка и промокод»: по снимку при подаче, база ставки плюс надбавки
+   * @example "SNAPSHOT"
+   */
+  paymentModel?: "CONTINUOUS" | "SNAPSHOT";
+  /**
+   * SNAPSHOT: общая рекламная HTTPS-ссылка, которую криаторы ставят в ссылки профиля; обязательна, если есть надбавка за ссылку
+   * @minLength 0
+   * @maxLength 1024
+   * @example "https://example.com/app?utm_source=offer"
+   */
+  promoUrl?: string;
+  /**
+   * SNAPSHOT: общий многоразовый промокод для закреплённого комментария; обязателен, если есть надбавка за промокод
+   * @minLength 0
+   * @maxLength 64
+   * @example "OFFER20"
+   */
+  promoCode?: string;
+  /**
+   * SNAPSHOT: что даёт промокод и на каких условиях — попадёт в шаблон комментария
+   * @minLength 0
+   * @maxLength 2000
+   * @example "−20% на первый месяц, до 31 декабря"
+   */
+  promoBenefit?: string;
+  /**
+   * SNAPSHOT: надбавка к базовой ставке за ссылку в профиле, в копейках за 1000 просмотров; 0 или null — не предлагается
+   * @format int64
+   * @example 30000
+   */
+  linkBonusPerThousandKopecks?: number;
+  /**
+   * SNAPSHOT: надбавка к базовой ставке за промокод в закрепе, в копейках за 1000 просмотров; 0 или null — не предлагается
+   * @format int64
+   * @example 20000
+   */
+  promoBonusPerThousandKopecks?: number;
+  /**
+   * SNAPSHOT: сколько дней после подачи держать ссылку и закреп; null — 7
+   * @format int32
+   * @min 1
+   * @max 90
+   * @example 7
+   */
+  placementRetentionDays?: number;
+  /**
+   * SNAPSHOT: потолок вознаграждения за один ролик, в копейках; null — без потолка
+   * @format int64
+   * @example 1000000
+   */
+  maxRewardPerVideoKopecks?: number;
   /**
    * Материалы для криатора: файлы и ссылки, в порядке показа; null — без материалов
    * @maxItems 10
@@ -340,6 +475,40 @@ export interface CampaignDTO {
   acceptingApplications?: boolean;
   /** Материалы для криатора в порядке показа */
   materials?: CampaignMaterialDTO[];
+  /** Как платит объявление: CONTINUOUS — по мере роста просмотров, SNAPSHOT — «ссылка и промокод» */
+  paymentModel?: string;
+  /** Человекочитаемый способ оплаты */
+  paymentModelDescription?: string;
+  /** Общая рекламная ссылка; на публичной странице скрыта до взятия оффера */
+  promoUrl?: string;
+  /** Общий промокод; на публичной странице скрыт до взятия оффера */
+  promoCode?: string;
+  /** Что даёт промокод зрителю */
+  promoBenefit?: string;
+  /**
+   * Надбавка за ссылку в профиле, в копейках за 1000 просмотров
+   * @format int64
+   */
+  linkBonusPerThousandKopecks?: number;
+  /**
+   * Надбавка за промокод в закрепе, в копейках за 1000 просмотров
+   * @format int64
+   */
+  promoBonusPerThousandKopecks?: number;
+  /** Предлагает ли объявление надбавку за ссылку */
+  offersLink?: boolean;
+  /** Предлагает ли объявление надбавку за промокод */
+  offersPromo?: boolean;
+  /**
+   * Сколько дней после подачи держать ссылку и закреп
+   * @format int32
+   */
+  placementRetentionDays?: number;
+  /**
+   * Потолок вознаграждения за ролик, в копейках; null — без потолка
+   * @format int64
+   */
+  maxRewardPerVideoKopecks?: number;
   /** @format int64 */
   customerId?: number;
   customerName?: string;
@@ -495,8 +664,82 @@ export interface ApplicationDTO {
   moderatedAt?: string;
   /** Причина отказа; есть только у REJECTED */
   rejectionReason?: string;
+  /** Как платит объявление: CONTINUOUS или SNAPSHOT («ссылка и промокод») */
+  paymentModel?: string;
+  /** Условия и состояние работы «ссылка и промокод»: ставки, снимок при подаче, материалы, надбавки */
+  placement?: ApplicationPlacementDTO;
   createdAt?: string;
   updatedAt?: string;
+}
+
+/** Условия и состояние работы «ссылка и промокод»: ставки, снимок при подаче, материалы, надбавки */
+export interface ApplicationPlacementDTO {
+  /**
+   * Базовая ставка за 1000 просмотров на момент взятия оффера, в копейках
+   * @format int64
+   */
+  baseRatePerThousandKopecks?: number;
+  /**
+   * Надбавка за ссылку в профиле, в копейках за 1000 просмотров; 0 — не предлагается
+   * @format int64
+   */
+  linkBonusPerThousandKopecks?: number;
+  /**
+   * Надбавка за промокод в закрепе, в копейках за 1000 просмотров; 0 — не предлагается
+   * @format int64
+   */
+  promoBonusPerThousandKopecks?: number;
+  /**
+   * Ставка выбранного варианта: база и выбранные надбавки
+   * @format int64
+   */
+  selectedRatePerThousandKopecks?: number;
+  /**
+   * Ставка, под которую занят бюджет: база и надбавки без отказа
+   * @format int64
+   */
+  reservedRatePerThousandKopecks?: number;
+  /**
+   * Ставка, которая уже уходит в кошелёк: база и засчитанные надбавки
+   * @format int64
+   */
+  creditableRatePerThousandKopecks?: number;
+  /**
+   * Оплачиваемые просмотры из снимка при подаче; null — работа ещё не подана
+   * @format int64
+   */
+  billingViews?: number;
+  /** Когда снят снимок при подаче, ISO-8601 */
+  billingCapturedAt?: string;
+  /**
+   * Откуда снимок
+   * @example "ScrapeCreators"
+   */
+  billingSource?: string;
+  /** Когда работа подана, ISO-8601; null — ещё не подана */
+  submittedAt?: string;
+  /** До какого момента держать ссылку и закреп, ISO-8601; null — работа ещё не подана */
+  retainUntil?: string;
+  /**
+   * Сколько дней после подачи держать ссылку и закреп
+   * @format int32
+   */
+  retentionDays?: number;
+  /**
+   * Потолок вознаграждения за ролик, в копейках; null — без потолка
+   * @format int64
+   */
+  maxRewardPerVideoKopecks?: number;
+  /** Общая рекламная ссылка кампании */
+  promoUrl?: string;
+  /** Общий промокод кампании */
+  promoCode?: string;
+  /** Что даёт промокод зрителю */
+  promoBenefit?: string;
+  /** Одна надбавка работы «ссылка и промокод»: состояние, доказательство, автопроверка, решение */
+  link?: PlacementDTO;
+  /** Одна надбавка работы «ссылка и промокод»: состояние, доказательство, автопроверка, решение */
+  promo?: PlacementDTO;
 }
 
 /** Сработавшее правило антифрода */
@@ -518,6 +761,68 @@ export interface FraudFlagDTO {
   points?: number;
   /** Пояснение с цифрами */
   detail?: string;
+}
+
+/** Одна надбавка работы «ссылка и промокод»: состояние, доказательство, автопроверка, решение */
+export interface PlacementDTO {
+  /** LINK — ссылка в профиле, PROMO — промокод в закрепе */
+  kind?: string;
+  /**
+   * Человекочитаемая надбавка
+   * @example "Ссылка в профиле"
+   */
+  kindDescription?: string;
+  /** Предлагает ли объявление эту надбавку */
+  offered?: boolean;
+  /** NOT_SELECTED, PENDING, VERIFIED, EARNED, REJECTED */
+  state?: string;
+  /**
+   * Человекочитаемое состояние
+   * @example "Ждёт проверки"
+   */
+  stateDescription?: string;
+  /** Временная ссылка на скриншот или запись экрана; null — не приложено */
+  proofFileUrl?: string;
+  /** Ключ доказательства в хранилище */
+  proofKey?: string;
+  /** Ссылка от криатора: на закреплённый комментарий или профиль */
+  proofUrl?: string;
+  /** Автопроверка: FOUND, MISSING, UNKNOWN; null — не проводилась */
+  checkState?: string;
+  /** Человекочитаемый итог автопроверки */
+  checkStateDescription?: string;
+  /** Что увидела автопроверка */
+  checkDetail?: string;
+  /** Когда прошла автопроверка, ISO-8601 */
+  checkedAt?: string;
+  /** Причина отказа или пометка системы */
+  note?: string;
+  /** Когда принято решение, ISO-8601 */
+  decidedAt?: string;
+}
+
+/** Вариант участия «ссылка и промокод»: какие надбавки криатор берёт на себя */
+export interface PlacementChoiceRequestDTO {
+  /** Поставлю рекламную ссылку в профиль */
+  withLink?: boolean;
+  /** Закреплю комментарий с промокодом под роликом */
+  withPromo?: boolean;
+}
+
+/** Исправление надбавки: новое доказательство после отказа или вместо старого */
+export interface PlacementProofRequestDTO {
+  /**
+   * Ключ скриншота или записи экрана из /api/files/placement-proof/presign
+   * @minLength 0
+   * @maxLength 512
+   */
+  proofKey?: string;
+  /**
+   * Ссылка на закреплённый комментарий или профиль
+   * @minLength 0
+   * @maxLength 1024
+   */
+  proofUrl?: string;
 }
 
 /** Заявка заказчика на пополнение: сколько он собирается перевести */
@@ -675,6 +980,200 @@ export interface TopUpPaidRequestDTO {
   proofKeys: string[];
 }
 
+export interface StudioPresignRequestDTO {
+  /**
+   * @minLength 0
+   * @maxLength 160
+   */
+  filename: string;
+  /**
+   * @minLength 0
+   * @maxLength 128
+   */
+  contentType: string;
+  purpose: string;
+  /** @format int64 */
+  size: number;
+}
+
+export interface StudioPresignResponseDTO {
+  uploadUrl?: string;
+  key?: string;
+}
+
+export interface StudioActiveTemplateRequestDTO {
+  /** @format uuid */
+  templateId?: string;
+  favorite?: boolean;
+}
+
+export interface StudioTelegramLinkDTO {
+  url?: string;
+  /** @format date-time */
+  expiresAt?: string;
+}
+
+export interface StudioJobRequestDTO {
+  sourceKey: string;
+  /**
+   * @minLength 0
+   * @maxLength 160
+   */
+  filename: string;
+  settings: StudioSettings;
+  captions?: string;
+  bannerKey?: string;
+  /** @format uuid */
+  bannerAssetId?: string;
+  backgroundKey?: string;
+  /** @format uuid */
+  backgroundAssetId?: string;
+}
+
+export interface StudioJobDTO {
+  /** @format uuid */
+  id?: string;
+  status?: string;
+  origin?: string;
+  filename?: string;
+  /** @format int32 */
+  progress?: number;
+  /** @format int64 */
+  queuePosition?: number;
+  error?: string;
+  settings?: StudioSettings;
+  preset?: string;
+  presetName?: string;
+  /** @format uuid */
+  batchId?: string;
+  /** @format int64 */
+  resultSize?: number;
+  downloadUrl?: string;
+  previewUrl?: string;
+  /** @format date-time */
+  retryUntil?: string;
+  /** @format date-time */
+  availableUntil?: string;
+  canSendToTelegram?: boolean;
+  /** @format date-time */
+  createdAt?: string;
+  /** @format date-time */
+  startedAt?: string;
+  /** @format date-time */
+  finishedAt?: string;
+}
+
+export interface StudioRetryRequestDTO {
+  quality?: string;
+}
+
+export interface StudioAssetRequestDTO {
+  key: string;
+  kind: string;
+  /**
+   * @minLength 0
+   * @maxLength 120
+   */
+  name: string;
+  shared?: boolean;
+}
+
+export interface StudioAssetDTO {
+  /** @format uuid */
+  id?: string;
+  kind?: string;
+  name?: string;
+  shared?: boolean;
+  own?: boolean;
+  video?: boolean;
+  /** @format int64 */
+  sizeBytes?: number;
+  url?: string;
+  /** @format date-time */
+  createdAt?: string;
+}
+
+/** Аккаунт, который криатор хочет привязать по проверочному коду */
+export interface SocialVerificationRequestDTO {
+  /**
+   * Ник (с @ или без) или ссылка на профиль; для YouTube ещё id канала UC…
+   * @minLength 0
+   * @maxLength 300
+   * @example "@my_channel"
+   */
+  account: string;
+}
+
+/** Найденный профиль и код, который криатор добавляет в его описание */
+export interface SocialVerificationDTO {
+  /**
+   * Площадка
+   * @example "TIKTOK"
+   */
+  platform?: string;
+  /**
+   * Название площадки для интерфейса
+   * @example "TikTok"
+   */
+  platformLabel?: string;
+  /** Идентификатор аккаунта на стороне площадки */
+  externalId?: string;
+  /** Ник; у YouTube может быть null */
+  username?: string;
+  displayName?: string;
+  avatarUrl?: string;
+  /** @format int64 */
+  followers?: number;
+  /**
+   * Код для описания профиля
+   * @example "OFFER-7KQ2PX"
+   */
+  code?: string;
+  /** Куда вставить код, для подсказки в интерфейсе */
+  codePlacement?: string;
+  /** Код уже стоит в описании — можно сразу подтверждать */
+  codeFound?: boolean;
+  /** Аккаунт уже привязан к этому криатору */
+  alreadyConnected?: boolean;
+}
+
+/** Привязанный аккаунт соцсети */
+export interface SocialAccountDTO {
+  /** @format uuid */
+  id?: string;
+  /**
+   * Площадка
+   * @example "TIKTOK"
+   */
+  platform?: string;
+  /**
+   * Название площадки для интерфейса
+   * @example "TikTok"
+   */
+  platformLabel?: string;
+  /** Идентификатор аккаунта на стороне площадки */
+  externalId?: string;
+  /** Ник аккаунта; может быть null */
+  username?: string;
+  displayName?: string;
+  avatarUrl?: string;
+  /** @format int64 */
+  followers?: number;
+  /** ACTIVE — аккаунт в работе, EXPIRED — нужна повторная привязка */
+  status?: string;
+  /** Когда аккаунт привязали, ISO-8601 */
+  connectedAt?: string;
+  /** До какого момента живёт токен, ISO-8601 */
+  tokenExpiresAt?: string;
+  /** Отдаёт ли привязанный аккаунт географию просмотров (YouTube с доступом к аналитике); для других площадок false */
+  reportsViewGeography?: boolean;
+  /**
+   * Как привязан: OAUTH — вход на площадке, SCRAPE — код в описании профиля
+   * @example "SCRAPE"
+   */
+  linkMethod?: string;
+}
+
 /** Ссылка, по которой криатора отправляют на страницу согласия площадки */
 export interface SocialAuthorizeResponseDTO {
   /**
@@ -684,6 +1183,119 @@ export interface SocialAuthorizeResponseDTO {
   platform?: string;
   /** Адрес страницы согласия */
   authorizationUrl?: string;
+}
+
+/** Запрос ссылки на прямую загрузку файла в хранилище */
+export interface PresignUploadRequestDTO {
+  /**
+   * Имя файла — из него берётся только расширение
+   * @minLength 0
+   * @maxLength 255
+   * @example "photo.jpg"
+   */
+  filename: string;
+  /**
+   * MIME-тип файла, допускаются только изображения
+   * @example "image/jpeg"
+   */
+  contentType: string;
+}
+
+/** Ссылка на прямую загрузку файла в хранилище */
+export interface PresignUploadResponseDTO {
+  /** Куда отправить PUT с телом файла и тем же Content-Type */
+  uploadUrl?: string;
+  /** Ключ файла — его передают при сохранении объявления */
+  key?: string;
+}
+
+/** Партнёрская программа рекламодателя: условия, код приглашения и что принесли приглашённые */
+export interface PartnerDTO {
+  /** Подключена ли программа */
+  active?: boolean;
+  /**
+   * Код приглашения для ссылки на лендинг; null — программа не подключена
+   * @example "K7Q2M9XA"
+   */
+  code?: string;
+  /** Когда подключена, ISO-8601; null — не подключена */
+  joinedAt?: string;
+  /**
+   * Комиссия платформы с пополнений и выводов, %
+   * @example 10
+   */
+  commissionPercent?: number;
+  /**
+   * Доля партнёра от комиссии платформы с приглашённых, %
+   * @example 10
+   */
+  partnerSharePercent?: number;
+  /**
+   * Сколько рекламодателей зарегистрировалось по приглашению
+   * @format int32
+   */
+  invitedCount?: number;
+  /**
+   * Сколько из них уже принесли вознаграждение
+   * @format int32
+   */
+  activeCount?: number;
+  /**
+   * Заработано за всё время, в копейках
+   * @format int64
+   */
+  earnedKopecks?: number;
+  /** Приглашённые рекламодатели, новые сверху */
+  referrals?: PartnerReferralDTO[];
+  /** Последние начисления, новые сверху */
+  rewards?: PartnerRewardDTO[];
+}
+
+/** Рекламодатель, зарегистрированный по приглашению партнёра */
+export interface PartnerReferralDTO {
+  /** Имя рекламодателя */
+  name?: string;
+  /** Когда зарегистрировался, ISO-8601 */
+  joinedAt?: string;
+  /**
+   * Сколько партнёр заработал на нём, в копейках
+   * @format int64
+   */
+  earnedKopecks?: number;
+  /**
+   * Сколько начислений он принёс
+   * @format int32
+   */
+  rewardsCount?: number;
+}
+
+/** Начисление партнёру с комиссии платформы по операции приглашённого */
+export interface PartnerRewardDTO {
+  /**
+   * Публичный номер начисления в кошельке партнёра
+   * @example "K7Q2M9XA"
+   */
+  publicId?: string;
+  /** Кто из приглашённых принёс начисление */
+  referralName?: string;
+  /** Операция приглашённого: TOP_UP или WITHDRAWAL */
+  sourceType?: string;
+  /**
+   * Человекочитаемая операция
+   * @example "Пополнение"
+   */
+  sourceTypeDescription?: string;
+  /**
+   * Комиссия платформы с операции, в копейках
+   * @format int64
+   */
+  commissionKopecks?: number;
+  /**
+   * Доля партнёра, в копейках
+   * @format int64
+   */
+  rewardKopecks?: number;
+  createdAt?: string;
 }
 
 /** Финансист отметил, что USDT отправлены: номер транзакции и скриншоты */
@@ -756,30 +1368,6 @@ export interface WalletOperationRequestDTO {
    * @example "Счёт №14 от 01.09"
    */
   comment?: string;
-}
-
-/** Запрос ссылки на прямую загрузку файла в хранилище */
-export interface PresignUploadRequestDTO {
-  /**
-   * Имя файла — из него берётся только расширение
-   * @minLength 0
-   * @maxLength 255
-   * @example "photo.jpg"
-   */
-  filename: string;
-  /**
-   * MIME-тип файла, допускаются только изображения
-   * @example "image/jpeg"
-   */
-  contentType: string;
-}
-
-/** Ссылка на прямую загрузку файла в хранилище */
-export interface PresignUploadResponseDTO {
-  /** Куда отправить PUT с телом файла и тем же Content-Type */
-  uploadUrl?: string;
-  /** Ключ файла — его передают при сохранении объявления */
-  key?: string;
 }
 
 /** Заявка криатора на вывод USDT (TRC-20) */
@@ -855,6 +1443,77 @@ export interface AuthResponseDTO {
   name?: string;
 }
 
+/** Вход из мини-приложения Telegram */
+export interface TelegramWebAppRequestDTO {
+  /** Telegram.WebApp.initData как есть */
+  initData: string;
+  /**
+   * Для Telegram без учётки: cr — новый креатор, cu — новый рекламодатель, have — есть учётка с почтой
+   * @pattern cr|cu|have
+   */
+  action?: string;
+  referralCode?: string;
+}
+
+/** Результат входа из мини-приложения Telegram */
+export interface TelegramWebAppDTO {
+  /** DONE — вход выполнен, токен в auth; NEED_ACCOUNT — Telegram ни к чему не привязан, нужно выбрать action; NEED_EMAIL — войдите по почте и передайте secret в /telegram/attach */
+  status?: string;
+  /** Результат входа */
+  auth?: AuthResponseDTO;
+  /** Имя или @ник Telegram для подсказки */
+  telegram?: string;
+  /** Секрет для /telegram/attach при NEED_EMAIL */
+  secret?: string;
+  /** start_param из ссылки t.me/бот/app?startapp=… */
+  startParam?: string;
+}
+
+/** Начало входа через Telegram. Роль — только со страницы регистрации */
+export interface TelegramAuthStartRequestDTO {
+  /** CUSTOMER или CREATOR для новой учётки; пусто — бот спросит сам */
+  role?:
+    | "CUSTOMER"
+    | "CREATOR"
+    | "FINANCE_MANAGER"
+    | "ADMIN"
+    | "SUPER_ADMIN"
+    | "SERVICE";
+  /**
+   * @minLength 0
+   * @maxLength 64
+   */
+  referralCode?: string;
+}
+
+/** Попытка входа через Telegram: ссылка в бота и секрет, по которому браузер ждёт результат */
+export interface TelegramAuthStartDTO {
+  /** Ссылка t.me на бота с кодом входа */
+  url?: string;
+  /** Секрет попытки — хранится только в этом браузере */
+  secret?: string;
+  /** @format date-time */
+  expiresAt?: string;
+}
+
+export interface TelegramAuthSecretDTO {
+  /**
+   * @minLength 0
+   * @maxLength 128
+   */
+  secret: string;
+}
+
+/** Состояние входа через Telegram */
+export interface TelegramAuthPollDTO {
+  /** PENDING — ждём бота; DONE — вход выполнен, токен в auth; NEED_EMAIL — Telegram подтверждён, но учётки нет: войдите по почте, и он привяжется; CANCELLED — отменено в боте; EXPIRED — попытка устарела */
+  status?: string;
+  /** Результат входа */
+  auth?: AuthResponseDTO;
+  /** Имя или @ник Telegram для подсказки */
+  telegram?: string;
+}
+
 /** Запрос кода входа на почту */
 export interface RequestCodeDTO {
   /**
@@ -900,6 +1559,19 @@ export interface RegisterRequestDTO {
   referralCode?: string;
 }
 
+export interface EmailCodeDTO {
+  /**
+   * @minLength 0
+   * @maxLength 255
+   */
+  email: string;
+  /**
+   * @minLength 0
+   * @maxLength 16
+   */
+  code?: string;
+}
+
 /** Отклик криатора на объявление */
 export interface ApplicationCreateRequestDTO {
   /**
@@ -916,6 +1588,198 @@ export interface ApplicationCreateRequestDTO {
   videoUrl?: string;
   /** Комментарий заказчику: что сняли и почему так */
   comment?: string;
+  /** Объявление «ссылка и промокод»: беру надбавку за рекламную ссылку в профиле */
+  withLink?: boolean;
+  /** Объявление «ссылка и промокод»: беру надбавку за промокод в закреплённом комментарии */
+  withPromo?: boolean;
+}
+
+/** Подтверждение расчёта и подача работы «ссылка и промокод» */
+export interface SnapshotSubmitRequestDTO {
+  /**
+   * snapshotId из расчёта, который криатор видел и подтверждает
+   * @format int64
+   */
+  snapshotId: number;
+  /** Вариант из расчёта: ссылка в профиле; должен совпасть с текущим выбором */
+  withLink?: boolean;
+  /** Вариант из расчёта: промокод в закрепе; должен совпасть с текущим выбором */
+  withPromo?: boolean;
+  /**
+   * Скриншот профиля со ссылкой из /api/files/placement-proof/presign; обязателен, если автопроверка ссылку не нашла
+   * @minLength 0
+   * @maxLength 512
+   */
+  linkProofKey?: string;
+  /**
+   * Скриншот или запись экрана с закреплённым комментарием; обязателен для надбавки за промокод
+   * @minLength 0
+   * @maxLength 512
+   */
+  promoProofKey?: string;
+  /**
+   * Ссылка на сам закреплённый комментарий, если площадка её даёт
+   * @minLength 0
+   * @maxLength 1024
+   */
+  promoCommentUrl?: string;
+  /** Комментарий заказчику */
+  comment?: string;
+}
+
+/** Ролик для расчёта работы «ссылка и промокод» */
+export interface SnapshotQuoteRequestDTO {
+  /**
+   * Ссылка на выложенный ролик: YouTube, TikTok или Instagram
+   * @minLength 0
+   * @maxLength 1024
+   * @example "https://www.tiktok.com/@demo/video/123"
+   */
+  videoUrl: string;
+}
+
+/** Предварительный расчёт работы «ссылка и промокод» по свежему снимку просмотров. Подтверждается подачей с тем же snapshotId, пока не истёк expiresAt */
+export interface SnapshotQuoteDTO {
+  /**
+   * Номер снимка: его подтверждает подача
+   * @format int64
+   */
+  snapshotId?: number;
+  /** Когда сняты просмотры, ISO-8601 */
+  capturedAt?: string;
+  /** До какого момента расчёт можно подтвердить, ISO-8601 */
+  expiresAt?: string;
+  /**
+   * Откуда просмотры
+   * @example "ScrapeCreators"
+   */
+  source?: string;
+  /** Ссылка на ролик, развёрнутая до полной */
+  videoUrl?: string;
+  /**
+   * Площадка ролика
+   * @example "TikTok"
+   */
+  platformDescription?: string;
+  /** Когда ролик опубликован, ISO-8601; null — площадка не отдала */
+  videoPublishedAt?: string;
+  /**
+   * Все просмотры ролика на момент снимка
+   * @format int64
+   */
+  views?: number;
+  /**
+   * Просмотры из региона объявления
+   * @format int64
+   */
+  payableViews?: number;
+  /** Известна ли география (для «весь мир» всегда true) */
+  geographyKnown?: boolean;
+  /**
+   * Оплачиваемые просмотры: после потолка новичка, округлены вниз до сотен
+   * @format int64
+   */
+  billableViews?: number;
+  /** Просмотры урезаны потолком для новых криаторов */
+  cappedForNewCreator?: boolean;
+  /**
+   * Порог оплаты объявления; null — без порога
+   * @format int64
+   */
+  minPaidViews?: number;
+  /** Ролик не дотянул до порога оплаты: сумма 0 */
+  belowMinPaidViews?: boolean;
+  /**
+   * Ставка за 1000 просмотров, в копейках: база
+   * @format int64
+   */
+  baseRatePerThousandKopecks?: number;
+  /**
+   * Надбавка за ссылку, в копейках за 1000 просмотров
+   * @format int64
+   */
+  linkBonusPerThousandKopecks?: number;
+  /**
+   * Надбавка за промокод, в копейках за 1000 просмотров
+   * @format int64
+   */
+  promoBonusPerThousandKopecks?: number;
+  /**
+   * Ставка выбранного варианта
+   * @format int64
+   */
+  rateKopecks?: number;
+  /** Выбрана надбавка за ссылку */
+  withLink?: boolean;
+  /** Выбрана надбавка за промокод */
+  withPromo?: boolean;
+  /**
+   * База, в копейках
+   * @format int64
+   */
+  baseKopecks?: number;
+  /**
+   * Надбавка за ссылку, в копейках; 0 — не выбрана
+   * @format int64
+   */
+  linkKopecks?: number;
+  /**
+   * Надбавка за промокод, в копейках; 0 — не выбрана
+   * @format int64
+   */
+  promoKopecks?: number;
+  /**
+   * База и надбавки до потолка на ролик и остатка бюджета
+   * @format int64
+   */
+  grossKopecks?: number;
+  /**
+   * Потолок вознаграждения за ролик; null — без потолка
+   * @format int64
+   */
+  maxRewardPerVideoKopecks?: number;
+  /**
+   * Остаток бюджета объявления
+   * @format int64
+   */
+  budgetRemainingKopecks?: number;
+  /** Сумма упёрлась в потолок на ролик или остаток бюджета */
+  limited?: boolean;
+  /**
+   * Сумма работы при подтверждении всех выбранных надбавок
+   * @format int64
+   */
+  totalKopecks?: number;
+  /**
+   * Сумма, если ни одну надбавку не подтвердят: только база
+   * @format int64
+   */
+  baseOnlyKopecks?: number;
+  /** Комиссия платформы при выводе, % */
+  commissionPercent?: number;
+  /**
+   * Комиссия с totalKopecks
+   * @format int64
+   */
+  commissionKopecks?: number;
+  /**
+   * totalKopecks после комиссии
+   * @format int64
+   */
+  netKopecks?: number;
+  /** Автопроверка ссылки в профиле: FOUND, MISSING, UNKNOWN; null — ссылка не выбрана */
+  linkCheckState?: string;
+  /** Человекочитаемый итог автопроверки */
+  linkCheckStateDescription?: string;
+  /** Что увидела автопроверка */
+  linkCheckDetail?: string;
+  /**
+   * Сколько дней держать ссылку и закреп после подачи
+   * @format int32
+   */
+  retentionDays?: number;
+  /** До какого момента держать ссылку и закреп, если подать сейчас, ISO-8601 */
+  retainUntil?: string;
 }
 
 /** Отклик в очереди антифрода: сам отклик, последний замер и решение админа */
@@ -1026,6 +1890,14 @@ export interface ApplicationStatusUpdateRequestDTO {
    * @maxLength 2000
    * @example "Ролик не по брифу"
    */
+  reason?: string;
+}
+
+/** Решение модератора или заказчика по одной надбавке */
+export interface PlacementDecisionRequestDTO {
+  /** VERIFIED — подтвердить, REJECTED — не подтверждать (нужна причина) */
+  decision: "NOT_SELECTED" | "PENDING" | "VERIFIED" | "EARNED" | "REJECTED";
+  /** Причина отказа; её увидит криатор */
   reason?: string;
 }
 
@@ -1159,36 +2031,59 @@ export interface OperationRowDTO {
   createdAt?: string;
 }
 
-/** Привязанный аккаунт соцсети */
-export interface SocialAccountDTO {
-  /** @format uuid */
+export interface Telegram {
+  botEnabled?: boolean;
+  botUsername?: string;
+  botUrl?: string;
+  linked?: boolean;
+  telegramUsername?: string;
+  /** @format date-time */
+  linkedAt?: string;
+}
+
+export interface Preset {
   id?: string;
-  /**
-   * Площадка
-   * @example "TIKTOK"
-   */
-  platform?: string;
-  /**
-   * Название площадки для интерфейса
-   * @example "TikTok"
-   */
-  platformLabel?: string;
-  /** Идентификатор аккаунта на стороне площадки */
-  externalId?: string;
-  /** Ник аккаунта; может быть null */
-  username?: string;
-  displayName?: string;
-  avatarUrl?: string;
+  name?: string;
+  url?: string;
+}
+
+export interface StudioOverviewDTO {
+  admin?: boolean;
+  unlimited?: boolean;
+  /** @format int32 */
+  dailyLimit?: number;
+  /** @format int32 */
+  remaining?: number;
+  /** @format int32 */
+  maxActive?: number;
+  /** @format int32 */
+  active?: number;
+  /** @format date-time */
+  quotaResetsAt?: string;
   /** @format int64 */
-  followers?: number;
-  /** ACTIVE — токен живой, EXPIRED — нужна повторная привязка */
-  status?: string;
-  /** Когда аккаунт привязали, ISO-8601 */
-  connectedAt?: string;
-  /** До какого момента живёт токен, ISO-8601 */
-  tokenExpiresAt?: string;
-  /** Отдаёт ли привязанный аккаунт географию просмотров (YouTube с доступом к аналитике); для других площадок false */
-  reportsViewGeography?: boolean;
+  sourceMaxBytes?: number;
+  /** @format int64 */
+  bannerMaxBytes?: number;
+  /** @format int64 */
+  backgroundMaxBytes?: number;
+  rendererAvailable?: boolean;
+  /** @format uuid */
+  activeTemplateId?: string;
+  /** @format uuid */
+  favoriteTemplateId?: string;
+  telegram?: Telegram;
+  presets?: Preset[];
+}
+
+/** Как сейчас привязываются аккаунты соцсетей */
+export interface SocialModeDTO {
+  /**
+   * OAUTH — вход на площадке (/authorize), SCRAPE — ник и код в описании профиля (/verification)
+   * @example "SCRAPE"
+   */
+  mode?: string;
+  /** Привязка настроена на сервере; false — ручки отвечают 503 */
+  available?: boolean;
 }
 
 /** Курс USDT/RUB на бирже Rapira: сколько рублей стоит 1 USDT */
@@ -1210,6 +2105,19 @@ export interface UsdtRateDTO {
    * @example "Rapira"
    */
   source?: string;
+}
+
+/** Кто пригласил: показывается на лендинге рекламодателя по коду из ссылки */
+export interface PartnerInviteDTO {
+  /**
+   * Код приглашения
+   * @example "K7Q2M9XA"
+   */
+  code?: string;
+  /** Имя партнёра */
+  name?: string;
+  /** Компания партнёра; null — не указана в профиле */
+  company?: string;
 }
 
 /** Карточка объявления на публичной доске */
@@ -1279,6 +2187,18 @@ export interface CampaignBoardDTO {
    * @format int32
    */
   materialsCount?: number;
+  /** Как платит объявление: CONTINUOUS или SNAPSHOT («ссылка и промокод») */
+  paymentModel?: string;
+  /**
+   * Надбавка за ссылку в профиле, в копейках за 1000 просмотров; 0 — нет
+   * @format int64
+   */
+  linkBonusPerThousandKopecks?: number;
+  /**
+   * Надбавка за промокод в закрепе, в копейках за 1000 просмотров; 0 — нет
+   * @format int64
+   */
+  promoBonusPerThousandKopecks?: number;
   customerName?: string;
   /** Компания заказчика; null — профиль не заполнен */
   customerCompany?: string;
@@ -1431,121 +2351,6 @@ export interface CampaignBenchmarkDTO {
   topics?: CampaignTopicDTO[];
 }
 
-/** Текущий пользователь */
-export interface CurrentUserDTO {
-  /** @format int64 */
-  id?: number;
-  /** Логин (e-mail) */
-  username?: string;
-  name?: string;
-  /** Роль: CUSTOMER, CREATOR, FINANCE_MANAGER, ADMIN или SUPER_ADMIN */
-  role?: string;
-  /** Вкладки кабинета в порядке меню */
-  tabs?: CabinetTabDTO[];
-}
-
-/** Партнёрская программа рекламодателя: условия, код приглашения и что принесли приглашённые */
-export interface PartnerDTO {
-  /** Подключена ли программа */
-  active?: boolean;
-  /**
-   * Код приглашения для ссылки на лендинг; null — программа не подключена
-   * @example "K7Q2M9XA"
-   */
-  code?: string;
-  /** Когда подключена, ISO-8601; null — не подключена */
-  joinedAt?: string;
-  /**
-   * Комиссия платформы с пополнений и выводов, %
-   * @example 10
-   */
-  commissionPercent?: number;
-  /**
-   * Доля партнёра от комиссии платформы с приглашённых, %
-   * @example 10
-   */
-  partnerSharePercent?: number;
-  /**
-   * Сколько рекламодателей зарегистрировалось по приглашению
-   * @format int32
-   */
-  invitedCount?: number;
-  /**
-   * Сколько из них уже принесли вознаграждение
-   * @format int32
-   */
-  activeCount?: number;
-  /**
-   * Заработано за всё время, в копейках
-   * @format int64
-   */
-  earnedKopecks?: number;
-  /** Приглашённые рекламодатели, новые сверху */
-  referrals?: PartnerReferralDTO[];
-  /** Последние начисления, новые сверху */
-  rewards?: PartnerRewardDTO[];
-}
-
-/** Рекламодатель, зарегистрированный по приглашению партнёра */
-export interface PartnerReferralDTO {
-  /** Имя рекламодателя */
-  name?: string;
-  /** Когда зарегистрировался, ISO-8601 */
-  joinedAt?: string;
-  /**
-   * Сколько партнёр заработал на нём, в копейках
-   * @format int64
-   */
-  earnedKopecks?: number;
-  /**
-   * Сколько начислений он принёс
-   * @format int32
-   */
-  rewardsCount?: number;
-}
-
-/** Начисление партнёру с комиссии платформы по операции приглашённого */
-export interface PartnerRewardDTO {
-  /**
-   * Публичный номер начисления в кошельке партнёра
-   * @example "K7Q2M9XA"
-   */
-  publicId?: string;
-  /** Кто из приглашённых принёс начисление */
-  referralName?: string;
-  /** Операция приглашённого: TOP_UP или WITHDRAWAL */
-  sourceType?: string;
-  /**
-   * Человекочитаемая операция
-   * @example "Пополнение"
-   */
-  sourceTypeDescription?: string;
-  /**
-   * Комиссия платформы с операции, в копейках
-   * @format int64
-   */
-  commissionKopecks?: number;
-  /**
-   * Доля партнёра, в копейках
-   * @format int64
-   */
-  rewardKopecks?: number;
-  createdAt?: string;
-}
-
-/** Кто пригласил: показывается на лендинге рекламодателя по коду из ссылки */
-export interface PartnerInviteDTO {
-  /**
-   * Код приглашения
-   * @example "K7Q2M9XA"
-   */
-  code?: string;
-  /** Имя партнёра */
-  name?: string;
-  /** Компания партнёра; null — не указана в профиле */
-  company?: string;
-}
-
 /** Вкладка левого меню личного кабинета */
 export interface CabinetTabDTO {
   /** Код вкладки, по нему фронт закрывает страницы раздела */
@@ -1560,6 +2365,25 @@ export interface CabinetTabDTO {
   icon?: string;
   /** Подсвечивать только на точном совпадении адреса, без вложенных страниц */
   exact?: boolean;
+}
+
+/** Текущий пользователь */
+export interface CurrentUserDTO {
+  /** @format int64 */
+  id?: number;
+  /** Логин (e-mail) */
+  username?: string;
+  name?: string;
+  /** Роль: CUSTOMER, CREATOR, FINANCE_MANAGER, ADMIN или SUPER_ADMIN */
+  role?: string;
+  /** Вкладки кабинета в порядке меню */
+  tabs?: CabinetTabDTO[];
+  /** Временная ссылка на аватарку; null — аватарки нет */
+  avatarUrl?: string;
+  /** Почта для входа; null — учётка заведена через Telegram и почты пока нет */
+  email?: string;
+  /** true — войти можно только через Telegram */
+  telegramOnly?: boolean;
 }
 
 import type {
@@ -1749,6 +2573,46 @@ export class Api<
 > extends HttpClient<SecurityDataType> {
   api = {
     /**
+     * No description
+     *
+     * @tags Studio
+     * @name UpdateTemplate
+     * @summary Изменить шаблон
+     * @request PUT:/api/studio/templates/{id}
+     * @secure
+     */
+    updateTemplate: (
+      id: string,
+      data: StudioTemplateRequestDTO,
+      params: RequestParams = {},
+    ) =>
+      this.request<StudioTemplateDTO, any>({
+        path: `/api/studio/templates/${id}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Studio
+     * @name DeleteTemplate
+     * @summary Удалить шаблон
+     * @request DELETE:/api/studio/templates/{id}
+     * @secure
+     */
+    deleteTemplate: (id: string, params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/api/studio/templates/${id}`,
+        method: "DELETE",
+        secure: true,
+        ...params,
+      }),
+
+    /**
      * @description Профиль текущего заказчика; если его почему-то нет — заводится пустой, а не 404
      *
      * @tags Profile
@@ -1827,6 +2691,42 @@ export class Api<
       }),
 
     /**
+     * @description Привязывает загруженную картинку к учётной записи; прежняя аватарка заменяется
+     *
+     * @tags Profile
+     * @name SetAvatar
+     * @summary Сохранить аватарку
+     * @request PUT:/api/profile/avatar
+     * @secure
+     */
+    setAvatar: (data: AvatarRequestDTO, params: RequestParams = {}) =>
+      this.request<AvatarDTO, any>({
+        path: `/api/profile/avatar`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description В кабинете снова показывается первая буква имени
+     *
+     * @tags Profile
+     * @name RemoveAvatar
+     * @summary Убрать аватарку
+     * @request DELETE:/api/profile/avatar
+     * @secure
+     */
+    removeAvatar: (params: RequestParams = {}) =>
+      this.request<AvatarDTO, any>({
+        path: `/api/profile/avatar`,
+        method: "DELETE",
+        secure: true,
+        ...params,
+      }),
+
+    /**
      * @description Только своё объявление; админ видит любое
      *
      * @tags Campaign
@@ -1899,6 +2799,53 @@ export class Api<
     ) =>
       this.request<ApplicationDTO, any>({
         path: `/api/applications/${id}/video`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description Какие надбавки криатор берёт на себя: ссылку в профиле, промокод в закрепе, оба или ни одной. Менять можно, пока работа не подана
+     *
+     * @tags Application
+     * @name ChoosePlacements
+     * @summary Вариант участия «ссылка и промокод»
+     * @request PUT:/api/applications/{id}/placements
+     * @secure
+     */
+    choosePlacements: (
+      id: string,
+      data: PlacementChoiceRequestDTO,
+      params: RequestParams = {},
+    ) =>
+      this.request<ApplicationDTO, any>({
+        path: `/api/applications/${id}/placements`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description Новое доказательство по надбавке link или promo после отказа или вместо прежнего: надбавка снова ждёт проверки, снимок просмотров и база не меняются
+     *
+     * @tags Application
+     * @name ResubmitPlacementProof
+     * @summary Исправить надбавку
+     * @request PUT:/api/applications/{id}/placements/{kind}/proof
+     * @secure
+     */
+    resubmitPlacementProof: (
+      id: string,
+      kind: string,
+      data: PlacementProofRequestDTO,
+      params: RequestParams = {},
+    ) =>
+      this.request<ApplicationDTO, any>({
+        path: `/api/applications/${id}/placements/${kind}/proof`,
         method: "PUT",
         body: data,
         secure: true,
@@ -2000,7 +2947,323 @@ export class Api<
       }),
 
     /**
-     * @description Возвращает адрес страницы согласия площадки: фронт открывает его в браузере. Платформа в пути: instagram, tiktok, youtube
+     * @description Presigned PUT: файл уходит в хранилище напрямую с тем же Content-Type. purpose: SOURCE | BANNER | BACKGROUND
+     *
+     * @tags Studio
+     * @name Presign
+     * @summary Ссылка на загрузку файла
+     * @request POST:/api/studio/uploads/presign
+     * @secure
+     */
+    presign: (data: StudioPresignRequestDTO, params: RequestParams = {}) =>
+      this.request<StudioPresignResponseDTO, any>({
+        path: `/api/studio/uploads/presign`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Studio
+     * @name Templates
+     * @summary Шаблоны монтажа
+     * @request GET:/api/studio/templates
+     * @secure
+     */
+    templates: (params: RequestParams = {}) =>
+      this.request<StudioTemplateDTO[], any>({
+        path: `/api/studio/templates`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Studio
+     * @name CreateTemplate
+     * @summary Новый шаблон
+     * @request POST:/api/studio/templates
+     * @secure
+     */
+    createTemplate: (
+      data: StudioTemplateRequestDTO,
+      params: RequestParams = {},
+    ) =>
+      this.request<StudioTemplateDTO, any>({
+        path: `/api/studio/templates`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description templateId=null — выключить; favorite=true — избранный (первым в списке под видео)
+     *
+     * @tags Studio
+     * @name SetActive
+     * @summary Автошаблон или избранный шаблон для Telegram
+     * @request POST:/api/studio/templates/active
+     * @secure
+     */
+    setActive: (
+      data: StudioActiveTemplateRequestDTO,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/api/studio/templates/active`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description Для всех ролей: через бота приходят уведомления и вход
+     *
+     * @tags Studio
+     * @name TelegramStatus
+     * @summary Привязан ли Telegram
+     * @request GET:/api/studio/telegram/link
+     */
+    telegramStatus: (params: RequestParams = {}) =>
+      this.request<Telegram, any>({
+        path: `/api/studio/telegram/link`,
+        method: "GET",
+        ...params,
+      }),
+
+    /**
+     * @description Одноразовая, действует 10 минут
+     *
+     * @tags Studio
+     * @name Link
+     * @summary Ссылка для привязки Telegram
+     * @request POST:/api/studio/telegram/link
+     * @secure
+     */
+    link: (params: RequestParams = {}) =>
+      this.request<StudioTelegramLinkDTO, any>({
+        path: `/api/studio/telegram/link`,
+        method: "POST",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Studio
+     * @name Unlink
+     * @summary Отвязать Telegram
+     * @request DELETE:/api/studio/telegram/link
+     * @secure
+     */
+    unlink: (params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/api/studio/telegram/link`,
+        method: "DELETE",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * @description filter: all | active | done | failed
+     *
+     * @tags Studio
+     * @name Jobs
+     * @summary Мои видео
+     * @request GET:/api/studio/jobs
+     * @secure
+     */
+    jobs: (
+      query?: {
+        /** @default "all" */
+        filter?: string;
+        /**
+         * @format int32
+         * @default 50
+         */
+        limit?: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<StudioJobDTO[], any>({
+        path: `/api/studio/jobs`,
+        method: "GET",
+        query: query,
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * @description Ставит задачу в очередь; для профиля 9:16 + 1:1 — две задачи одного пакета
+     *
+     * @tags Studio
+     * @name Create
+     * @summary Собрать видео
+     * @request POST:/api/studio/jobs
+     * @secure
+     */
+    create: (data: StudioJobRequestDTO, params: RequestParams = {}) =>
+      this.request<StudioJobDTO[], any>({
+        path: `/api/studio/jobs`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description Нужна привязка Telegram; квоту не тратит
+     *
+     * @tags Studio
+     * @name SendToTelegram
+     * @summary Прислать готовый MP4 в Telegram
+     * @request POST:/api/studio/jobs/{id}/telegram
+     * @secure
+     */
+    sendToTelegram: (id: string, params: RequestParams = {}) =>
+      this.request<Record<string, string>, any>({
+        path: `/api/studio/jobs/${id}/telegram`,
+        method: "POST",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * @description Нужны сохранённые исходники (keepSource). quality: null или "720"
+     *
+     * @tags Studio
+     * @name Retry
+     * @summary Повторить задачу
+     * @request POST:/api/studio/jobs/{id}/retry
+     * @secure
+     */
+    retry: (
+      id: string,
+      data: StudioRetryRequestDTO,
+      params: RequestParams = {},
+    ) =>
+      this.request<StudioJobDTO, any>({
+        path: `/api/studio/jobs/${id}/retry`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Studio
+     * @name Cancel
+     * @summary Отменить задачу
+     * @request POST:/api/studio/jobs/{id}/cancel
+     * @secure
+     */
+    cancel: (id: string, params: RequestParams = {}) =>
+      this.request<StudioJobDTO, any>({
+        path: `/api/studio/jobs/${id}/cancel`,
+        method: "POST",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * @description Свои баннеры и фоны и общий каталог
+     *
+     * @tags Studio
+     * @name Assets
+     * @summary Библиотека
+     * @request GET:/api/studio/assets
+     * @secure
+     */
+    assets: (params: RequestParams = {}) =>
+      this.request<StudioAssetDTO[], any>({
+        path: `/api/studio/assets`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * @description shared=true — в общий каталог (только админ)
+     *
+     * @tags Studio
+     * @name SaveAsset
+     * @summary Сохранить файл в библиотеку
+     * @request POST:/api/studio/assets
+     * @secure
+     */
+    saveAsset: (data: StudioAssetRequestDTO, params: RequestParams = {}) =>
+      this.request<StudioAssetDTO, any>({
+        path: `/api/studio/assets`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description Только в режиме SCRAPE. Ничего не сохраняет: код один и тот же при каждом запросе для пары «криатор — аккаунт». Платформа в пути: instagram, tiktok, youtube
+     *
+     * @tags SocialAccounts
+     * @name StartVerification
+     * @summary Найти профиль и получить проверочный код
+     * @request POST:/api/social/{platform}/verification
+     * @secure
+     */
+    startVerification: (
+      platform: string,
+      data: SocialVerificationRequestDTO,
+      params: RequestParams = {},
+    ) =>
+      this.request<SocialVerificationDTO, any>({
+        path: `/api/social/${platform}/verification`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description Только в режиме SCRAPE. Перечитывает профиль и привязывает аккаунт, если код на месте; после привязки код из описания можно убрать
+     *
+     * @tags SocialAccounts
+     * @name ConfirmVerification
+     * @summary Подтвердить аккаунт кодом в описании профиля
+     * @request POST:/api/social/{platform}/verification/confirm
+     * @secure
+     */
+    confirmVerification: (
+      platform: string,
+      data: SocialVerificationRequestDTO,
+      params: RequestParams = {},
+    ) =>
+      this.request<SocialAccountDTO, any>({
+        path: `/api/social/${platform}/verification/confirm`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description Только в режиме OAUTH. Возвращает адрес страницы согласия площадки: фронт открывает его в браузере. Платформа в пути: instagram, tiktok, youtube
      *
      * @tags SocialAccounts
      * @name Authorize
@@ -2011,6 +3274,62 @@ export class Api<
     authorize: (platform: string, params: RequestParams = {}) =>
       this.request<SocialAuthorizeResponseDTO, any>({
         path: `/api/social/${platform}/authorize`,
+        method: "POST",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * @description Presigned PUT-ссылка: картинка отправляется в хранилище напрямую, с тем же Content-Type. Полученный key передаётся в PUT /api/profile/avatar
+     *
+     * @tags Profile
+     * @name PresignAvatar
+     * @summary Ссылка на загрузку аватарки
+     * @request POST:/api/profile/avatar/presign
+     * @secure
+     */
+    presignAvatar: (
+      data: PresignUploadRequestDTO,
+      params: RequestParams = {},
+    ) =>
+      this.request<PresignUploadResponseDTO, any>({
+        path: `/api/profile/avatar/presign`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description Условия программы, а если она подключена — код приглашения, приглашённые и начисления
+     *
+     * @tags Partner
+     * @name MyPartner
+     * @summary Моя партнёрская программа
+     * @request GET:/api/partner
+     * @secure
+     */
+    myPartner: (params: RequestParams = {}) =>
+      this.request<PartnerDTO, any>({
+        path: `/api/partner`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * @description Заводит партнёра с кодом приглашения и открывает вкладку «Рефералка»; повторный вызов ничего не меняет
+     *
+     * @tags Partner
+     * @name ActivatePartner
+     * @summary Стать партнёром
+     * @request POST:/api/partner
+     * @secure
+     */
+    activatePartner: (params: RequestParams = {}) =>
+      this.request<PartnerDTO, any>({
+        path: `/api/partner`,
         method: "POST",
         secure: true,
         ...params,
@@ -2117,6 +3436,28 @@ export class Api<
     ) =>
       this.request<PresignUploadResponseDTO, any>({
         path: `/api/files/transfer-proof/presign`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description Presigned PUT-ссылка для криатора: скриншот профиля с рекламной ссылкой или запись экрана с закреплённым комментарием и промокодом. Полученный key передаётся при подаче работы «ссылка и промокод» или при исправлении надбавки
+     *
+     * @tags File
+     * @name PresignPlacementProof
+     * @summary Ссылка на загрузку доказательства размещения
+     * @request POST:/api/files/placement-proof/presign
+     * @secure
+     */
+    presignPlacementProof: (
+      data: PresignUploadRequestDTO,
+      params: RequestParams = {},
+    ) =>
+      this.request<PresignUploadResponseDTO, any>({
+        path: `/api/files/placement-proof/presign`,
         method: "POST",
         body: data,
         secure: true,
@@ -2352,6 +3693,82 @@ export class Api<
       }),
 
     /**
+     * @description Принимает Telegram.WebApp.initData, проверяет подпись бота. Привязанный Telegram — сразу JWT; непривязанный — NEED_ACCOUNT, затем повторный запрос с action cr/cu/have
+     *
+     * @tags Auth
+     * @name TelegramWebApp
+     * @summary Вход из мини-приложения Telegram
+     * @request POST:/api/auth/telegram/webapp
+     */
+    telegramWebApp: (
+      data: TelegramWebAppRequestDTO,
+      params: RequestParams = {},
+    ) =>
+      this.request<TelegramWebAppDTO, any>({
+        path: `/api/auth/telegram/webapp`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description Отдаёт ссылку в бота и секрет. Браузер открывает ссылку и опрашивает /telegram/poll. Роль передают только со страницы регистрации — для новой учётки
+     *
+     * @tags Auth
+     * @name TelegramStart
+     * @summary Вход через Telegram: начать
+     * @request POST:/api/auth/telegram/start
+     */
+    telegramStart: (
+      data: TelegramAuthStartRequestDTO,
+      params: RequestParams = {},
+    ) =>
+      this.request<TelegramAuthStartDTO, any>({
+        path: `/api/auth/telegram/start`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description PENDING — ждём бота, DONE — в ответе токен (выдаётся один раз), NEED_EMAIL — войдите по почте и вызовите /telegram/attach, CANCELLED, EXPIRED
+     *
+     * @tags Auth
+     * @name TelegramPoll
+     * @summary Вход через Telegram: результат
+     * @request POST:/api/auth/telegram/poll
+     */
+    telegramPoll: (data: TelegramAuthSecretDTO, params: RequestParams = {}) =>
+      this.request<TelegramAuthPollDTO, any>({
+        path: `/api/auth/telegram/poll`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description Для ответа NEED_EMAIL: человек подтвердил Telegram в боте, но учётки у него не было под этим Telegram — после входа по почте он привязывается к ней
+     *
+     * @tags Auth
+     * @name TelegramAttach
+     * @summary Привязать Telegram после входа по почте
+     * @request POST:/api/auth/telegram/attach
+     * @secure
+     */
+    telegramAttach: (data: TelegramAuthSecretDTO, params: RequestParams = {}) =>
+      this.request<Record<string, string>, any>({
+        path: `/api/auth/telegram/attach`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
      * @description 404, если учётки с такой почтой нет; 429, если код уже уходил меньше 30 секунд назад
      *
      * @tags Auth
@@ -2386,6 +3803,25 @@ export class Api<
       }),
 
     /**
+     * @description Без code — отправляет письмо с кодом; с code — подтверждает, почта становится логином и в ответе новый токен. 409 — почта занята или у учётки уже есть почта
+     *
+     * @tags Auth
+     * @name AddEmail
+     * @summary Добавить почту к учётке из Telegram
+     * @request POST:/api/auth/email
+     * @secure
+     */
+    addEmail: (data: EmailCodeDTO, params: RequestParams = {}) =>
+      this.request<object, any>({
+        path: `/api/auth/email`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
      * @description Без ссылки на ролик отклик встаёт в IN_PROGRESS: криатор снимает ролик и прикладывает его позже, повторный вызов возвращает тот же отклик. Со ссылкой площадка определяется по ней, должна быть среди площадок объявления, а аккаунт этой площадки должен быть привязан в профиле. Откликнуться можно только на активное объявление и не на своё, роликов на одно объявление можно подать сколько угодно; тот же ролик повторно — 409
      *
      * @tags Application
@@ -2401,6 +3837,69 @@ export class Api<
         body: data,
         secure: true,
         type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description Фиксирует просмотры и сумму из расчёта snapshotId; рост просмотров после подачи работу не меняет. Для надбавки за промокод нужен скриншот или запись экрана с закрепом; для ссылки — скриншот, если автопроверка её не нашла. Устаревший расчёт — 409
+     *
+     * @tags Application
+     * @name SubmitWork
+     * @summary Подать работу по расчёту
+     * @request POST:/api/applications/{id}/submit
+     * @secure
+     */
+    submitWork: (
+      id: string,
+      data: SnapshotSubmitRequestDTO,
+      params: RequestParams = {},
+    ) =>
+      this.request<ApplicationDTO, any>({
+        path: `/api/applications/${id}/submit`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description Проверяет ролик (площадка, аккаунт, дубли, выложен после взятия оффера), снимает свежие просмотры и проверяет ссылку в профиле. Возвращает расчёт: оплачиваемые просмотры, базу, надбавки, комиссию. Расчёт живёт 15 минут и подтверждается подачей
+     *
+     * @tags Application
+     * @name QuoteWork
+     * @summary Расчёт работы по снимку просмотров
+     * @request POST:/api/applications/{id}/quote
+     * @secure
+     */
+    quoteWork: (
+      id: string,
+      data: SnapshotQuoteRequestDTO,
+      params: RequestParams = {},
+    ) =>
+      this.request<SnapshotQuoteDTO, any>({
+        path: `/api/applications/${id}/quote`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description Автопроверка ссылки по публичному профилю; найденная ссылка подтверждает ожидающую надбавку. Не чаще раза в минуту
+     *
+     * @tags Application
+     * @name RecheckPlacementLink
+     * @summary Проверить ссылку в профиле ещё раз
+     * @request POST:/api/applications/{id}/placements/link/check
+     * @secure
+     */
+    recheckPlacementLink: (id: string, params: RequestParams = {}) =>
+      this.request<ApplicationDTO, any>({
+        path: `/api/applications/${id}/placements/link/check`,
+        method: "POST",
+        secure: true,
         ...params,
       }),
 
@@ -2500,6 +3999,30 @@ export class Api<
     ) =>
       this.request<ApplicationDTO, any>({
         path: `/api/applications/${id}/status`,
+        method: "PATCH",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description Заказчик объявления или модератор подтверждает (VERIFIED) или отклоняет (REJECTED, с причиной) надбавку link или promo. Отказ по надбавке не отклоняет ролик. Засчитанную надбавку не изменить
+     *
+     * @tags Application
+     * @name DecidePlacement
+     * @summary Решение по надбавке
+     * @request PATCH:/api/applications/{id}/placements/{kind}/decision
+     * @secure
+     */
+    decidePlacement: (
+      id: string,
+      kind: string,
+      data: PlacementDecisionRequestDTO,
+      params: RequestParams = {},
+    ) =>
+      this.request<ApplicationDTO, any>({
+        path: `/api/applications/${id}/placements/${kind}/decision`,
         method: "PATCH",
         body: data,
         secure: true,
@@ -2628,6 +4151,57 @@ export class Api<
       }),
 
     /**
+     * @description Лимиты, привязка Telegram, встроенные фоны
+     *
+     * @tags Studio
+     * @name Overview
+     * @summary Обзор студии
+     * @request GET:/api/studio/overview
+     * @secure
+     */
+    overview: (params: RequestParams = {}) =>
+      this.request<StudioOverviewDTO, any>({
+        path: `/api/studio/overview`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Studio
+     * @name Job
+     * @summary Задача
+     * @request GET:/api/studio/jobs/{id}
+     * @secure
+     */
+    job: (id: string, params: RequestParams = {}) =>
+      this.request<StudioJobDTO, any>({
+        path: `/api/studio/jobs/${id}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * @description OAUTH — кнопка ведёт на /{platform}/authorize; SCRAPE — криатор вводит ник, получает код через /{platform}/verification и подтверждает через /{platform}/verification/confirm
+     *
+     * @tags SocialAccounts
+     * @name Mode
+     * @summary Способ привязки аккаунтов
+     * @request GET:/api/social/mode
+     * @secure
+     */
+    mode: (params: RequestParams = {}) =>
+      this.request<SocialModeDTO, any>({
+        path: `/api/social/mode`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
      * @description Сюда браузер приходит редиректом от площадки. Ручка открыта: пользователя опознаём по подписанному state, а не по заголовку авторизации
      *
      * @tags SocialAccounts
@@ -2669,51 +4243,18 @@ export class Api<
       }),
 
     /**
-     * @description Условия программы, а если она подключена — код приглашения, приглашённые и начисления
+     * No description
      *
-     * @tags Partner
-     * @name MyPartner
-     * @summary Моя партнёрская программа
-     * @request GET:/api/partner
-     * @secure
+     * @tags Studio
+     * @name Preset
+     * @summary Картинка встроенного фона
+     * @request GET:/api/public/studio/presets/{id}.jpg
      */
-    myPartner: (params: RequestParams = {}) =>
-      this.request<PartnerDTO, any>({
-        path: `/api/partner`,
+    preset: (id: string, params: RequestParams = {}) =>
+      this.request<Blob, any>({
+        path: `/api/public/studio/presets/${id}.jpg`,
         method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * @description Заводит партнёра с кодом приглашения и открывает вкладку «Рефералка»; повторный вызов ничего не меняет
-     *
-     * @tags Partner
-     * @name ActivatePartner
-     * @summary Стать партнёром
-     * @request POST:/api/partner
-     * @secure
-     */
-    activatePartner: (params: RequestParams = {}) =>
-      this.request<PartnerDTO, any>({
-        path: `/api/partner`,
-        method: "POST",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * @description Имя и компания партнёра по коду из ссылки-приглашения; 404 — код не найден
-     *
-     * @tags Partner
-     * @name PartnerInvite
-     * @summary Кто пригласил
-     * @request GET:/api/public/partners/{code}
-     */
-    partnerInvite: (code: string, params: RequestParams = {}) =>
-      this.request<PartnerInviteDTO, any>({
-        path: `/api/public/partners/${code}`,
-        method: "GET",
+        format: "blob",
         ...params,
       }),
 
@@ -2728,6 +4269,21 @@ export class Api<
     usdt: (params: RequestParams = {}) =>
       this.request<UsdtRateDTO, any>({
         path: `/api/public/rates/usdt`,
+        method: "GET",
+        ...params,
+      }),
+
+    /**
+     * @description Имя и компания партнёра по коду из ссылки-приглашения; 404 — код не найден
+     *
+     * @tags Partner
+     * @name PartnerInvite
+     * @summary Кто пригласил
+     * @request GET:/api/public/partners/{code}
+     */
+    partnerInvite: (code: string, params: RequestParams = {}) =>
+      this.request<PartnerInviteDTO, any>({
+        path: `/api/public/partners/${code}`,
         method: "GET",
         ...params,
       }),
@@ -2845,7 +4401,8 @@ export class Api<
           | "ALLOCATION"
           | "RELEASE"
           | "EARNING"
-          | "PAYOUT";
+          | "PAYOUT"
+          | "REFERRAL_REWARD";
         status?:
           | "DONE"
           | "PENDING"
@@ -2985,7 +4542,7 @@ export class Api<
       }),
 
     /**
-     * @description Медианная ставка за 1000 просмотров и медианный бюджет по всем запущенным объявлениям, в копейках; пока таких объявлений нет — 150 ₽ и 100 000 ₽. Плюс до 10 самых популярных тематик со средней ставкой за 1000 просмотров по каждой
+     * @description Медианная ставка за 1000 просмотров и медианный бюджет по всем запущенным объявлениям, в копейках; пока таких объявлений нет — 150 ₽ и 100 000 ₽. Минимальный бюджет для запуска объявления, в копейках (настройка CAMPAIGN_MIN_BUDGET_RUB). Сколько процентов бюджета может составлять порог вывода (настройка CAMPAIGN_MAX_PAYOUT_BUDGET_PERCENT). Плюс до 10 самых популярных тематик со средней ставкой за 1000 просмотров по каждой
      *
      * @tags Campaign
      * @name CampaignBenchmarks
@@ -3129,6 +4686,23 @@ export class Api<
     /**
      * No description
      *
+     * @tags Studio
+     * @name DeleteAsset
+     * @summary Удалить файл из библиотеки
+     * @request DELETE:/api/studio/assets/{id}
+     * @secure
+     */
+    deleteAsset: (id: string, params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/api/studio/assets/${id}`,
+        method: "DELETE",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @tags SocialAccounts
      * @name Disconnect
      * @summary Отвязать аккаунт
@@ -3155,6 +4729,23 @@ export class Api<
     deleteApplication: (id: string, params: RequestParams = {}) =>
       this.request<void, any>({
         path: `/api/applications/${id}`,
+        method: "DELETE",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * @description Криатор продолжает без надбавки link или promo по меньшей ставке; база и другая надбавка остаются
+     *
+     * @tags Application
+     * @name DeclinePlacement
+     * @summary Отказаться от надбавки
+     * @request DELETE:/api/applications/{id}/placements/{kind}
+     * @secure
+     */
+    declinePlacement: (id: string, kind: string, params: RequestParams = {}) =>
+      this.request<ApplicationDTO, any>({
+        path: `/api/applications/${id}/placements/${kind}`,
         method: "DELETE",
         secure: true,
         ...params,

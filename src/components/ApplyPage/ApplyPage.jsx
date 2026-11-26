@@ -13,11 +13,12 @@ import { campaignRequirements } from '../../shared/requirements';
 import {
   DEFAULT_VIEW_REGION,
   isWorldRegion,
-  platformGeographyWarning,
   viewRegionHint,
   viewRegionLabel,
 } from '../../shared/viewRegion';
 import { detectPlatform } from '../../shared/video';
+import { campaignRates, isSnapshot, rateRange, workRates } from '../../shared/placement';
+import SnapshotApply from './SnapshotApply';
 import ui from '../../shared/ui.module.css';
 import styles from './ApplyPage.module.css';
 
@@ -150,18 +151,7 @@ const ApplyPage = () => {
     accounts === null ||
     accounts.some((account) => account.platform === platform && account.status === 'ACTIVE');
   const worldRegion = isWorldRegion(campaign?.viewRegion);
-  const regionHint = viewRegionHint(campaign?.viewRegion, campaign?.platforms);
-  const geographyWarning = platformGeographyWarning(campaign?.viewRegion, platform);
-  const activeYoutubeAccounts = Array.isArray(accounts)
-    ? accounts.filter(
-        (account) => account.platform === 'YOUTUBE_SHORTS' && account.status === 'ACTIVE'
-      )
-    : [];
-  const youtubeWithoutAnalytics =
-    platform === 'YOUTUBE_SHORTS' &&
-    !worldRegion &&
-    activeYoutubeAccounts.length > 0 &&
-    !activeYoutubeAccounts.some((account) => account.reportsViewGeography === true);
+  const regionHint = viewRegionHint(campaign?.viewRegion);
 
   const setField = (e) => {
     const { name, value } = e.target;
@@ -249,7 +239,7 @@ const ApplyPage = () => {
           <header className={ui.pageHead}>
             <div className={ui.pageHeadMain}>
               <span className={ui.eyebrow}>Креатор</span>
-              <h1 className={ui.title}>Ролик по офферу</h1>
+              <h1 className={ui.title}>{isSnapshot(campaign) ? 'Работа по офферу' : 'Ролик по офферу'}</h1>
               <p className={ui.subtitle}>
                 {campaign.title} · {customer}
               </p>
@@ -259,6 +249,15 @@ const ApplyPage = () => {
           {inactive && <p className={styles.notice}>{renderInactiveNotice()}</p>}
 
           <div className={styles.columns}>
+            {isSnapshot(campaign) ? (
+              <SnapshotApply
+                campaign={campaign}
+                workInProgress={workInProgress}
+                onWorkChange={setWorkInProgress}
+                inactive={inactive}
+                accounts={accounts}
+              />
+            ) : (
             <form className={`${ui.card} ${styles.form}`} onSubmit={handleSubmit} noValidate>
               <div className={styles.field}>
                 <label htmlFor="apply-video-url" className={ui.label}>
@@ -294,22 +293,10 @@ const ApplyPage = () => {
                 {platform && platformAccepted && hasAccount && (
                   <span className={ui.hintOk}>Площадка: {PLATFORM_LABELS[platform]}</span>
                 )}
-                {platform && platformAccepted && geographyWarning && (
-                  <span className={ui.hintWarn}>{geographyWarning}</span>
-                )}
-                {platform && platformAccepted && hasAccount && youtubeWithoutAnalytics && (
-                  <span className={ui.hintWarn}>
-                    YouTube подключён без доступа к аналитике — география просмотров не учтётся
-                    и ролик по этому региону не оплатится.{' '}
-                    <Link to="/app/profile" className={styles.inlineLink}>
-                      Переподключить YouTube
-                    </Link>
-                  </span>
-                )}
                 {platform && platformAccepted && !hasAccount && (
                   <span className={ui.hintWarn}>
                     {PLATFORM_LABELS[platform]} не привязан в профиле, отклик не примется.{' '}
-                    <Link to="/app/profile" className={styles.inlineLink}>
+                    <Link to="/app/profile#socials" className={styles.inlineLink}>
                       Привязать аккаунт
                     </Link>
                   </span>
@@ -352,12 +339,21 @@ const ApplyPage = () => {
                 </Link>
               </div>
             </form>
+            )}
 
             <aside className={styles.aside}>
               <section className={ui.card}>
                 <span className={ui.eyebrow}>Ставка за результат</span>
-                <p className={styles.rate}>{formatRubles(campaign.ratePerThousandKopecks)}</p>
-                <p className={styles.rateUnit}>за 1 000 подтверждённых просмотров</p>
+                <p className={styles.rate}>
+                  {isSnapshot(campaign)
+                    ? rateRange(workInProgress?.placement ? workRates(workInProgress.placement) : campaignRates(campaign))
+                    : formatRubles(campaign.ratePerThousandKopecks)}
+                </p>
+                <p className={styles.rateUnit}>
+                  {isSnapshot(campaign)
+                    ? 'за 1 000 просмотров на момент подачи, по варианту участия'
+                    : 'за 1 000 подтверждённых просмотров'}
+                </p>
 
                 {acceptedPlatforms.length > 0 && (
                   <>

@@ -1,0 +1,283 @@
+/* «Ссылка и промокод»: варианты ставки, доказательства, надбавки работы */
+
+.variants {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.variant {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--field-radius);
+  background: var(--color-surface);
+  font-size: 0.86rem;
+  color: var(--color-ink);
+  text-align: left;
+}
+
+button.variant {
+  width: 100%;
+  font: inherit;
+  cursor: pointer;
+}
+
+button.variant:hover:not(:disabled) {
+  border-color: var(--color-accent);
+}
+
+button.variant:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.variantActive {
+  composes: variant;
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.variantLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.variantDot {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--color-border-strong);
+  border-radius: 50%;
+}
+
+.variantActive .variantDot {
+  border-color: var(--color-accent);
+  background: radial-gradient(circle, var(--color-accent) 0 45%, transparent 50%);
+}
+
+.variantRate {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.variantShare {
+  font-weight: 400;
+  font-size: 0.76rem;
+  color: var(--color-muted);
+}
+
+.note {
+  margin: 8px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--color-muted);
+}
+
+.toggles {
+  display: grid;
+  gap: 8px;
+}
+
+.toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  color: var(--color-ink);
+  cursor: pointer;
+}
+
+.toggle input {
+  margin-top: 3px;
+  accent-color: var(--color-accent);
+}
+
+.toggleHint {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--color-muted);
+}
+
+/* Материалы: ссылка, код, шаблон комментария */
+
+.materials {
+  display: grid;
+  gap: 10px;
+}
+
+.material {
+  display: grid;
+  gap: 4px;
+}
+
+.materialLabel {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.materialValue {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: var(--field-radius);
+  background: var(--color-surface-alt);
+  font-size: 0.86rem;
+  color: var(--color-ink);
+  overflow-wrap: anywhere;
+}
+
+.materialValue > span {
+  flex: 1;
+  min-width: 0;
+}
+
+.copy {
+  flex: none;
+  border: 0;
+  background: none;
+  color: var(--color-accent);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* Доказательство */
+
+.proof {
+  display: grid;
+  gap: 6px;
+}
+
+.proofRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.84rem;
+}
+
+.proofName {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--color-ink);
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Надбавки работы */
+
+.parts {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.part {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--field-radius);
+}
+
+.partHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.partMeta {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--color-muted);
+  overflow-wrap: anywhere;
+}
+
+.partActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  font-size: 0.84rem;
+  color: var(--color-ink);
+}
+
+.summary b {
+  font-weight: 700;
+}
+
+/* Расчёт */
+
+.quote {
+  display: grid;
+  gap: 2px;
+  padding: 14px 16px;
+  border-radius: var(--field-radius);
+  background: var(--color-surface-alt);
+}
+
+.quoteTotal {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border-strong);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.section {
+  display: grid;
+  gap: 12px;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-ink);
+}

@@ -6,7 +6,7 @@ import styles from './RejectDialog.module.css';
 
 const REASON_LIMIT = 2000;
 
-const RejectDialog = ({ subject, busy = false, onCancel, onConfirm }) => {
+const RejectDialog = ({ subject, busy = false, onCancel, onConfirm, title = 'Отклонить работу', confirmLabel = 'Отклонить' }) => {
   const dialogRef = useRef(null);
   const [reason, setReason] = useState('');
   const [error, setError] = useState('');
@@ -51,7 +51,7 @@ const RejectDialog = ({ subject, busy = false, onCancel, onConfirm }) => {
         <header className={styles.head}>
           <div>
             <h2 id="reject-dialog-title" className={styles.title}>
-              Отклонить работу
+              {title}
             </h2>
             {subject && <p className={styles.subject}>{subject}</p>}
           </div>
@@ -90,7 +90,7 @@ const RejectDialog = ({ subject, busy = false, onCancel, onConfirm }) => {
             Отмена
           </button>
           <button type="submit" className={ui.btnDanger} disabled={busy}>
-            {busy ? 'Отклоняем…' : 'Отклонить'}
+            {busy ? 'Отклоняем…' : confirmLabel}
           </button>
         </div>
       </form>

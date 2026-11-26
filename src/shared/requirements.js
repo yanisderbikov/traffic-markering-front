@@ -39,7 +39,7 @@ export const campaignRequirements = (campaign) => {
     label: 'регион просмотров',
     value: regionLabel,
     short: isWorldRegion(region) ? '' : `просмотры: ${regionLabel}`,
-    hint: viewRegionHint(region, campaign.platforms),
+    hint: viewRegionHint(region),
   });
   if (campaign.minVideoSeconds) {
     const length = `от ${formatSeconds(campaign.minVideoSeconds)}`;

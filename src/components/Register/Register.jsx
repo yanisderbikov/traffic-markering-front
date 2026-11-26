@@ -15,6 +15,8 @@ import {
 } from '../../shared/validation';
 import { useCooldown } from '../../shared/useCooldown';
 import { errorMessage, verifyCode } from '../../shared/auth';
+import { attachPendingTelegram } from '../../shared/telegramAuth';
+import TelegramLogin from '../shared/TelegramLogin/TelegramLogin';
 import {
   forgetReferralCode,
   normalizeReferralCode,
@@ -180,12 +182,18 @@ const Register = () => {
     try {
       await verifyCode(formState.email.trim(), formState.code.trim());
       if (invited) forgetReferralCode();
+      const linked = await attachPendingTelegram();
+      if (linked) toast.success(`Telegram ${linked} привязан — теперь можно входить через него`);
       const telegram = formState.telegram.trim();
       if (telegram) {
         try {
           await saveTelegram(formState.role, telegram);
         } catch {
-          toast.error('Аккаунт создан, но Telegram не сохранился. Добавьте его в профиле.');
+          toast.error(
+            formState.role === 'CUSTOMER'
+              ? 'Аккаунт создан, но Telegram не сохранился. Добавьте его в профиле.'
+              : 'Аккаунт создан, но Telegram не сохранился.'
+          );
         }
       }
       navigate('/app', { replace: true });
@@ -368,6 +376,22 @@ const Register = () => {
             >
               Назад
             </button>
+          </div>
+        )}
+
+        {step === STEP_NAME && (
+          <div className={form.actions}>
+            <span className={form.or}>или быстрее — без почты</span>
+            <TelegramLogin
+              role={formState.role}
+              referralCode={invited ? inviter.code : undefined}
+              label="Зарегистрироваться через Telegram"
+              onDone={() => {
+                if (invited) forgetReferralCode();
+                navigate('/app', { replace: true });
+              }}
+              onNeedEmail={() => navigate('/login', { replace: true })}
+            />
           </div>
         )}
 

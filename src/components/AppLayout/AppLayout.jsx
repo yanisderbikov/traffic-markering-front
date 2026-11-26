@@ -50,6 +50,12 @@ const AppLayout = () => {
   }
 
   const initial = userName.trim().charAt(0).toUpperCase() || '·';
+  const avatarUrl = session.user?.avatarUrl;
+  const avatarImage = avatarUrl ? (
+    <img src={avatarUrl} alt="" className={styles.avatarImage} />
+  ) : (
+    initial
+  );
 
   const navList = (
     <nav
@@ -80,7 +86,7 @@ const AppLayout = () => {
   const userCard = (
     <>
       <span className={styles.userAvatar} aria-hidden="true">
-        {initial}
+        {avatarImage}
       </span>
       <span className={styles.userText}>
         <span className={styles.userName}>{userName || 'Профиль'}</span>
@@ -160,7 +166,7 @@ const AppLayout = () => {
           <div className={styles.topbarActions}>
             {profileTab && (
               <NavLink to={profileTab.path} className={styles.topbarAvatar} title={userName}>
-                {initial}
+                {avatarImage}
               </NavLink>
             )}
             <button

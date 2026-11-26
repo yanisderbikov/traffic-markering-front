@@ -6,7 +6,10 @@ import CodeInput, { CODE_LENGTH } from '../shared/CodeInput/CodeInput';
 import FieldError from '../shared/FieldError/FieldError';
 import { clearFieldError, hasErrors, validateCode, validateEmail } from '../../shared/validation';
 import { useCooldown } from '../../shared/useCooldown';
+import toast from 'react-hot-toast';
 import { errorMessage, safeReturnPath, verifyCode } from '../../shared/auth';
+import { attachPendingTelegram, pendingTelegram } from '../../shared/telegramAuth';
+import TelegramLogin from '../shared/TelegramLogin/TelegramLogin';
 import ui from '../../shared/ui.module.css';
 import form from '../shared/AuthLayout/authForm.module.css';
 
@@ -22,6 +25,8 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const cooldown = useCooldown();
+  // Пришли из бота с «У меня есть аккаунт»: Telegram привяжется после входа по почте
+  const [waitingTelegram, setWaitingTelegram] = useState(() => pendingTelegram()?.telegram || null);
 
   const requestCode = async () => {
     const nextErrors = { email: validateEmail(email) };
@@ -56,6 +61,8 @@ const Login = () => {
     setError('');
     try {
       await verifyCode(email.trim(), code.trim());
+      const telegram = await attachPendingTelegram();
+      if (telegram) toast.success(`Telegram ${telegram} привязан — теперь можно входить через него`);
       navigate(safeReturnPath(searchParams.get('from')), { replace: true });
     } catch (err) {
       setError(errorMessage(err, 'Не удалось войти. Проверьте код.'));
@@ -92,7 +99,9 @@ const Login = () => {
       caption={
         codeSent
           ? `Отправили код на ${email.trim()}. Он действует 10 минут.`
-          : 'Пришлём код для входа на почту. Пароль не нужен.'
+          : waitingTelegram
+            ? `Войдите по почте — Telegram ${waitingTelegram} привяжется к аккаунту.`
+            : 'Пришлём код для входа на почту или войдите через Telegram. Пароль не нужен.'
       }
       footer={
         <p className={form.switch}>
@@ -175,6 +184,15 @@ const Login = () => {
               >
                 Изменить адрес почты
               </button>
+            </>
+          )}
+          {!codeSent && !waitingTelegram && (
+            <>
+              <span className={form.or}>или</span>
+              <TelegramLogin
+                onDone={() => navigate(safeReturnPath(searchParams.get('from')), { replace: true })}
+                onNeedEmail={(telegram) => setWaitingTelegram(telegram || 'из бота')}
+              />
             </>
           )}
         </div>

@@ -1,10 +1,12 @@
 import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
 import apiClient from '../../apiClient';
 import CreatorProfile from '../CreatorProfile/CreatorProfile';
 import CustomerProfile from '../CustomerProfile/CustomerProfile';
+import CreatorSocialAccounts from '../CreatorSocialAccounts/CreatorSocialAccounts';
+import AvatarSettings from './AvatarSettings';
 import ThemeSettings from './ThemeSettings';
 import PartnerOffer from './PartnerOffer';
+import LoginSettings from './LoginSettings';
 
 const PARTNER_ROLES = ['CUSTOMER', 'ADMIN'];
 
@@ -13,7 +15,14 @@ const PARTNER_ROLES = ['CUSTOMER', 'ADMIN'];
  * Лишний запрос /api/auth/me не нужен — роль уже лежит в токене.
  */
 const RoleProfile = ({ role }) => {
-  if (role === 'CREATOR') return <CreatorProfile />;
+  if (role === 'CREATOR') {
+    return (
+      <>
+        <CreatorProfile />
+        <CreatorSocialAccounts />
+      </>
+    );
+  }
 
   // У админа на бэке есть доступ к обоим профилям — показываем оба, друг под другом.
   if (role === 'ADMIN') {
@@ -21,6 +30,7 @@ const RoleProfile = ({ role }) => {
       <>
         <CustomerProfile />
         <CreatorProfile />
+        <CreatorSocialAccounts />
       </>
     );
   }
@@ -32,15 +42,12 @@ const RoleProfile = ({ role }) => {
 
 const Profile = () => {
   const role = apiClient.getJwtMetadata()?.role;
-  const { search } = useLocation();
-
-  if (new URLSearchParams(search).has('social')) {
-    return <Navigate to={`/app/profile/socials${search}`} replace />;
-  }
 
   return (
     <>
+      <AvatarSettings />
       <RoleProfile role={role} />
+      <LoginSettings />
       <ThemeSettings>{PARTNER_ROLES.includes(role) && <PartnerOffer />}</ThemeSettings>
     </>
   );

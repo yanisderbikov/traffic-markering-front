@@ -1,0 +1,26 @@
+.box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.icon {
+  color: #229ed9;
+  flex: none;
+}
+
+.note {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: var(--color-muted);
+  text-align: center;
+}

@@ -1,3 +1,13 @@
+.page {
+  padding-top: 0;
+  padding-bottom: 28px;
+  scroll-margin-top: 16px;
+}
+
+.lead {
+  margin: 8px 0 16px;
+}
+
 /* Cards never get narrower than 270px (the connect button fits on one line);
    the shared grid3 forces three columns from 900px and squeezes them next to the sidebar. */
 .grid {
@@ -106,6 +116,49 @@
 
 .connect {
   margin-top: auto;
+}
+
+.linking {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.linkingActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.step {
+  margin: 4px 0 0;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--color-ink);
+}
+
+.codeRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px dashed var(--color-accent);
+  border-radius: var(--field-radius);
+  background: var(--color-accent-soft);
+}
+
+.code {
+  flex: 1 0 auto;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--color-ink);
+  user-select: all;
+  white-space: nowrap;
 }
 
 @media (max-width: 560px) {

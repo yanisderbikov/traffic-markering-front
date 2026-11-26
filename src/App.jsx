@@ -11,6 +11,7 @@ import CampaignPage from './components/CampaignPage/CampaignPage';
 import ApplyPage from './components/ApplyPage/ApplyPage';
 import Login from './components/Login/Login';
 import Register from './components/Register/Register';
+import TelegramAuthPage from './components/TelegramAuth/TelegramAuthPage';
 import NotFound from './components/NotFound/NotFound';
 import AppLayout from './components/AppLayout/AppLayout';
 import RequireTab from './components/AppLayout/RequireTab';
@@ -20,11 +21,11 @@ import CampaignEditor from './components/CampaignEditor/CampaignEditor';
 import CampaignEditPage from './components/CampaignEditor/CampaignEditPage';
 import CreatorApplications from './components/CreatorApplications/CreatorApplications';
 import Profile from './components/Profile/Profile';
-import CreatorSocialAccounts from './components/CreatorSocialAccounts/CreatorSocialAccounts';
 import CustomerWallet from './components/CustomerWallet/CustomerWallet';
 import FinanceCustomers from './components/FinanceCustomers/FinanceCustomers';
 import FinanceCustomer from './components/FinanceCustomer/FinanceCustomer';
 import AdminUsers from './components/AdminUsers/AdminUsers';
+import AdminBroadcasts from './components/AdminBroadcasts/AdminBroadcasts';
 import AdminDashboard from './components/AdminDashboard/AdminDashboard';
 import AdminFraud from './components/AdminFraud/AdminFraud';
 import AdminModeration from './components/AdminModeration/AdminModeration';
@@ -36,6 +37,7 @@ import FinancePayout from './components/FinancePayout/FinancePayout';
 import FinanceOperations from './components/FinanceOperations/FinanceOperations';
 import FinanceTopUps from './components/FinanceTopUps/FinanceTopUps';
 import Referral from './components/Referral/Referral';
+import Studio from './components/Studio/Studio';
 import Info from './components/Info/Info';
 import DocumentPage from './components/Info/DocumentPage';
 
@@ -65,6 +67,7 @@ const KNOWN_PATHS = new Set([
   '/app/finance/operations',
   '/app/admin/dashboard',
   '/app/admin/users',
+  '/app/admin/broadcasts',
   '/app/admin/moderation',
   '/app/admin/fraud',
   '/app/admin/fraud/creators',
@@ -212,6 +215,7 @@ function App() {
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/auth/telegram" element={<TelegramAuthPage />} />
         <Route path="/info" element={<Info />} />
         <Route path="/info/:slug" element={<DocumentPage />} />
         <Route element={<AppLayout />}>
@@ -267,11 +271,24 @@ function App() {
           <Route element={<RequireTab tab="USERS" />}>
             <Route path="/app/admin/users" element={<AdminUsers />} />
           </Route>
+          <Route element={<RequireTab tab="BROADCASTS" />}>
+            <Route path="/app/admin/broadcasts" element={<AdminBroadcasts />} />
+          </Route>
+          <Route element={<RequireTab tab="STUDIO" />}>
+            <Route path="/app/studio" element={<Studio />} />
+          </Route>
           <Route element={<RequireTab tab="PROFILE" />}>
             <Route path="/app/profile" element={<Profile />} />
-          </Route>
-          <Route element={<RequireTab tab="SOCIALS" />}>
-            <Route path="/app/profile/socials" element={<CreatorSocialAccounts />} />
+            {/* Старый адрес вкладки: закладки и возврат с площадки при подключении аккаунта. */}
+            <Route
+              path="/app/profile/socials"
+              element={
+                <Navigate
+                  to={{ pathname: '/app/profile', search: location.search, hash: '#socials' }}
+                  replace
+                />
+              }
+            />
           </Route>
           <Route element={<RequireTab tab="REFERRAL" />}>
             <Route path="/app/referral" element={<Referral />} />

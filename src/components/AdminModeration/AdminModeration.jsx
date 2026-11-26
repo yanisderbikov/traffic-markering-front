@@ -4,6 +4,7 @@ import apiClient from '../../apiClient';
 import { FraudBadge, TrustBadge } from '../shared/FraudBadge/FraudBadge';
 import AdminListSkeleton from '../AdminFraud/AdminListSkeleton';
 import RejectDialog from '../shared/RejectDialog/RejectDialog';
+import PlacementReview from '../shared/Placement/PlacementReview';
 import { errorMessage } from '../../shared/auth';
 import { formatRubles } from '../../shared/money';
 import { PLATFORM_LABELS, formatDate } from '../../shared/dictionaries';
@@ -40,8 +41,13 @@ const AdminModeration = () => {
     try {
       await apiClient.instance.patch(`${MODERATION_URL}/${application.id}`, { status, reason });
       toast.success(`${application.publicId}: ${status === 'APPROVED' ? 'одобрен' : 'отклонён'}`);
-      setItems((current) => current.filter((item) => item.id !== application.id));
       setRejecting(null);
+      if (application.placement && status === 'APPROVED') {
+        // У работы «ссылка и промокод» после ролика могут остаться надбавки на проверке
+        await load();
+      } else {
+        setItems((current) => current.filter((item) => item.id !== application.id));
+      }
     } catch (err) {
       toast.error(errorMessage(err, 'Не удалось сохранить решение'));
       await load();
@@ -58,7 +64,8 @@ const AdminModeration = () => {
           <h1 className={ui.title}>Ролики на проверке</h1>
           <p className={ui.subtitle}>
             Креатор приложил ролик — работа ждёт решения. Пока её не одобрили, деньги за просмотры не
-            начисляются. Отклонить можно только с причиной: креатор увидит её в карточке работы.
+            начисляются. Отклонить можно только с причиной: креатор увидит её в карточке работы. В работах
+            «ссылка и промокод» ссылку и закреплённый промокод подтверждают отдельно от ролика.
           </p>
         </div>
         <div className={ui.pageHeadActions}>
@@ -108,7 +115,12 @@ const AdminModeration = () => {
                     {' · '}
                     {PLATFORM_LABELS[application.platform] || application.platform}
                     {' · '}
-                    {formatRubles(application.ratePerThousandKopecks ?? 0)} за 1000
+                    {formatRubles(
+                      application.placement?.selectedRatePerThousandKopecks ??
+                        application.ratePerThousandKopecks ??
+                        0
+                    )}{' '}
+                    за 1000
                     {' · подан '}
                     {formatDate(application.updatedAt || application.createdAt)}
                   </p>
@@ -119,6 +131,9 @@ const AdminModeration = () => {
 
                   {application.comment && <p className={styles.review}>{application.comment}</p>}
 
+                  {application.placement && <PlacementReview application={application} onChanged={load} />}
+
+                  {application.status === 'PENDING' && (
                   <div className={styles.actions}>
                     <button
                       type="button"
@@ -137,6 +152,7 @@ const AdminModeration = () => {
                       Отклонить
                     </button>
                   </div>
+                  )}
                 </li>
               );
             })}

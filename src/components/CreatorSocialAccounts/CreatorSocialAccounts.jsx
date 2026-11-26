@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import apiClient from '../../apiClient';
 import SocialIcon from '../shared/SocialIcon/SocialIcon';
@@ -8,10 +8,31 @@ import ui from '../../shared/ui.module.css';
 import styles from './CreatorSocialAccounts.module.css';
 
 const PLATFORMS = [
-  { slug: 'instagram', platform: 'INSTAGRAM', label: 'Instagram' },
-  { slug: 'tiktok', platform: 'TIKTOK', label: 'TikTok' },
-  { slug: 'youtube', platform: 'YOUTUBE_SHORTS', label: 'YouTube Shorts' },
+  {
+    slug: 'instagram',
+    platform: 'INSTAGRAM',
+    label: 'Instagram',
+    placeholder: '@nickname или instagram.com/nickname',
+  },
+  {
+    slug: 'tiktok',
+    platform: 'TIKTOK',
+    label: 'TikTok',
+    placeholder: '@nickname или tiktok.com/@nickname',
+  },
+  {
+    slug: 'youtube',
+    platform: 'YOUTUBE_SHORTS',
+    label: 'YouTube Shorts',
+    placeholder: '@channel или ссылка на канал',
+  },
 ];
+
+// OAUTH — кнопка уводит на площадку; SCRAPE — ник и код в описании профиля.
+// Старый бэк без /api/social/mode работает как раньше, через OAuth.
+const MODE_OAUTH = 'OAUTH';
+const MODE_SCRAPE = 'SCRAPE';
+const EMPTY_LINKING = { slug: '', account: '', verification: null, busy: '' };
 
 const STATUS_LABELS = {
   ACTIVE: 'Подключён',
@@ -28,7 +49,8 @@ const formatFollowers = (value) =>
   typeof value === 'number' ? value.toLocaleString('ru-RU') : null;
 
 const renderGeographyStatus = (account) => {
-  if (account.platform !== 'YOUTUBE_SHORTS') return null;
+  // Привязка по коду географию не даёт вовсе, переподключение тут не поможет.
+  if (account.platform !== 'YOUTUBE_SHORTS' || account.linkMethod === MODE_SCRAPE) return null;
   if (account.reportsViewGeography) {
     return <span className={styles.geo}>География просмотров: да</span>;
   }
@@ -45,6 +67,10 @@ const CreatorSocialAccounts = () => {
   const [loading, setLoading] = useState(true);
   const [pendingSlug, setPendingSlug] = useState('');
   const [error, setError] = useState('');
+  const [mode, setMode] = useState(MODE_OAUTH);
+  const [linking, setLinking] = useState(EMPTY_LINKING);
+  const { hash } = useLocation();
+  const sectionRef = useRef(null);
 
   const loadAccounts = useCallback(async () => {
     try {
@@ -61,6 +87,22 @@ const CreatorSocialAccounts = () => {
   useEffect(() => {
     loadAccounts();
   }, [loadAccounts]);
+
+  useEffect(() => {
+    apiClient.instance
+      .get('/api/social/mode')
+      .then((res) => setMode(res?.data?.mode === MODE_SCRAPE ? MODE_SCRAPE : MODE_OAUTH))
+      .catch(() => setMode(MODE_OAUTH));
+  }, []);
+
+  const scrapeMode = mode === MODE_SCRAPE;
+
+  // Ссылки «Управлять» и «Привязать аккаунт» ведут сразу к этому блоку профиля.
+  useEffect(() => {
+    if (!loading && hash === '#socials') {
+      sectionRef.current?.scrollIntoView({ block: 'start' });
+    }
+  }, [loading, hash]);
 
   useEffect(() => {
     const social = searchParams.get('social');
@@ -87,7 +129,63 @@ const CreatorSocialAccounts = () => {
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams, loadAccounts]);
 
+  const openLinking = (slug) => setLinking({ ...EMPTY_LINKING, slug });
+
+  const closeLinking = () => setLinking(EMPTY_LINKING);
+
+  const requestCode = async (event, platform) => {
+    event.preventDefault();
+    const account = linking.account.trim();
+    if (!account) {
+      toast.error('Укажите ник или ссылку на профиль');
+      return;
+    }
+    setLinking((prev) => ({ ...prev, busy: 'code' }));
+    try {
+      const res = await apiClient.instance.post(`/api/social/${platform.slug}/verification`, {
+        account,
+      });
+      setLinking((prev) => ({ ...prev, account, verification: res.data, busy: '' }));
+    } catch (err) {
+      toast.error(errorText(err, `Не удалось найти аккаунт ${platform.label}`));
+      setLinking((prev) => ({ ...prev, busy: '' }));
+    }
+  };
+
+  const confirmCode = async (platform) => {
+    setLinking((prev) => ({ ...prev, busy: 'confirm' }));
+    try {
+      const res = await apiClient.instance.post(
+        `/api/social/${platform.slug}/verification/confirm`,
+        { account: linking.account }
+      );
+      const name = res?.data?.username ? `@${res.data.username}` : res?.data?.displayName || '';
+      toast.dismiss();
+      toast.success(
+        `${platform.label}: подключён ${name}`.trim() + '. Код из описания теперь можно убрать'
+      );
+      closeLinking();
+      loadAccounts();
+    } catch (err) {
+      toast.error(errorText(err, 'Не удалось подтвердить аккаунт'));
+      setLinking((prev) => ({ ...prev, busy: '' }));
+    }
+  };
+
+  const copyCode = async (code) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      toast.success('Код скопирован');
+    } catch {
+      toast.error('Не удалось скопировать — выделите код вручную');
+    }
+  };
+
   const connect = async (slug) => {
+    if (scrapeMode) {
+      openLinking(slug);
+      return;
+    }
     setPendingSlug(slug);
     try {
       const res = await apiClient.instance.post(`/api/social/${slug}/authorize`);
@@ -116,18 +214,117 @@ const CreatorSocialAccounts = () => {
     }
   };
 
-  return (
-    <div className={ui.page}>
-      <header className={ui.pageHead}>
-        <div className={ui.pageHeadMain}>
-          <span className={ui.eyebrow}>Креатор</span>
-          <h1 className={ui.title}>Соцсети</h1>
-          <p className={ui.subtitle}>
-            Подключайте сколько угодно аккаунтов на каждой площадке — просмотры роликов мы считаем
-            по официальному API площадки, а не с ваших слов.
-          </p>
+  // Шаг 1 — ник или ссылка; шаг 2 — найденный профиль, код и «Проверить».
+  const renderLinking = (platform) => {
+    const { verification, busy } = linking;
+    if (!verification) {
+      const inputId = `social-account-${platform.slug}`;
+      return (
+        <form className={styles.linking} onSubmit={(event) => requestCode(event, platform)}>
+          <label className={ui.label} htmlFor={inputId}>
+            Ник или ссылка на профиль
+          </label>
+          <input
+            id={inputId}
+            className={ui.input}
+            value={linking.account}
+            onChange={(event) => setLinking((prev) => ({ ...prev, account: event.target.value }))}
+            placeholder={platform.placeholder}
+            autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            maxLength={300}
+            autoFocus
+          />
+          <div className={styles.linkingActions}>
+            <button
+              type="submit"
+              className={`${ui.btnPrimary} ${ui.btnBlock}`}
+              disabled={busy === 'code'}
+            >
+              {busy === 'code' ? 'Ищем аккаунт…' : 'Получить код'}
+            </button>
+            <button type="button" className={`${ui.btnGhost} ${ui.btnBlock}`} onClick={closeLinking}>
+              Отмена
+            </button>
+          </div>
+        </form>
+      );
+    }
+
+    const followers = formatFollowers(verification.followers);
+    const name = verification.username
+      ? `@${verification.username}`
+      : verification.displayName || verification.externalId;
+    const meta = [
+      verification.username ? verification.displayName : null,
+      followers ? `${followers} подписчиков` : null,
+    ]
+      .filter(Boolean)
+      .join(' · ');
+    return (
+      <div className={styles.linking}>
+        <div className={styles.account}>
+          {verification.avatarUrl ? (
+            <img className={styles.avatar} src={verification.avatarUrl} alt="" loading="lazy" />
+          ) : (
+            <span className={styles.avatarStub} aria-hidden="true" />
+          )}
+          <span className={styles.accountInfo}>
+            <span className={styles.accountName}>{name}</span>
+            {meta && <span className={styles.accountMeta}>{meta}</span>}
+          </span>
         </div>
-      </header>
+
+        <p className={styles.step}>
+          {`Сохраните этот код в профиле — мы найдём его в ${verification.codePlacement || 'описании профиля'}.`}
+        </p>
+        <div className={styles.codeRow}>
+          <code className={styles.code}>{verification.code}</code>
+          <button
+            type="button"
+            className={`${ui.btnSecondary} ${ui.btnSmall}`}
+            onClick={() => copyCode(verification.code)}
+          >
+            Скопировать
+          </button>
+        </div>
+        <p className={verification.codeFound ? ui.hintOk : ui.hint}>
+          {verification.codeFound
+            ? 'Код уже стоит в описании — осталось подтвердить.'
+            : 'Код можно поставить в любое место описания. После привязки его можно убрать.'}
+        </p>
+
+        <div className={styles.linkingActions}>
+          <button
+            type="button"
+            className={`${ui.btnPrimary} ${ui.btnBlock}`}
+            onClick={() => confirmCode(platform)}
+            disabled={busy === 'confirm'}
+          >
+            {busy === 'confirm' ? 'Проверяем описание…' : 'Проверить'}
+          </button>
+          <button
+            type="button"
+            className={`${ui.btnGhost} ${ui.btnBlock}`}
+            onClick={() => openLinking(platform.slug)}
+            disabled={busy === 'confirm'}
+          >
+            Другой аккаунт
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <section ref={sectionRef} className={`${ui.page} ${styles.page}`}>
+      <h2 className={ui.sectionTitle}>Привязанные аккаунты</h2>
+      <p className={`${ui.hint} ${styles.lead}`}>
+        {scrapeMode
+          ? 'Подключайте сколько угодно аккаунтов на каждой площадке. Чтобы подтвердить, что аккаунт ваш, добавьте в описание профиля короткий код — после привязки его можно убрать. Профиль должен быть открытым: просмотры мы берём из публичной статистики ролика, а не с ваших слов.'
+          : 'Подключайте сколько угодно аккаунтов на каждой площадке — просмотры роликов мы считаем по официальному API площадки, а не с ваших слов.'}
+      </p>
 
       {error && <p className={ui.errorBanner}>{error}</p>}
       {loading && (
@@ -213,24 +410,28 @@ const CreatorSocialAccounts = () => {
                   </ul>
                 )}
 
-                <button
-                  type="button"
-                  className={`${connected.length ? ui.btnSecondary : ui.btnPrimary} ${ui.btnBlock} ${styles.connect}`}
-                  onClick={() => connect(platform.slug)}
-                  disabled={pendingSlug === platform.slug}
-                  aria-label={`Подключить ${platform.label}`}
-                >
-                  <SocialIcon name={platform.slug} />
-                  {pendingSlug === platform.slug
-                    ? 'Открываем площадку…'
-                    : connected.length ? 'Подключить ещё' : 'Подключить аккаунт'}
-                </button>
+                {scrapeMode && linking.slug === platform.slug ? (
+                  renderLinking(platform)
+                ) : (
+                  <button
+                    type="button"
+                    className={`${connected.length ? ui.btnSecondary : ui.btnPrimary} ${ui.btnBlock} ${styles.connect}`}
+                    onClick={() => connect(platform.slug)}
+                    disabled={pendingSlug === platform.slug}
+                    aria-label={`Подключить ${platform.label}`}
+                  >
+                    <SocialIcon name={platform.slug} />
+                    {pendingSlug === platform.slug
+                      ? 'Открываем площадку…'
+                      : connected.length ? 'Подключить ещё' : 'Подключить аккаунт'}
+                  </button>
+                )}
               </section>
             );
           })}
         </div>
       )}
-    </div>
+    </section>
   );
 };
 

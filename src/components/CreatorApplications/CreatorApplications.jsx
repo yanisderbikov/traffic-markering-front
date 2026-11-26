@@ -206,6 +206,7 @@ const CreatorApplications = () => {
               key={application.id}
               application={application}
               onWithdraw={handleWithdraw}
+              onChanged={loadApplications}
               busy={busyId === application.id}
             />
           ))}
