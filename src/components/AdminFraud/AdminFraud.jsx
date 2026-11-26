@@ -227,6 +227,13 @@ const AdminFraud = () => {
 
                   <FraudFlags flags={application.fraudFlags} />
 
+                  {application.moderatedByName && (
+                    <p className={styles.review}>
+                      Ролик проверил {application.moderatedByName}
+                      {application.moderatedAt ? `, ${formatDate(application.moderatedAt)}` : ''}
+                    </p>
+                  )}
+
                   {item.fraudReviewedAt && (
                     <p className={styles.review}>
                       Решение {item.fraudReviewedBy ? `${item.fraudReviewedBy}, ` : ''}

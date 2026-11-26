@@ -370,6 +370,12 @@ const CampaignOverview = ({ campaign, onReload }) => {
                       {application.status === 'REJECTED' && application.rejectionReason && (
                         <p className={styles.appMeta}>Причина отказа: {application.rejectionReason}</p>
                       )}
+                      {application.moderatedByName && (
+                        <p className={styles.appMeta}>
+                          Проверил: {application.moderatedByName}
+                          {application.moderatedAt ? `, ${formatDate(application.moderatedAt)}` : ''}
+                        </p>
+                      )}
                       {application.campaignViewRegion && application.campaignViewRegion !== 'WORLD' && (
                         <p className={styles.appMeta}>
                           {application.viewsGeographyKnown === false ? (

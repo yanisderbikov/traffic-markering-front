@@ -13,12 +13,14 @@ const toText = (moderators) =>
     .map((moderator) => `@${moderator.username}`)
     .join('\n');
 
+const DECISION_LABELS = { APPROVED: 'Принят', REJECTED: 'Отклонён' };
+
 const statusOf = (moderator) => {
   if (!moderator.enabled) return { label: 'убран из списка', className: ui.chipOutline };
-  if (!moderator.linked) return { label: 'ещё не заходил в бота', className: ui.chipWarning };
-  if (moderator.paused) return { label: 'пауза', className: ui.chipWarning };
-  if (moderator.available) return { label: 'принимает заявки', className: ui.chipSuccess };
-  return { label: 'не его часы', className: ui.chipOutline };
+  if (!moderator.active) return { label: 'неактивен', className: ui.chipDanger };
+  if (!moderator.linked) return { label: 'активен · ещё не заходил в бота', className: ui.chipWarning };
+  if (moderator.available) return { label: 'активен · принимает заявки', className: ui.chipSuccess };
+  return { label: 'активен · не его часы', className: ui.chipOutline };
 };
 
 /** Супер-админ: кто разбирает ролики в Telegram-боте модерации. Список — ники через @. */
@@ -27,6 +29,9 @@ const ModeratorRoster = () => {
   const [text, setText] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [toggling, setToggling] = useState(null);
+  const [decisions, setDecisions] = useState([]);
+  const [decisionsFor, setDecisionsFor] = useState('');
 
   const load = useCallback(async () => {
     try {
@@ -42,6 +47,36 @@ const ModeratorRoster = () => {
   useEffect(() => {
     load();
   }, [load]);
+
+  const loadDecisions = useCallback(async (username) => {
+    try {
+      const res = await apiClient.instance.get(`${MODERATORS_URL}/decisions`, {
+        params: { limit: 100, username: username || undefined },
+      });
+      setDecisions(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      toast.error(errorMessage(err, 'Не удалось загрузить журнал решений'));
+    }
+  }, []);
+
+  useEffect(() => {
+    loadDecisions(decisionsFor);
+  }, [loadDecisions, decisionsFor]);
+
+  const toggle = async (moderator) => {
+    setToggling(moderator.username);
+    try {
+      const res = await apiClient.instance.patch(`${MODERATORS_URL}/${moderator.username}`, {
+        active: !moderator.active,
+      });
+      setData(res.data);
+      toast.success(`@${moderator.username}: ${moderator.active ? 'неактивен' : 'активен'}`);
+    } catch (err) {
+      toast.error(errorMessage(err, 'Не удалось поменять статус'));
+    } finally {
+      setToggling(null);
+    }
+  };
 
   const save = async () => {
     setSaving(true);
@@ -63,8 +98,8 @@ const ModeratorRoster = () => {
     <section className={ui.card}>
       <h2 className={ui.cardTitle}>Менеджеры в Telegram</h2>
       <p className={ui.muted}>
-        Ролики на модерации раздаются менеджерам по одному в их рабочие часы. Не ответил за{' '}
-        {data?.holdMinutes ?? 30} мин — заявка уходит следующему.{' '}
+        Ролики на модерации раздаются активным менеджерам по одному в их рабочие часы. Не ответил за{' '}
+        {data?.holdMinutes ?? 30} мин — заявка уходит следующему; пропустил 3 подряд — становится неактивным.{' '}
         {data?.botUsername ? (
           <>
             Менеджеры заходят в бота{' '}
@@ -103,7 +138,7 @@ const ModeratorRoster = () => {
       </div>
 
       {moderators.length > 0 && (
-        <div className={ui.tableWrap}>
+        <div className={ui.tableWrap} style={{ marginTop: 20 }}>
           <table className={ui.table}>
             <thead>
               <tr>
@@ -113,6 +148,7 @@ const ModeratorRoster = () => {
                 <th>Сейчас</th>
                 <th>За сутки</th>
                 <th>Принято / отклонено / пропущено</th>
+                <th />
               </tr>
             </thead>
             <tbody>
@@ -138,6 +174,97 @@ const ModeratorRoster = () => {
                     <td>{moderator.decidedLastDay}</td>
                     <td>
                       {moderator.approved} / {moderator.rejected} / {moderator.missed}
+                    </td>
+                    <td>
+                      {moderator.enabled && (
+                        <button
+                          type="button"
+                          className={`${moderator.active ? ui.btnSecondary : ui.btnPrimary} ${ui.btnSmall}`}
+                          onClick={() => toggle(moderator)}
+                          disabled={toggling === moderator.username}
+                        >
+                          {moderator.active ? 'Сделать неактивным' : 'Сделать активным'}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <h3 className={ui.sectionTitle} style={{ marginTop: 28 }}>
+        Кто что решил
+      </h3>
+      <p className={ui.muted}>
+        Последние решения в боте — для выборочной перепроверки. Если решение потом поменяли на сайте, текущий
+        статус отличается от решения менеджера.
+      </p>
+      {moderators.length > 0 && (
+        <select
+          className={ui.input}
+          value={decisionsFor}
+          onChange={(event) => setDecisionsFor(event.target.value)}
+          aria-label="Менеджер"
+        >
+          <option value="">Все менеджеры</option>
+          {moderators.map((moderator) => (
+            <option key={moderator.username} value={moderator.username}>
+              @{moderator.username}
+            </option>
+          ))}
+        </select>
+      )}
+      {decisions.length === 0 ? (
+        <p className={ui.message}>Решений в боте пока нет.</p>
+      ) : (
+        <div className={ui.tableWrap} style={{ marginTop: 12 }}>
+          <table className={ui.table}>
+            <thead>
+              <tr>
+                <th>Когда</th>
+                <th>Менеджер</th>
+                <th>Ролик</th>
+                <th>Решение</th>
+                <th>Сейчас</th>
+              </tr>
+            </thead>
+            <tbody>
+              {decisions.map((decision) => {
+                const changed =
+                  decision.applicationStatus &&
+                  decision.applicationStatus !== decision.decision &&
+                  !(decision.decision === 'APPROVED' && decision.applicationStatus === 'COMPLETED');
+                return (
+                  <tr key={decision.id}>
+                    <td>{formatDate(decision.decidedAt)}</td>
+                    <td>{decision.moderatorLabel}</td>
+                    <td>
+                      {decision.videoUrl ? (
+                        <a href={decision.videoUrl} target="_blank" rel="noreferrer">
+                          {decision.applicationPublicId}
+                        </a>
+                      ) : (
+                        decision.applicationPublicId
+                      )}
+                      {decision.campaignTitle && <div className={ui.muted}>{decision.campaignTitle}</div>}
+                    </td>
+                    <td>
+                      <span className={decision.decision === 'APPROVED' ? ui.chipSuccess : ui.chipDanger}>
+                        {DECISION_LABELS[decision.decision] || decision.decision}
+                      </span>
+                      {decision.reason && <div className={ui.muted}>{decision.reason}</div>}
+                    </td>
+                    <td>
+                      {decision.applicationStatus ? (
+                        <span className={changed ? ui.chipWarning : ui.chipOutline}>
+                          {changed ? 'изменено на сайте' : 'как решил'}
+                        </span>
+                      ) : (
+                        'отклик удалён'
+                      )}
                     </td>
                   </tr>
                 );
