@@ -6,6 +6,8 @@ import AdminListSkeleton from '../AdminFraud/AdminListSkeleton';
 import RejectDialog from '../shared/RejectDialog/RejectDialog';
 import PlacementReview from '../shared/Placement/PlacementReview';
 import { errorMessage } from '../../shared/auth';
+import { useSession } from '../../shared/session';
+import ModeratorRoster from './ModeratorRoster';
 import { formatRubles } from '../../shared/money';
 import { PLATFORM_LABELS, formatDate } from '../../shared/dictionaries';
 import ui from '../../shared/ui.module.css';
@@ -19,6 +21,7 @@ const AdminModeration = () => {
   const [pageError, setPageError] = useState('');
   const [busyId, setBusyId] = useState(null);
   const [rejecting, setRejecting] = useState(null);
+  const { user } = useSession();
 
   const load = useCallback(async () => {
     try {
@@ -121,6 +124,7 @@ const AdminModeration = () => {
                         0
                     )}{' '}
                     за 1000
+                    {application.contentTopic ? ` · ${application.contentTopic}` : ''}
                     {' · подан '}
                     {formatDate(application.updatedAt || application.createdAt)}
                   </p>
@@ -159,6 +163,8 @@ const AdminModeration = () => {
           </ul>
         )}
       </section>
+
+      {user?.role === 'SUPER_ADMIN' && <ModeratorRoster />}
 
       <RejectDialog
         subject={rejecting && `${rejecting.creatorName} · ${rejecting.campaignTitle}`}

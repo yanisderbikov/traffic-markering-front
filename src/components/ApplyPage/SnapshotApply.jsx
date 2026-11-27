@@ -11,6 +11,9 @@ import { formatDate, PLATFORM_LABELS } from '../../shared/dictionaries';
 import { formatDay } from '../../shared/dates';
 import { formatRubles, formatViews } from '../../shared/money';
 import { campaignRates, rateVariants, workRates } from '../../shared/placement';
+import { hasContentRates } from '../../shared/contentRates';
+import ContentTopicPicker from '../shared/ContentTopicPicker/ContentTopicPicker';
+import SubmitConfirmDialog from '../shared/SubmitConfirmDialog/SubmitConfirmDialog';
 import { detectPlatform } from '../../shared/video';
 import ui from '../../shared/ui.module.css';
 import placementStyles from '../shared/Placement/Placement.module.css';
@@ -94,6 +97,9 @@ const SnapshotApply = ({ campaign, workInProgress, onWorkChange, inactive, accou
   const [commentUrl, setCommentUrl] = useState('');
   const [comment, setComment] = useState('');
   const [formError, setFormError] = useState('');
+  const [contentTopic, setContentTopic] = useState(workInProgress?.contentTopic || '');
+  const [topicError, setTopicError] = useState('');
+  const [confirming, setConfirming] = useState(false);
 
   const placement = workInProgress?.placement;
   const rates = placement ? workRates(placement) : campaignRates(campaign);
@@ -161,11 +167,18 @@ const SnapshotApply = ({ campaign, workInProgress, onWorkChange, inactive, accou
       setVideoError('Площадка не распознана: принимаются YouTube, TikTok и Instagram');
       return;
     }
+    if (hasContentRates(campaign) && !contentTopic) {
+      setTopicError('Выберите тематику ролика — от неё зависит базовая ставка');
+      return;
+    }
     setBusy('quote');
     setFormError('');
     setQuote(null);
     try {
-      const res = await apiClient.api.quoteWork(workInProgress.id, { videoUrl: url });
+      const res = await apiClient.api.quoteWork(workInProgress.id, {
+        videoUrl: url,
+        contentTopic: contentTopic || null,
+      });
       setQuote(res.data);
     } catch (err) {
       setFormError(errorMessage(err, 'Не удалось рассчитать работу'));
@@ -185,6 +198,11 @@ const SnapshotApply = ({ campaign, workInProgress, onWorkChange, inactive, accou
       setFormError('Приложите скриншот или запись экрана с закреплённым комментарием — или выберите вариант без промокода');
       return;
     }
+    setFormError('');
+    setConfirming(true);
+  };
+
+  const send = async () => {
     setBusy('submit');
     setFormError('');
     try {
@@ -204,18 +222,34 @@ const SnapshotApply = ({ campaign, workInProgress, onWorkChange, inactive, accou
       setFormError(errorMessage(err, 'Не удалось подать работу'));
     } finally {
       setBusy(null);
+      setConfirming(false);
     }
   };
 
   const disabled = inactive || busy !== null;
 
   return (
+    <>
+    <SubmitConfirmDialog
+      title="Подать работу на проверку?"
+      open={confirming}
+      busy={busy === 'submit'}
+      onCancel={() => setConfirming(false)}
+      onConfirm={send}
+    >
+      Работа сразу уйдёт на модерацию с просмотрами из расчёта
+      {quote ? ` — ${formatViews(quote.views ?? 0)}` : ''}. Просмотры, набранные позже, в оплату не
+      войдут. Если ролик ещё набирает просмотры — подайте его позже и рассчитайте заново.
+    </SubmitConfirmDialog>
     <form className={`${ui.card} ${styles.form}`} onSubmit={submit} noValidate>
       <section className={placementStyles.section}>
         <h2 className={placementStyles.sectionTitle}>1. Вариант участия</h2>
         <PlacementRates rates={rates} selected={selected} onSelect={choose} disabled={disabled} />
         <p className={placementStyles.note}>
           Ставки за 1 000 просмотров до комиссии платформы.{' '}
+          {hasContentRates(campaign)
+            ? 'Базовая ставка зависит от тематики ролика — указана наибольшая, тематику выберете при расчёте. '
+            : ''}
           {placement
             ? 'Вариант можно менять, пока работа не подана.'
             : 'Нет возможности поставить ссылку или закрепить комментарий — выберите вариант без этого.'}
@@ -279,6 +313,17 @@ const SnapshotApply = ({ campaign, workInProgress, onWorkChange, inactive, accou
                 наберёт просмотры: по ним и считается оплата.
               </span>
             </div>
+            <ContentTopicPicker
+              campaign={campaign}
+              value={contentTopic}
+              onChange={(name) => {
+                setContentTopic(name);
+                setTopicError('');
+                setQuote(null);
+              }}
+              disabled={disabled}
+              error={topicError}
+            />
             <div className={styles.actions}>
               <button
                 type="button"
@@ -369,6 +414,7 @@ const SnapshotApply = ({ campaign, workInProgress, onWorkChange, inactive, accou
         </div>
       )}
     </form>
+    </>
   );
 };
 

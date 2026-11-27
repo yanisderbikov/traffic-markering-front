@@ -45,7 +45,7 @@ const CampaignPreview = ({ editor, hideOnMobile = false }) => {
         </p>
         <p className={styles.previewRate}>
           {rateKopecks > 0
-            ? `${bonusKopecks > 0 ? 'до ' : ''}${formatRubles(rateKopecks + bonusKopecks)}`
+            ? `${bonusKopecks > 0 || form.contentRates.length > 1 ? 'до ' : ''}${formatRubles(rateKopecks + bonusKopecks)}`
             : '— ₽'}{' '}
           <span className={styles.previewRateUnit}>/ 1 000</span>
         </p>

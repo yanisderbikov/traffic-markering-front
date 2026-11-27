@@ -130,6 +130,7 @@ const WorkCard = ({ application, onWithdraw, onChanged, busy = false }) => {
             )}
           </b>
           <span className={ui.muted}> / 1 000</span>
+          {application.contentTopic && <span className={ui.muted}> · {application.contentTopic}</span>}
         </span>
         {!awaitingVideo && (
           <span>

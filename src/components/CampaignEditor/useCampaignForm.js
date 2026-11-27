@@ -19,6 +19,7 @@ import {
   suggestedRateInput,
   topicFromCampaign,
   validateCampaign,
+  withContentRates,
 } from './campaignForm';
 
 const useCampaignForm = (initialCampaign) => {
@@ -106,6 +107,38 @@ const useCampaignForm = (initialCampaign) => {
     }));
     touch('platforms');
   };
+
+  const changeContentRates = (change) => {
+    setForm((prev) => withContentRates(prev, change(prev.contentRates)));
+    touch('contentRates');
+    touch('rateRub');
+  };
+
+  // Включаем с двумя строками: первая берёт текущую ставку, чтобы не начинать с нуля
+  const setContentRatesEnabled = (enabled) =>
+    changeContentRates(() =>
+      enabled
+        ? [
+            { name: '', rateRub: form.rateRub },
+            { name: '', rateRub: '' },
+          ]
+        : []
+    );
+
+  const addContentRate = () =>
+    changeContentRates((rates) => [...rates, { name: '', rateRub: '' }]);
+
+  const removeContentRate = (index) =>
+    changeContentRates((rates) => rates.filter((_, position) => position !== index));
+
+  const setContentRate = (index, key, value) =>
+    changeContentRates((rates) =>
+      rates.map((rate, position) =>
+        position === index
+          ? { ...rate, [key]: key === 'rateRub' ? formatRubInput(value) : value }
+          : rate
+      )
+    );
 
   const setViewRegion = (region) => updateField('viewRegion', region);
   const setPaymentModel = (model) => updateField('paymentModel', model);
@@ -371,6 +404,10 @@ const useCampaignForm = (initialCampaign) => {
     togglePlatform,
     setViewRegion,
     setPaymentModel,
+    setContentRatesEnabled,
+    addContentRate,
+    removeContentRate,
+    setContentRate,
     setTopic,
     selectTopic,
     prefillRate,

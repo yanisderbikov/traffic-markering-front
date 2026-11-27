@@ -17,6 +17,7 @@ import PlacementRates from '../shared/Placement/PlacementRates';
 import { campaignRates, fullRate, isSnapshot, rateVariants } from '../../shared/placement';
 import ui from '../../shared/ui.module.css';
 import styles from './CampaignPage.module.css';
+import { campaignRateLabel, hasContentRates } from '../../shared/contentRates';
 
 const SKELETON_TERMS = ['Осталось в бюджете', 'Порог вывода', 'Срок приёма работ', 'Откликов'];
 
@@ -320,7 +321,9 @@ const CampaignPage = () => {
         <div className={styles.heroBody}>
           <span className={styles.heroKicker}>{customer} / оффер</span>
           <h2 className={styles.heroTitle}>
-            {snapshot && fullRate(rates) > rates.base
+            {hasContentRates(campaign)
+              ? `${campaignRateLabel(campaign)} за 1 000 просмотров`
+              : snapshot && fullRate(rates) > rates.base
               ? `До ${formatRubles(fullRate(rates))} за 1 000 просмотров`
               : `${formatRubles(campaign.ratePerThousandKopecks)} за 1 000 просмотров`}
           </h2>
@@ -397,11 +400,28 @@ const CampaignPage = () => {
           <section className={ui.card}>
             <span className={ui.eyebrow}>Ставка за результат</span>
             <p className={styles.rate}>
-              {formatRubles(snapshot && selectedVariant ? selectedVariant.rate : campaign.ratePerThousandKopecks)}
+              {hasContentRates(campaign)
+                ? campaignRateLabel(campaign)
+                : formatRubles(snapshot && selectedVariant ? selectedVariant.rate : campaign.ratePerThousandKopecks)}
             </p>
             <p className={styles.rateUnit}>
               за 1 000 {snapshot ? 'просмотров на момент подачи' : 'подтверждённых просмотров'}
             </p>
+            {hasContentRates(campaign) && (
+              <>
+                <div className={ui.divider} />
+                <span className={ui.eyebrow}>
+                  {snapshot ? 'Базовая ставка по тематике ролика' : 'Ставка по тематике ролика'}
+                </span>
+                {campaign.contentRates.map((rate) => (
+                  <div key={rate.name} className={ui.kv}>
+                    <span className={ui.kvKey}>{rate.name}</span>
+                    <span className={ui.kvValue}>{formatRubles(rate.ratePerThousandKopecks)}</span>
+                  </div>
+                ))}
+                <p className={styles.rateUnit}>Тематику ролика выберете при подаче.</p>
+              </>
+            )}
             {snapshot && variants.length > 1 && (
               <>
                 <div className={ui.divider} />

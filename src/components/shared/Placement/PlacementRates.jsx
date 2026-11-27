@@ -5,7 +5,7 @@ import styles from './Placement.module.css';
 
 /**
  * Четыре варианта участия «ссылка и промокод» со ставками за 1 000 просмотров.
- * С onSelect варианты кликабельны (выбор криатора), без него — просто список ставок.
+ * С onSelect варианты кликабельны (выбор креатора), без него — просто список ставок.
  */
 const PlacementRates = ({ rates, selected, onSelect, disabled = false }) => {
   const variants = rateVariants(rates);

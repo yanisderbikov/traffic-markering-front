@@ -26,6 +26,7 @@ import FitRubles from '../shared/FitRubles/FitRubles';
 import Skeleton from '../shared/Skeleton/Skeleton';
 import ui from '../../shared/ui.module.css';
 import styles from './CampaignEditor.module.css';
+import { campaignRateLabel, hasContentRates } from '../../shared/contentRates';
 
 const APPLICATION_ACTIONS = [
   { status: 'APPROVED', label: 'Одобрить' },
@@ -229,7 +230,7 @@ const CampaignOverview = ({ campaign, onReload }) => {
           <span className={ui.statLabel}>Средняя цена просмотра</span>
           <span className={ui.statValue}>{cpv > 0 ? formatRubles(Math.round(cpv)) : '—'}</span>
           <span className={ui.statNote}>
-            ставка {isSnapshot(campaign) ? rateRange(campaignRates(campaign)) : formatRubles(campaign.ratePerThousandKopecks)} / 1 000
+            ставка {hasContentRates(campaign) ? campaignRateLabel(campaign) : isSnapshot(campaign) ? rateRange(campaignRates(campaign)) : formatRubles(campaign.ratePerThousandKopecks)} / 1 000
           </span>
         </div>
       </div>
@@ -323,6 +324,7 @@ const CampaignOverview = ({ campaign, onReload }) => {
                           {application.platformDescription ||
                             PLATFORM_LABELS[application.platform] ||
                             application.platform}
+                          {application.contentTopic ? ` · ${application.contentTopic}` : ''}
                           {' · '}
                           {formatDate(application.createdAt)}
                         </span>
@@ -367,6 +369,12 @@ const CampaignOverview = ({ campaign, onReload }) => {
                       {application.comment && <p className={styles.comment}>{application.comment}</p>}
                       {application.status === 'REJECTED' && application.rejectionReason && (
                         <p className={styles.appMeta}>Причина отказа: {application.rejectionReason}</p>
+                      )}
+                      {application.moderatedByName && (
+                        <p className={styles.appMeta}>
+                          Проверил: {application.moderatedByName}
+                          {application.moderatedAt ? `, ${formatDate(application.moderatedAt)}` : ''}
+                        </p>
                       )}
                       {application.campaignViewRegion && application.campaignViewRegion !== 'WORLD' && (
                         <p className={styles.appMeta}>
