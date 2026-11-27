@@ -39,7 +39,9 @@ const moneyOrDash = (value) => {
 const reviewRows = (form, topic) => ({
   brief: [
     ['Название', orDash(form.title.trim())],
-    ['Тематика', orDash(topic?.description)],
+    form.contentRates.length > 0
+      ? ['Тематики', form.contentRates.map((rate) => rate.name.trim()).join(', ')]
+      : ['Тематика', orDash(topic?.description)],
     ['Описание', form.description.trim() ? 'заполнено' : '—'],
     ['Обложка', form.photoKey ? 'загружена' : '—'],
     [
@@ -77,7 +79,9 @@ const reviewRows = (form, topic) => ({
 const LaunchReview = ({ form, topic, onEdit, disabled }) => {
   const rows = reviewRows(form, topic);
   const rateKopecks = rubToKopecks(form.rateRub);
+  // При нескольких тематиках ставки сравниваются со средней в самих строках ставок
   const rateBelowTopic =
+    form.contentRates.length === 0 &&
     compareToTopicAverage(rateKopecks, topic?.averageRatePerThousandKopecks) === 'below';
   const missing = missingLabels(form);
   return (

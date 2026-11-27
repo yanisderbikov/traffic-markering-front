@@ -19,6 +19,9 @@ import {
   suggestedRateInput,
   topicFromCampaign,
   validateCampaign,
+  isTopicSelected,
+  removeTopicRate,
+  toggleTopic,
   withContentRates,
 } from './campaignForm';
 
@@ -73,7 +76,22 @@ const useCampaignForm = (initialCampaign) => {
 
   const topics = benchmarks?.topics ?? [];
   const campaignTopic = useMemo(() => topicFromCampaign(campaign), [campaign]);
-  const topic = findTopic([...topics, ...pickedTopics, campaignTopic], form.topic);
+  const knownTopics = [...topics, ...pickedTopics, campaignTopic];
+  const topic = findTopic(knownTopics, form.topic);
+  // Несколько тематик — строки ставок; одна — основная тематика с общей ставкой
+  const selectedTopics =
+    form.contentRates.length > 0
+      ? form.contentRates.map(
+          (rate) =>
+            findTopic(knownTopics, rate.topicCode) || {
+              code: rate.topicCode,
+              description: rate.name,
+              averageRatePerThousandKopecks: null,
+            }
+        )
+      : topic
+        ? [topic]
+        : [];
 
   const prefillRate = useCallback(() => {
     if (ratePrefilled.current || !benchmarks) return;
@@ -81,7 +99,7 @@ const useCampaignForm = (initialCampaign) => {
     const baseKopecks =
       topic?.averageRatePerThousandKopecks ?? benchmarks.medianRatePerThousandKopecks;
     const rateRub = suggestedRateInput(baseKopecks);
-    setForm((prev) => (prev.rateRub ? prev : { ...prev, rateRub }));
+    setForm((prev) => (prev.rateRub || prev.contentRates.length > 0 ? prev : { ...prev, rateRub }));
   }, [benchmarks, topic]);
 
   const touch = (name) => {
@@ -108,46 +126,48 @@ const useCampaignForm = (initialCampaign) => {
     touch('platforms');
   };
 
-  const changeContentRates = (change) => {
-    setForm((prev) => withContentRates(prev, change(prev.contentRates)));
+  const touchTopics = () => {
+    touch('topic');
     touch('contentRates');
     touch('rateRub');
   };
 
-  // Включаем с двумя строками: первая берёт текущую ставку, чтобы не начинать с нуля
-  const setContentRatesEnabled = (enabled) =>
-    changeContentRates(() =>
-      enabled
-        ? [
-            { name: '', rateRub: form.rateRub },
-            { name: '', rateRub: '' },
-          ]
-        : []
-    );
+  const removeContentRate = (index) => {
+    setForm((prev) => removeTopicRate(prev, index));
+    touchTopics();
+  };
 
-  const addContentRate = () =>
-    changeContentRates((rates) => [...rates, { name: '', rateRub: '' }]);
-
-  const removeContentRate = (index) =>
-    changeContentRates((rates) => rates.filter((_, position) => position !== index));
-
-  const setContentRate = (index, key, value) =>
-    changeContentRates((rates) =>
-      rates.map((rate, position) =>
-        position === index
-          ? { ...rate, [key]: key === 'rateRub' ? formatRubInput(value) : value }
-          : rate
+  const setContentRate = (index, value) => {
+    setForm((prev) =>
+      withContentRates(
+        prev,
+        prev.contentRates.map((rate, position) =>
+          position === index ? { ...rate, rateRub: formatRubInput(value) } : rate
+        )
       )
     );
+    touchTopics();
+  };
 
   const setViewRegion = (region) => updateField('viewRegion', region);
   const setPaymentModel = (model) => updateField('paymentModel', model);
-  const setTopic = (code) => updateField('topic', code);
-
   // Найденная поиском или только что добавленная тематика в топ не входит — запоминаем её
-  const selectTopic = (picked) => {
+  const rememberTopic = (picked) =>
     setPickedTopics((prev) => (findTopic(prev, picked.code) ? prev : [...prev, picked]));
-    setTopic(picked.code);
+
+  const toggleTopicChoice = (picked) => {
+    rememberTopic(picked);
+    setForm((prev) => toggleTopic(prev, picked, findTopic(knownTopics, prev.topic)));
+    touchTopics();
+  };
+
+  // Из поиска тематику только добавляем: повторный выбор её не снимает
+  const selectTopic = (picked) => {
+    rememberTopic(picked);
+    setForm((prev) =>
+      isTopicSelected(prev, picked) ? prev : toggleTopic(prev, picked, findTopic(knownTopics, prev.topic))
+    );
+    touchTopics();
   };
 
   const materialsFull = form.materials.length >= MATERIALS_MAX;
@@ -395,6 +415,7 @@ const useCampaignForm = (initialCampaign) => {
     benchmarksLoading,
     topics,
     topic,
+    selectedTopics,
     availableKopecks,
     savedBudgetKopecks,
     setField,
@@ -404,11 +425,9 @@ const useCampaignForm = (initialCampaign) => {
     togglePlatform,
     setViewRegion,
     setPaymentModel,
-    setContentRatesEnabled,
-    addContentRate,
     removeContentRate,
     setContentRate,
-    setTopic,
+    toggleTopic: toggleTopicChoice,
     selectTopic,
     prefillRate,
     removeMaterial,

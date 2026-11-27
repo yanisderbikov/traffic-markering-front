@@ -820,6 +820,20 @@
   align-items: center;
 }
 
+.contentRateName {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  min-width: 0;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.contentRateName > span {
+  margin-top: 0;
+}
+
 .contentRates + button {
   align-self: flex-start;
 }

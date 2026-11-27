@@ -20,8 +20,8 @@ import {
   DEFAULT_RETENTION_DAYS,
   MATERIALS_MAX,
   CONTENT_RATES_MAX,
-  CONTENT_TOPIC_NAME_MAX,
   hasContentRates,
+  isTopicSelected,
   isSnapshotForm,
   TOPIC_NAME_MAX,
   compareToMedian,
@@ -215,8 +215,8 @@ const TopicSearch = ({ editor }) => {
                     <TopicChip
                       key={item.code}
                       topic={item}
-                      selected={editor.form.topic === item.code}
-                      aria-pressed={editor.form.topic === item.code}
+                      selected={isTopicSelected(editor.form, item)}
+                      aria-pressed={isTopicSelected(editor.form, item)}
                       onClick={() => search.pick(item)}
                     />
                   ))}
@@ -244,29 +244,78 @@ const TopicSearch = ({ editor }) => {
   );
 };
 
+const TopicRates = ({ editor }) => {
+  const { form, selectedTopics } = editor;
+  const rateLabel = isSnapshotForm(form) ? 'Базовая ставка' : 'Ставка';
+  return (
+    <div className={styles.contentRates}>
+      {form.contentRates.map((rate, index) => {
+        const average = selectedTopics[index]?.averageRatePerThousandKopecks;
+        const below = compareToTopicAverage(rubToKopecks(rate.rateRub), average) === 'below';
+        return (
+          <div key={rate.topicCode || rate.name} className={styles.contentRateRow}>
+            <span className={styles.contentRateName}>
+              {rate.name}
+              {average != null && (
+                <span className={below ? ui.hintWarn : ui.hint}>
+                  {below ? 'ниже средней — ' : 'в среднем '}
+                  {formatRubles(average)}
+                </span>
+              )}
+            </span>
+            <div className={styles.money}>
+              <input
+                type="text"
+                inputMode="decimal"
+                className={ui.input}
+                value={rate.rateRub}
+                placeholder={rateLabel}
+                aria-label={`${rateLabel} за 1 000 просмотров: ${rate.name}`}
+                autoComplete="off"
+                onChange={(e) => editor.setContentRate(index, e.target.value)}
+              />
+              <span className={styles.moneyUnit}>₽</span>
+            </div>
+            <button
+              type="button"
+              className={ui.linkAccent}
+              onClick={() => editor.removeContentRate(index)}
+              aria-label={`Убрать тематику ${rate.name}`}
+            >
+              Убрать
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 const TopicField = ({ editor }) => {
-  const { form, errors, topics, topic, benchmarksLoading } = editor;
-  // Выбранная поиском тематика может не входить в топ — показываем её в общем ряду
-  const chips = topic && !findTopic(topics, topic.code) ? [...topics, topic] : topics;
+  const { form, errors, topics, selectedTopics, benchmarksLoading } = editor;
+  // Выбранные поиском тематики могут не входить в топ — показываем их в общем ряду
+  const chips = [...topics, ...selectedTopics.filter((item) => !findTopic(topics, item.code))];
+  const several = hasContentRates(form);
+  const full = form.contentRates.length >= CONTENT_RATES_MAX;
   return (
     <div className={styles.field}>
-      <FieldLabel field="topic">Тематика</FieldLabel>
+      <FieldLabel field="topic">Тематики</FieldLabel>
       {benchmarksLoading ? (
         <Skeleton width="min(24rem, 90%)" />
       ) : chips.length === 0 ? (
         <span className={ui.hintWarn}>Не удалось загрузить популярные тематики — найдите свою поиском.</span>
       ) : (
-        <div className={ui.chips} role="radiogroup" aria-label="Тематика">
+        <div className={ui.chips} role="group" aria-label="Тематики">
           {chips.map((item) => {
-            const selected = form.topic === item.code;
+            const selected = isTopicSelected(form, item);
             return (
               <TopicChip
-                key={item.code}
+                key={item.code || item.description}
                 topic={item}
                 selected={selected}
-                role="radio"
-                aria-checked={selected}
-                onClick={() => editor.setTopic(item.code)}
+                aria-pressed={selected}
+                disabled={full && !selected}
+                onClick={() => editor.toggleTopic(item)}
               />
             );
           })}
@@ -274,9 +323,19 @@ const TopicField = ({ editor }) => {
       )}
       <TopicSearch editor={editor} />
       <FieldError>{errors.topic}</FieldError>
+      {several && (
+        <>
+          <span className={ui.label}>
+            {isSnapshotForm(form) ? 'Базовая ставка' : 'Ставка'} за 1 000 просмотров по каждой тематике
+          </span>
+          <TopicRates editor={editor} />
+          <FieldError>{errors.contentRates}</FieldError>
+        </>
+      )}
       <span className={ui.hint}>
-        Рядом — средняя ставка за 1 000 просмотров по тематике. От неё посчитаем подсказку на шаге
-        бюджета. Нет подходящей — найдите поиском или добавьте свою.
+        Можно выбрать несколько тематик и назначить свою ставку за каждую: креатор при подаче укажет
+        тематику ролика, и ролик оплатится по её ставке. Рядом с тематикой — средняя ставка за 1 000
+        просмотров. Нет подходящей — найдите поиском или добавьте свою.
       </span>
     </div>
   );
@@ -591,7 +650,7 @@ export const BudgetFields = ({ editor, onOpenWallet }) => {
         {launched && campaign.applicationsCount > 0 ? ' Способ оплаты не поменять: по кампании уже есть отклики.' : ''}
       </span>
     </div>
-    <ContentRatesField editor={editor} snapshot={snapshot} />
+    {hasContentRates(form) && <ContentRatesField editor={editor} snapshot={snapshot} />}
     <div className={styles.fieldGrid}>
       {!hasContentRates(form) && (
       <div className={styles.field}>
@@ -690,88 +749,20 @@ export const BudgetFields = ({ editor, onOpenWallet }) => {
   );
 };
 
-const RATE_MODES = [
-  { value: false, label: 'Одна ставка на все ролики' },
-  { value: true, label: 'Разные ставки по тематикам' },
-];
-
-const ContentRatesField = ({ editor, snapshot }) => {
-  const { form, errors } = editor;
-  const enabled = hasContentRates(form);
-  const rateLabel = snapshot ? 'Базовая ставка' : 'Ставка';
-
-  return (
-    <div className={styles.field}>
-      <span className={ui.label}>Ставка за 1 000 просмотров</span>
-      <div className={ui.chips} role="radiogroup" aria-label="Ставка за 1 000 просмотров">
-        {RATE_MODES.map((mode) => (
-          <button
-            key={String(mode.value)}
-            type="button"
-            role="radio"
-            aria-checked={enabled === mode.value}
-            className={enabled === mode.value ? ui.chipActive : ui.chip}
-            onClick={() => enabled !== mode.value && editor.setContentRatesEnabled(mode.value)}
-          >
-            {mode.label}
-          </button>
-        ))}
-      </div>
-      {enabled ? (
-        <>
-          <span className={ui.hint}>
-            Назовите тематики роликов и ставку за каждую — например «CS и Dota 2», «Остальные игры»,
-            «Юмор». Креатор при подаче выбирает тематику своего ролика, и ролик оплачивается по её
-            ставке.{snapshot ? ' Надбавки за ссылку и промокод прибавляются к ставке тематики.' : ''}
-          </span>
-          <div className={styles.contentRates}>
-            {form.contentRates.map((rate, index) => (
-              <div key={index} className={styles.contentRateRow}>
-                <input
-                  type="text"
-                  className={ui.input}
-                  value={rate.name}
-                  maxLength={CONTENT_TOPIC_NAME_MAX}
-                  placeholder="Тематика, например «Юмор»"
-                  aria-label={`Тематика ${index + 1}`}
-                  autoComplete="off"
-                  onChange={(e) => editor.setContentRate(index, 'name', e.target.value)}
-                />
-                <div className={styles.money}>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    className={ui.input}
-                    value={rate.rateRub}
-                    placeholder={rateLabel}
-                    aria-label={`${rateLabel} за 1 000 просмотров: ${rate.name || `тематика ${index + 1}`}`}
-                    autoComplete="off"
-                    onChange={(e) => editor.setContentRate(index, 'rateRub', e.target.value)}
-                  />
-                  <span className={styles.moneyUnit}>₽</span>
-                </div>
-                <button
-                  type="button"
-                  className={ui.linkAccent}
-                  onClick={() => editor.removeContentRate(index)}
-                  aria-label={`Убрать тематику ${rate.name || index + 1}`}
-                >
-                  Убрать
-                </button>
-              </div>
-            ))}
-          </div>
-          {form.contentRates.length < CONTENT_RATES_MAX && (
-            <button type="button" className={ui.linkAccent} onClick={editor.addContentRate}>
-              + Добавить тематику
-            </button>
-          )}
-          <FieldError>{errors.contentRates || errors.rateRub}</FieldError>
-        </>
-      ) : null}
-    </div>
-  );
-};
+const ContentRatesField = ({ editor, snapshot }) => (
+  <div className={styles.field}>
+    <span className={ui.label}>
+      {snapshot ? 'Базовая ставка' : 'Ставка'} за 1 000 просмотров по тематикам
+    </span>
+    <TopicRates editor={editor} />
+    <FieldError>{editor.errors.contentRates || editor.errors.rateRub}</FieldError>
+    <span className={ui.hint}>
+      Креатор при подаче выбирает тематику ролика, и ролик оплачивается по её ставке.
+      {snapshot ? ' Надбавки за ссылку и промокод прибавляются к ставке тематики.' : ''} Добавить или
+      убрать тематику можно на шаге «Бриф».
+    </span>
+  </div>
+);
 
 const PAYMENT_MODELS = [
   { value: 'CONTINUOUS', label: 'За просмотры' },

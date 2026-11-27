@@ -66,7 +66,7 @@ export const CAMPAIGN_STEPS = [
     id: 'brief',
     title: 'Бриф',
     heading: 'Расскажите о задаче',
-    fields: ['title', 'topic', 'description', 'photoKey', 'materials'],
+    fields: ['title', 'topic', 'contentRates', 'description', 'photoKey', 'materials'],
   },
   {
     id: 'terms',
@@ -78,7 +78,7 @@ export const CAMPAIGN_STEPS = [
     id: 'budget',
     title: 'Бюджет',
     heading: 'Сколько платите',
-    fields: ['rateRub', 'contentRates', 'budgetRub', 'minPayoutRub', 'minPaidRub', 'paymentModel', ...SNAPSHOT_FIELDS],
+    fields: ['rateRub', 'budgetRub', 'minPayoutRub', 'minPaidRub', 'paymentModel', ...SNAPSHOT_FIELDS],
   },
   {
     id: 'launch',
@@ -279,7 +279,6 @@ const kopecksToInput = (kopecks) =>
   kopecks == null ? '' : formatRubInput(String(kopecksToRub(kopecks)));
 
 export const CONTENT_RATES_MAX = 20;
-export const CONTENT_TOPIC_NAME_MAX = 64;
 
 export const hasContentRates = (form) => form.contentRates.length > 0;
 
@@ -305,6 +304,53 @@ export const withContentRates = (form, contentRates) => {
     contentRates,
     rateRub: contentRates.length > 0 ? (rates.length ? kopecksToInput(Math.max(...rates)) : '') : form.rateRub,
   };
+};
+
+const topicRateRow = (topic, rateRub = '') => ({
+  name: topic.description,
+  rateRub,
+  topicCode: topic.code || '',
+});
+
+// У прежних ставок с названием от руки кода тематики нет — их узнаём по названию
+const isRateOfTopic = (rate, topic) =>
+  rate.topicCode
+    ? rate.topicCode === topic.code
+    : normalizeTopicName(rate.name) === normalizeTopicName(topic.description);
+
+export const isTopicSelected = (form, topic) =>
+  form.contentRates.length > 0
+    ? form.contentRates.some((rate) => isRateOfTopic(rate, topic))
+    : Boolean(form.topic) && form.topic === topic.code;
+
+// Одна тематика — общая ставка без строк; с двух у каждой своя ставка, основная тематика — первая
+const withTopicRates = (form, rates) => {
+  if (rates.length === 0) return { ...form, contentRates: [], topic: '' };
+  if (rates.length === 1) {
+    const [last] = rates;
+    return { ...form, contentRates: [], topic: last.topicCode || form.topic, rateRub: last.rateRub };
+  }
+  const primary = rates.find((rate) => rate.topicCode)?.topicCode || form.topic;
+  return withContentRates({ ...form, topic: primary }, rates);
+};
+
+export const removeTopicRate = (form, index) =>
+  withTopicRates(
+    form,
+    form.contentRates.filter((_, position) => position !== index)
+  );
+
+// current — уже выбранная единственная тематика: при выборе второй её общая ставка становится её собственной
+export const toggleTopic = (form, topic, current) => {
+  if (form.contentRates.length > 0) {
+    const index = form.contentRates.findIndex((rate) => isRateOfTopic(rate, topic));
+    if (index !== -1) return removeTopicRate(form, index);
+    if (form.contentRates.length >= CONTENT_RATES_MAX) return form;
+    return withTopicRates(form, [...form.contentRates, topicRateRow(topic)]);
+  }
+  if (form.topic === topic.code) return { ...form, topic: '' };
+  if (!form.topic || !current) return { ...form, topic: topic.code };
+  return withTopicRates(form, [topicRateRow(current, form.rateRub), topicRateRow(topic)]);
 };
 
 export const minPaidViewsFor = (minPaidRub, rateRub) => {
@@ -350,6 +396,7 @@ export const formFromCampaign = (campaign) => ({
     ? campaign.contentRates.map((rate) => ({
         name: rate.name || '',
         rateRub: kopecksToInput(rate.ratePerThousandKopecks),
+        topicCode: rate.topicCode || '',
       }))
     : [],
   budgetRub: kopecksToInput(campaign.budgetKopecks),
@@ -382,6 +429,7 @@ export const formToRequest = (form) => ({
   contentRates: form.contentRates.map((rate) => ({
     name: rate.name.trim(),
     ratePerThousandKopecks: rubToKopecks(rate.rateRub),
+    topicCode: rate.topicCode || null,
   })),
   budgetKopecks: rubToKopecks(form.budgetRub),
   minPayoutKopecks: rubToKopecks(form.minPayoutRub),
