@@ -49,7 +49,7 @@ export const PartFacts = ({ part }) => (
         {part.proofFileUrl && part.proofUrl ? ' · ' : ''}
         {part.proofUrl && (
           <a href={part.proofUrl} target="_blank" rel="noreferrer" className={ui.linkAccent}>
-            Ссылка от криатора
+            Ссылка от креатора
           </a>
         )}
       </p>
@@ -99,7 +99,7 @@ const PlacementReview = ({ application, onChanged }) => {
     <div className={styles.section}>
       <PlacementSummary placement={placement} />
       {parts.length === 0 ? (
-        <p className={styles.partMeta}>Криатор участвует без надбавок: только рекламный ролик.</p>
+        <p className={styles.partMeta}>Креатор участвует без надбавок: только рекламный ролик.</p>
       ) : (
         <ul className={styles.parts}>
           {parts.map((part) => (

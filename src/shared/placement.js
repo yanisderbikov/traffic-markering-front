@@ -46,7 +46,7 @@ export const campaignRates = (campaign) => ({
   promo: campaign?.offersPromo ? campaign.promoBonusPerThousandKopecks ?? 0 : 0,
 });
 
-// Ставки, зафиксированные в работе криатора, когда он брал оффер
+// Ставки, зафиксированные в работе креатора, когда он брал оффер
 export const workRates = (placement) => ({
   base: placement?.baseRatePerThousandKopecks ?? 0,
   link: placement?.link?.offered ? placement.linkBonusPerThousandKopecks ?? 0 : 0,
