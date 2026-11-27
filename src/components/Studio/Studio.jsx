@@ -765,6 +765,7 @@ const Studio = () => {
                 media={background}
                 onChange={setBackground}
                 assets={backgroundAssets}
+                maxBytes={overview && !overview.unlimited ? overview.backgroundMaxBytes : null}
               />
             )}
             {isSplit ? (
@@ -832,6 +833,7 @@ const Studio = () => {
                   media={banner}
                   onChange={setBanner}
                   assets={bannerAssets}
+                  maxBytes={overview && !overview.unlimited ? overview.bannerMaxBytes : null}
                 />
                 {settings.mode !== 'pause' && (
                   <div className={styles.grid2}>
@@ -1165,8 +1167,8 @@ const Studio = () => {
 };
 
 /** Файл баннера/фона: новый файл или из библиотеки */
-const MediaPicker = ({ label, accept, media, onChange, assets }) => (
-  <Row label={label}>
+const MediaPicker = ({ label, accept, media, onChange, assets, maxBytes }) => (
+  <Row label={maxBytes ? `${label} · до ${Math.round(maxBytes / 1024 / 1024)} МиБ` : label}>
     <div className={styles.inline}>
       <label className={ui.btnSecondary}>
         {media.file ? media.file.name.slice(0, 32) : 'Загрузить файл'}
@@ -1176,7 +1178,15 @@ const MediaPicker = ({ label, accept, media, onChange, assets }) => (
           hidden
           onChange={(e) => {
             const file = e.target.files?.[0];
-            if (file) onChange({ file, assetId: null });
+            e.target.value = '';
+            if (!file) return;
+            if (maxBytes && file.size > maxBytes) {
+              toast.error(
+                `${label}: ${formatBytes(file.size)}, а можно до ${Math.round(maxBytes / 1024 / 1024)} МиБ. Сожмите файл или выберите другой`,
+              );
+              return;
+            }
+            onChange({ file, assetId: null });
           }}
         />
       </label>
