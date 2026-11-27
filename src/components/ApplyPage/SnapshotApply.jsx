@@ -13,6 +13,7 @@ import { formatRubles, formatViews } from '../../shared/money';
 import { campaignRates, rateVariants, workRates } from '../../shared/placement';
 import { hasContentRates } from '../../shared/contentRates';
 import ContentTopicPicker from '../shared/ContentTopicPicker/ContentTopicPicker';
+import SubmitConfirmDialog from '../shared/SubmitConfirmDialog/SubmitConfirmDialog';
 import { detectPlatform } from '../../shared/video';
 import ui from '../../shared/ui.module.css';
 import placementStyles from '../shared/Placement/Placement.module.css';
@@ -98,6 +99,7 @@ const SnapshotApply = ({ campaign, workInProgress, onWorkChange, inactive, accou
   const [formError, setFormError] = useState('');
   const [contentTopic, setContentTopic] = useState(workInProgress?.contentTopic || '');
   const [topicError, setTopicError] = useState('');
+  const [confirming, setConfirming] = useState(false);
 
   const placement = workInProgress?.placement;
   const rates = placement ? workRates(placement) : campaignRates(campaign);
@@ -196,6 +198,11 @@ const SnapshotApply = ({ campaign, workInProgress, onWorkChange, inactive, accou
       setFormError('Приложите скриншот или запись экрана с закреплённым комментарием — или выберите вариант без промокода');
       return;
     }
+    setFormError('');
+    setConfirming(true);
+  };
+
+  const send = async () => {
     setBusy('submit');
     setFormError('');
     try {
@@ -215,12 +222,25 @@ const SnapshotApply = ({ campaign, workInProgress, onWorkChange, inactive, accou
       setFormError(errorMessage(err, 'Не удалось подать работу'));
     } finally {
       setBusy(null);
+      setConfirming(false);
     }
   };
 
   const disabled = inactive || busy !== null;
 
   return (
+    <>
+    <SubmitConfirmDialog
+      title="Подать работу на проверку?"
+      open={confirming}
+      busy={busy === 'submit'}
+      onCancel={() => setConfirming(false)}
+      onConfirm={send}
+    >
+      Работа сразу уйдёт на модерацию с просмотрами из расчёта
+      {quote ? ` — ${formatViews(quote.views ?? 0)}` : ''}. Просмотры, набранные позже, в оплату не
+      войдут. Если ролик ещё набирает просмотры — подайте его позже и рассчитайте заново.
+    </SubmitConfirmDialog>
     <form className={`${ui.card} ${styles.form}`} onSubmit={submit} noValidate>
       <section className={placementStyles.section}>
         <h2 className={placementStyles.sectionTitle}>1. Вариант участия</h2>
@@ -394,6 +414,7 @@ const SnapshotApply = ({ campaign, workInProgress, onWorkChange, inactive, accou
         </div>
       )}
     </form>
+    </>
   );
 };
 

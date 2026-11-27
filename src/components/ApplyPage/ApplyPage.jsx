@@ -20,6 +20,7 @@ import { detectPlatform } from '../../shared/video';
 import { isSnapshot, rateRange, workRates } from '../../shared/placement';
 import { campaignRateLabel, hasContentRates } from '../../shared/contentRates';
 import ContentTopicPicker from '../shared/ContentTopicPicker/ContentTopicPicker';
+import SubmitConfirmDialog from '../shared/SubmitConfirmDialog/SubmitConfirmDialog';
 import SnapshotApply from './SnapshotApply';
 import ui from '../../shared/ui.module.css';
 import styles from './ApplyPage.module.css';
@@ -86,6 +87,7 @@ const ApplyPage = () => {
   const [videoUrlError, setVideoUrlError] = useState('');
   const [topicError, setTopicError] = useState('');
   const [sending, setSending] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [accounts, setAccounts] = useState(null);
   const [workInProgress, setWorkInProgress] = useState(null);
 
@@ -186,6 +188,12 @@ const ApplyPage = () => {
       return;
     }
 
+    setFormError('');
+    setConfirming(true);
+  };
+
+  const send = async () => {
+    const videoUrl = form.videoUrl.trim();
     setSending(true);
     setFormError('');
     try {
@@ -207,6 +215,7 @@ const ApplyPage = () => {
       );
     } finally {
       setSending(false);
+      setConfirming(false);
     }
   };
 
@@ -287,8 +296,9 @@ const ApplyPage = () => {
                 />
                 <FieldError>{videoUrlError}</FieldError>
                 <span className={ui.hint}>
-                  По этой ссылке считаются просмотры, за которые начисляются деньги. Площадка
-                  определяется автоматически и должна быть из списка заказчика.
+                  Просмотры по этой ссылке фиксируются один раз — в момент отправки, по ним
+                  начисляются деньги. Площадка определяется автоматически и должна быть из списка
+                  заказчика.
                 </span>
                 {form.videoUrl.trim() && !platform && !videoUrlError && (
                   <span className={ui.hintWarn}>Площадка по ссылке не распознана.</span>
@@ -361,6 +371,16 @@ const ApplyPage = () => {
               </div>
             </form>
             )}
+            <SubmitConfirmDialog
+              open={confirming}
+              busy={sending}
+              onCancel={() => setConfirming(false)}
+              onConfirm={send}
+            >
+              Ролик сразу уйдёт на модерацию, а просмотры снимутся с площадки и зафиксируются на
+              момент подачи. Просмотры, набранные позже, в оплату не войдут. Если ролик ещё
+              набирает просмотры — подайте его позже.
+            </SubmitConfirmDialog>
 
             <aside className={styles.aside}>
               <section className={ui.card}>
@@ -373,7 +393,7 @@ const ApplyPage = () => {
                 <p className={styles.rateUnit}>
                   {isSnapshot(campaign)
                     ? 'за 1 000 просмотров на момент подачи, по варианту участия'
-                    : 'за 1 000 подтверждённых просмотров'}
+                    : 'за 1 000 просмотров на момент подачи'}
                 </p>
                 {hasContentRates(campaign) && (
                   <>
